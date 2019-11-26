@@ -1,0 +1,6 @@
+import numpy as np
+
+PRINTER_EXTENTS = np.array([150, 150, 150], dtype=float)
+PLANE_SPACING = 40
+N_RANDOM_NORMALS = 10
+SUFFICIENTLY_DIFFERENT_THRESHOLD = .1 * np.sqrt(np.sum(PRINTER_EXTENTS ** 2))
