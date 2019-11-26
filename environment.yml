@@ -1,0 +1,12 @@
+name: pychop3d
+dependencies:
+   - python=3.7
+   - pip
+   - matplotlib
+   - numpy
+   - scipy
+   - pytest
+   - networkx
+   - pip:
+      - trimesh
+      - pyglet
