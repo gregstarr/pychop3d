@@ -7,6 +7,9 @@ dependencies:
    - scipy
    - pytest
    - networkx
+   - shapely
+   - rtree
    - pip:
       - trimesh
       - pyglet
+# https://www.lfd.uci.edu/~gohlke/pythonlibs/#meshpy for meshpy

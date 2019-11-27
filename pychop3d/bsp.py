@@ -1,7 +1,9 @@
 import trimesh
 import numpy as np
-from pychop3d import constants
 import copy
+
+from pychop3d import constants
+from pychop3d import utils
 
 
 class BSPNode:
@@ -16,25 +18,23 @@ class BSPNode:
             self.path = self.parent.path + [num]
 
     def split(self, plane):
-        origin = plane[0]
-        norm = plane[1]
         part = self.part
         self.plane = plane
-        d = np.sqrt(np.sum((origin - part.vertices) ** 2, axis=1)).max()
-        xform = trimesh.transformations.translation_matrix(np.array([0., 0., -1 * d]))
-        cutter = trimesh.primitives.Box(extents=np.ones(3) * d * 2, transform=xform)
-        norm_aligner = trimesh.geometry.align_vectors(np.array([0, 0, 1]), norm)
-        cutter.apply_transform(norm_aligner)
-        translation_to_origin = trimesh.transformations.translation_matrix(origin)
-        cutter.apply_transform(translation_to_origin)
-        self.children[0] = BSPNode(part.difference(cutter, engine='scad'), parent=self, num=0)
-        self.children[1] = BSPNode(part.intersection(cutter, engine='scad'), parent=self, num=1)
+        positive = utils.unidirectional_split(part, plane[0], plane[1])
+        positive.remove_degenerate_faces()
+        negative = utils.unidirectional_split(part, plane[0], -1 * plane[1])
+        negative.remove_degenerate_faces()
+        self.children[0] = BSPNode(positive, parent=self, num=0)
+        self.children[1] = BSPNode(negative, parent=self, num=1)
 
     def terminated(self):
-        return np.all(self.part.bounding_box_oriented.extents < constants.PRINTER_EXTENTS)
+        return np.all(self.part.bounding_box_oriented.primitive.extents < constants.PRINTER_EXTENTS)
 
     def number_of_parts_estimate(self):
-        return np.prod(np.ceil(self.part.bounding_box_oriented.extents / constants.PRINTER_EXTENTS))
+        try:
+            return np.prod(np.ceil(self.part.bounding_box_oriented.primitive.extents / constants.PRINTER_EXTENTS))
+        except Exception as e:
+            print(e)
 
     def auxiliary_normals(self):
         obb_xform = np.array(self.part.bounding_box_oriented.primitive.transform)
@@ -58,12 +58,12 @@ class BSPTree:
 
     def __init__(self, part: trimesh.Trimesh):
         self.root = BSPNode(part)
-        self.a_part = 1
-        self.a_util = .05
-        self.a_connector = 1
-        self.a_fragility = 1
-        self.a_seam = .1
-        self.a_symmetry = .25
+        self.a_part = constants.A_PART
+        self.a_util = constants.A_UTIL
+        self.a_connector = constants.A_CONNECTOR
+        self.a_fragility = constants.A_FRAGILITY
+        self.a_seam = constants.A_SEAM
+        self.a_symmetry = constants.A_SYMMETRY
 
     def get_node(self, path=None):
         node = self.root
@@ -74,7 +74,7 @@ class BSPTree:
                 node = node.children[i]
         return node
 
-    def expand_node(self, plane, node=None):
+    def expand_node(self, plane, node):
         new_tree = copy.deepcopy(self)
         node = new_tree.get_node(node.path)
         node.split(plane)
@@ -116,7 +116,10 @@ class BSPTree:
 
     def nparts_objective(self):
         theta_0 = self.root.number_of_parts_estimate()
-        return sum([l.number_of_parts_estimate() for l in self.get_leaves()]) / theta_0
+        try:
+            return sum([l.number_of_parts_estimate() for l in self.get_leaves()]) / theta_0
+        except Exception as e:
+            print(e)
 
     def utilization_objective(self):
         V = np.prod(constants.PRINTER_EXTENTS)
@@ -126,6 +129,34 @@ class BSPTree:
         return 0
 
     def fragility_objective(self):
+        leaves = self.get_leaves()
+        nodes = {}
+        for leaf in leaves:
+            path = tuple(leaf.parent.path)
+            if path not in nodes:
+                nodes[path] = leaf.parent
+
+        for node in nodes.values():
+            origin, normal = node.plane
+            mesh = node.part
+            possibly_fragile = np.abs(mesh.vertex_normals @ normal) > constants.FRAGILITY_THRESHOLD
+            if not np.any(possibly_fragile):
+                continue
+            ray_origins = mesh.vertices[possibly_fragile] - .1 * mesh.vertex_normals[possibly_fragile]
+            distance_to_plane = np.abs((ray_origins - origin) @ normal)
+            side_mask = (ray_origins - origin) @ normal > 0
+            ray_directions = np.ones((ray_origins.shape[0], 1)) * normal[None, :]
+            ray_directions[side_mask] *= -1
+            hits = mesh.ray.intersects_any(ray_origins, ray_directions)
+            if np.any(distance_to_plane[~hits] < 1.5 * constants.CONNECTOR_DIAMETER):
+                return np.inf
+            if not np.any(hits):
+                continue
+            locs, index_ray, index_tri = mesh.ray.intersects_location(ray_origins, ray_directions)
+            ray_mesh_dist = np.sqrt(np.sum((ray_origins[index_ray] - locs) ** 2, axis=1))
+            if np.any((distance_to_plane[index_ray] < 1.5 * constants.CONNECTOR_DIAMETER) *
+                      (distance_to_plane[index_ray] < ray_mesh_dist)):
+                return np.inf
         return 0
 
     def seam_objective(self):
@@ -135,12 +166,13 @@ class BSPTree:
         return 0
 
     def get_objective(self):
-        return (self.a_part * self.nparts_objective() +
-                self.a_util * self.utilization_objective() +
-                self.a_connector * self.connector_objective() +
-                self.a_fragility * self.fragility_objective() +
-                self.a_seam * self.seam_objective() +
-                self.a_symmetry * self.symmetry_objective())
+        part = self.a_part * self.nparts_objective()
+        util = self.a_util * self.utilization_objective()
+        connector = self.a_connector * self.connector_objective()
+        fragility = self.a_fragility * self.fragility_objective()
+        seam = self.a_seam * self.seam_objective()
+        symmetry = self.a_symmetry * self.symmetry_objective()
+        return part + util + connector + fragility + seam + symmetry
 
     def preview(self):
         scene = trimesh.scene.Scene()
