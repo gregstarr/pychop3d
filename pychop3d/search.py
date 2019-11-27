@@ -14,7 +14,8 @@ def evaluate_cuts(base_tree, node):
         for plane in node.get_planes(normal):
             print('.', end='')
             tree2 = base_tree.expand_node(plane, node)
-            trees.append(tree2)
+            if tree2:
+                trees.append(tree2)
 
     print()
     result_set = []

@@ -8,24 +8,32 @@ from pychop3d import utils
 
 class BSPNode:
 
-    def __init__(self, part: trimesh.Trimesh, parent=None, num=None):
+    def __init__(self, part: trimesh.Trimesh, parent=None, num=None, connection_sites=None, connection_objective=None):
         self.part = part
         self.parent = parent
         self.children = {}
         self.path = []
         self.plane = None
+        self.connection_sites = connection_sites
+        self.connection_objective = connection_objective
+        # if this isn't the root node
         if self.parent is not None:
             self.path = self.parent.path + [num]
 
     def split(self, plane):
         part = self.part
         self.plane = plane
-        positive = utils.unidirectional_split(part, plane[0], plane[1])
-        positive.remove_degenerate_faces()
-        negative = utils.unidirectional_split(part, plane[0], -1 * plane[1])
-        negative.remove_degenerate_faces()
-        self.children[0] = BSPNode(positive, parent=self, num=0)
-        self.children[1] = BSPNode(negative, parent=self, num=1)
+        origin, normal = plane
+        positive, pos_connector_sites, pos_objective = utils.unidirectional_split(part, origin, normal)
+        negative, neg_connector_sites, neg_objective = utils.unidirectional_split(part, origin, -1 * normal)
+        # check for splitting errors
+        if None in [positive, negative]:
+            return False
+        self.children[0] = BSPNode(positive, parent=self, num=0, connection_sites=pos_connector_sites,
+                                   connection_objective=pos_objective)
+        self.children[1] = BSPNode(negative, parent=self, num=1, connection_sites=neg_connector_sites,
+                                   connection_objective=neg_objective)
+        return True
 
     def terminated(self):
         return np.all(self.part.bounding_box_oriented.primitive.extents < constants.PRINTER_EXTENTS)
@@ -77,8 +85,10 @@ class BSPTree:
     def expand_node(self, plane, node):
         new_tree = copy.deepcopy(self)
         node = new_tree.get_node(node.path)
-        node.split(plane)
-        return new_tree
+        success = node.split(plane)
+        if success:
+            return new_tree
+        return None
 
     def get_leaves(self):
         nodes = [self.root]
@@ -126,7 +136,12 @@ class BSPTree:
         return max([1 - leaf.part.volume / (leaf.number_of_parts_estimate() * V) for leaf in self.get_leaves()])
 
     def connector_objective(self):
-        return 0
+        """
+        for each leaf, for each connected component of the leaf's cut face, set up a grid of points and check each point
+        if a female connector could feasibly fit at that location, then take the convex hull of those points for each
+        cut face and compute the quantity in equation 4. Take the maximum of all of these
+        """
+        return max([l.connection_objective for l in self.get_leaves()])
 
     def fragility_objective(self):
         leaves = self.get_leaves()
