@@ -2,19 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="f111e811-a83a-4344-ab2e-3fe7cd95d636" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/pychop3d/run.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/test/test_bsp.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/test/test_objectives.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/pychop3d.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/pychop3d.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/environment.yml" beforeDir="false" afterPath="$PROJECT_DIR$/environment.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pychop3d/bsp.py" beforeDir="false" afterPath="$PROJECT_DIR$/pychop3d/bsp.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pychop3d/constants.py" beforeDir="false" afterPath="$PROJECT_DIR$/pychop3d/constants.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pychop3d/experiment.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pychop3d/search.py" beforeDir="false" afterPath="$PROJECT_DIR$/pychop3d/search.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pychop3d/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/pychop3d/utils.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
