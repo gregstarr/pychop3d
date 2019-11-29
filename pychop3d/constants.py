@@ -1,7 +1,7 @@
 import numpy as np
 import trimesh
 
-PRINTER_EXTENTS = np.array([150, 150, 150], dtype=float)
+PRINTER_EXTENTS = np.array([180, 180, 180], dtype=float)
 PLANE_SPACING = 10
 N_RANDOM_NORMALS = 40
 

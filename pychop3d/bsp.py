@@ -2,6 +2,8 @@ import trimesh
 import numpy as np
 import copy
 import itertools
+import json
+import os
 
 from pychop3d import constants
 from pychop3d import utils
@@ -89,7 +91,7 @@ class BSPTree:
 
     def get_node(self, path=None):
         node = self.nodes[0]
-        if path is None:
+        if not path:
             return node
         else:
             for i in path:
@@ -310,16 +312,29 @@ class BSPTree:
                 return new_state, new_objective
         return state, objective
 
-    def insert_connectors(self, state):
-        for i in range(state.sum()):
-            cc = self.connected_component[state][i]
-            node = self.nodes[self.connected_component_nodes[cc]]
-            xform = self.connectors[state][i].primitive.transform
-            slot = trimesh.primitives.Box(extents=np.ones(3) * (constants.CONNECTOR_DIAMETER + constants.CONNECTOR_TOLERANCE),
-                                          transform=xform)
-            if self.sides[state][i] == 1:
-                node.children[0].part = node.children[0].part.difference(slot, engine='scad')
-                node.children[1].part = node.children[1].part + self.connectors[state][i]
-            else:
-                node.children[1].part = node.children[1].part.difference(slot, engine='scad')
-                node.children[0].part = node.children[0].part + self.connectors[state][i]
+    def save(self, filename, state):
+        nodes = []
+        for node in self.nodes:
+            if node.plane is not None:
+                this_node = {'path': node.path, 'origin': list(node.plane[0]), 'normal': list(node.plane[1])}
+                nodes.append(this_node)
+        with open(filename, 'w') as f:
+            json.dump({'nodes': nodes, 'state': [bool(s) for s in state]}, f)
+
+    @classmethod
+    def from_json(cls, mesh, filename):
+        with open(filename) as f:
+            data = json.load(f)
+
+        node_data = data['nodes']
+        tree = cls(mesh)
+        for n in node_data:
+            plane = (np.array(n['origin']), np.array(n['normal']))
+            node = tree.get_node(n['path'])
+            tree = tree.expand_node(plane, node)
+        return tree, np.array(data['state'], dtype=bool)
+
+    def export_stl(self, dirname):
+        for i, leaf in enumerate(self.get_leaves()):
+            leaf.part.export(os.path.join(dirname, f"{i}.stl"))
+

@@ -1,11 +1,16 @@
 """
 TODO:
-    - compute objective functions for multiple planes at a time
+    - compute objective functions for multiple planes at a time / general speedup
     - one ring edges
     - seam objective
     - structural objective
     - symmetry objective
     - clean up code big time
+    - save tree / cuts as json
+    - ensure every surface has at least one connector
+    - do a print!
+    - website
+    - get random things from thingiverse and partition them
 """
 import trimesh
 import os
@@ -13,23 +18,25 @@ import time
 
 from pychop3d.search import beam_search
 from pychop3d.bsp_mesh import BSPMesh
+from pychop3d.bsp import BSPTree
+from pychop3d.utils import insert_connectors
 
 fn = "C:\\Users\\Greg\\Downloads\\Low_Poly_Stanford_Bunny\\files\\Bunny-LowPoly.stl"
 mesh = trimesh.load(fn, validate=True)
-mesh.apply_scale(2.5)
+mesh.apply_scale(3)
 chull = mesh.convex_hull
 mesh = BSPMesh.from_trimesh(mesh)
 mesh._convex_hull = chull
 
 t0 = time.time()
-best_tree = beam_search(mesh, 2)
+best_tree = beam_search(mesh, 4)
 print(f"Best BSP-tree found in {time.time() - t0} seconds")
 
 t0 = time.time()
 state = best_tree.simulated_annealing_connector_placement()
 print(f"Best connector arrangement found in {time.time() - t0} seconds")
 
-best_tree.insert_connectors(state)
+best_tree.save("tree_big.json", state)
 
-for i, leaf in enumerate(best_tree.get_leaves()):
-    leaf.part.export(os.path.join(os.path.dirname(__file__), f"../output/{i}.stl"))
+best_tree = insert_connectors(best_tree, state)
+best_tree.export_stl(os.path.join(os.path.dirname(__file__), "..\\output"))

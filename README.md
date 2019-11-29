@@ -6,10 +6,5 @@ http://cfg.mit.edu/content/chopper-partitioning-models-3d-printable-parts
 
 ### Gallery
 
-![Bunny 1](images/bunny1.png)
-![Bunny 2](images/bunny2.png)
-![Bunny 3](images/bunny3.png)
-![Bunny 4](images/bunny4.png)
-![Bunny 5](images/bunny5.png)
 ![Bunny 6](images/bunny6.png)
 ![Bunny 7](images/bunny7.png)
