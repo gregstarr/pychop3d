@@ -238,7 +238,7 @@ class BSPTree:
         for site, normal in zip(self.sites, self.normals):
             box = trimesh.primitives.Box(extents=np.ones(3) * constants.CONNECTOR_DIAMETER)
             box.apply_transform(np.linalg.inv(trimesh.points.plane_transform(site, normal)))
-            box.apply_transform(trimesh.transformations.translation_matrix(normal * constants.CONNECTOR_DIAMETER / 2))
+            box.apply_transform(trimesh.transformations.translation_matrix(normal * (constants.CONNECTOR_DIAMETER / 2 - .1)))
             connectors.append(box)
         self.connectors = np.array(connectors)
         self.connection_matrix = np.zeros((self.sites.shape[0], self.sites.shape[0]), dtype=bool)
