@@ -139,9 +139,9 @@ def insert_connectors(tree, state):
 
         if tree.sides[state][i] == 1:
             new_node.children[0].part = new_node.children[0].part.difference(slot, engine='scad')
-            new_node.children[1].part = new_node.children[1].part + tree.connectors[state][i]
+            new_node.children[1].part = new_node.children[1].part.union(tree.connectors[state][i], engine='scad')
         else:
             new_node.children[1].part = new_node.children[1].part.difference(slot, engine='scad')
-            new_node.children[0].part = new_node.children[0].part + tree.connectors[state][i]
+            new_node.children[0].part = new_node.children[0].part.union(tree.connectors[state][i], engine='scad')
 
     return new_tree
