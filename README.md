@@ -9,5 +9,5 @@ http://cfg.mit.edu/content/chopper-partitioning-models-3d-printable-parts
 ![](images/process1.png)
 ![](images/process2.png)
 ![](images/process3.png)
-![](images/process4.png)
-![](images/process5.png)
+![](images/process4.jpg)
+![](images/process5.jpg)
