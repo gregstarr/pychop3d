@@ -6,9 +6,6 @@ TODO:
     - structural objective
     - symmetry objective
     - clean up code big time
-    - save tree / cuts as json
-    - ensure every surface has at least one connector
-    - do a print!
     - website
     - get random things from thingiverse and partition them
 """
