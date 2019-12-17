@@ -1,0 +1,6 @@
+output
+profile
+*.pyc
+.idea
+.pytest_cache
+pychop3d/__pycache__
