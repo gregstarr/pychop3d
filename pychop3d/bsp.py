@@ -18,27 +18,26 @@ class BSPNode:
         self.children = {}
         self.path = []
         self.plane = None
-        self.connector_data = None
+        self.cross_section = None
         # if this isn't the root node
         if self.parent is not None:
             self.path = self.parent.path + [num]
 
     def split(self, plane):
-        part = self.part
         self.plane = plane
         origin, normal = plane
-        positive, negative, connector_data = utils.bidirectional_split(part, origin, normal)
-        # check for splitting errors
-        if None in [positive, negative]:
+        positive, negative, cross_section = self.part.bidirectional_split(origin, normal)
+
+        if None in [positive, negative, cross_section]:
             return False
-        pch, nch = utils.bidirectional_split(part.convex_hull, origin, normal, get_connections=False)
-        positive = bsp_mesh.BSPMesh.from_trimesh(positive)
-        positive._convex_hull = pch
-        negative = bsp_mesh.BSPMesh.from_trimesh(negative)
-        negative._convex_hull = nch
-        self.connector_data = connector_data
+
+        if not cross_section.find_connector_sites(positive, negative):
+            return False
+
+        self.cross_section = cross_section
         self.children[0] = BSPNode(positive, parent=self, num=0)
         self.children[1] = BSPNode(negative, parent=self, num=1)
+        print('.', end='')
         return True
 
     def get_bounding_box_oriented(self):
@@ -75,7 +74,7 @@ class BSPNode:
         return np.sqrt(np.sum(op ** 2)) > threshold
 
     def get_connection_objective(self):
-        return max([cc['objective'] for cc in self.connector_data])
+        return max([cc.objective for cc in self.cross_section.connected_components])
 
 
 class BSPTree:
@@ -150,12 +149,7 @@ class BSPTree:
         return max([1 - leaf.part.volume / (leaf.number_of_parts_estimate() * V) for leaf in self.get_leaves()])
 
     def connector_objective(self):
-        """
-        for each leaf, for each connected component of the leaf's cut face, set up a grid of points and check each point
-        if a female connector could feasibly fit at that location, then take the convex hull of those points for each
-        cut face and compute the quantity in equation 4. Take the maximum of all of these
-        """
-        return max([n.get_connection_objective() for n in self.nodes if n.connector_data is not None])
+        return max([n.get_connection_objective() for n in self.nodes if n.cross_section is not None])
 
     def fragility_objective(self):
         leaves = self.get_leaves()
@@ -177,13 +171,13 @@ class BSPTree:
             ray_directions = np.ones((ray_origins.shape[0], 1)) * normal[None, :]
             ray_directions[side_mask] *= -1
             hits = mesh.ray.intersects_any(ray_origins, ray_directions)
-            if np.any(distance_to_plane[~hits] < 1.5 * constants.CONNECTOR_DIAMETER):
+            if np.any(distance_to_plane[~hits] < 1.5 * node.cross_section.get_average_connector_size()):
                 return np.inf
             if not np.any(hits):
                 continue
             locs, index_ray, index_tri = mesh.ray.intersects_location(ray_origins, ray_directions)
             ray_mesh_dist = np.sqrt(np.sum((ray_origins[index_ray] - locs) ** 2, axis=1))
-            if np.any((distance_to_plane[index_ray] < 1.5 * constants.CONNECTOR_DIAMETER) *
+            if np.any((distance_to_plane[index_ray] < 1.5 * node.cross_section.get_average_connector_size()) *
                       (distance_to_plane[index_ray] < ray_mesh_dist)):
                 return np.inf
         return 0

@@ -1,13 +1,11 @@
 """
 TODO:
-    - compute objective functions for multiple planes at a time / general speedup
-    - one ring edges
-    - seam objective
-    - structural objective
-    - symmetry objective
-    - clean up code big time
-    - website
-    - get random things from thingiverse and partition them
+    1) rebuild
+        - connector classes
+        - node subclasses
+        - random thing downlaoder
+        - config
+        - chopper class
 """
 import trimesh
 import os
@@ -17,14 +15,12 @@ import datetime
 from pychop3d.search import beam_search
 from pychop3d.bsp_mesh import BSPMesh
 from pychop3d.bsp import BSPTree
-from pychop3d.utils import insert_connectors
+from pychop3d import utils
+from pychop3d import constants
 
-fn = "C:\\Users\\Greg\\Downloads\\Low_Poly_Stanford_Bunny\\files\\Bunny-LowPoly.stl"
-mesh = trimesh.load(fn, validate=True)
-mesh.apply_scale(3)
-chull = mesh.convex_hull
-mesh = BSPMesh.from_trimesh(mesh)
-mesh._convex_hull = chull
+config = constants.default_config.copy()
+config['scale'] = True
+mesh, config = utils.open_mesh(config)
 
 t0 = time.time()
 best_tree = beam_search(mesh, 4)

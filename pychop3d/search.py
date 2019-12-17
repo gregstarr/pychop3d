@@ -2,27 +2,29 @@ import numpy as np
 
 from pychop3d import utils
 from pychop3d import bsp
+from pychop3d import constants
 
 
 def evaluate_cuts(base_tree, node):
-    N = utils.uniform_normals()
+    N = constants.UNIFORM_NORMALS
     Np = node.auxiliary_normals()
     N = np.concatenate((N, Np), axis=0)
+    N = utils.get_unique_normals(N)
     trees = []
     for i in range(N.shape[0]):
         normal = N[i]
+        print(i, normal, end='')
         for plane in node.get_planes(normal):
-            print('.', end='')
             tree2 = base_tree.expand_node(plane, node)
             if tree2:
                 trees.append(tree2)
+        print()
 
-    print()
     result_set = []
     for tree in sorted(trees, key=lambda x: x.get_objective()):
         if tree.sufficiently_different(node, result_set):
             result_set.append(tree)
-    print(f"considering {len(result_set)} trees")
+    print(f"{len(result_set)} valid trees")
     return result_set
 
 
