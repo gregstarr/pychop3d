@@ -1,22 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="f111e811-a83a-4344-ab2e-3fe7cd95d636" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/pychop3d/bspnode.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/pychop3d/bsptree.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/pychop3d/chopper.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/pychop3d/connector.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/pychop3d/debug.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/environment.yml" beforeDir="false" afterPath="$PROJECT_DIR$/environment.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pychop3d/bsp.py" beforeDir="false" afterPath="$PROJECT_DIR$/pychop3d/bsp.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pychop3d/bsp_mesh.py" beforeDir="false" afterPath="$PROJECT_DIR$/pychop3d/bsp_mesh.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pychop3d/constants.py" beforeDir="false" afterPath="$PROJECT_DIR$/pychop3d/constants.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pychop3d/run.py" beforeDir="false" afterPath="$PROJECT_DIR$/pychop3d/run.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pychop3d/search.py" beforeDir="false" afterPath="$PROJECT_DIR$/pychop3d/search.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pychop3d/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/pychop3d/utils.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test/test_bsp.py" beforeDir="false" afterPath="$PROJECT_DIR$/test/test_bsp.py" afterDir="false" />
-    </list>
+    <list default="true" id="f111e811-a83a-4344-ab2e-3fe7cd95d636" name="Default Changelist" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -43,7 +28,7 @@
     <property name="ASKED_ADD_EXTERNAL_FILES" value="true" />
     <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$/../diffeq" />
-    <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyIntegratedToolsModulesConfigurable" />
+    <property name="settings.editor.selected.configurable" value="preferences.keymap" />
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
@@ -244,6 +229,10 @@
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state width="1899" height="245" key="GridCell.Tab.1.right/0.0.1920.1040/1920.0.1920.1040@0.0.1920.1040" timestamp="1576553654958" />
+    <state x="461" y="162" key="SettingsEditor" timestamp="1576554167418">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state x="461" y="162" key="SettingsEditor/0.0.1920.1040/1920.0.1920.1040@0.0.1920.1040" timestamp="1576554167418" />
     <state width="968" height="528" key="XDebugger.FullValuePopup" timestamp="1576125564975">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
@@ -261,11 +250,6 @@
     <breakpoint-manager>
       <breakpoints>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/pychop3d/run.py</url>
-          <line>60</line>
-          <option name="timeStamp" value="16" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$USER_HOME$/.conda/envs/pychop3d/Lib/site-packages/trimesh/ray/ray_triangle.py</url>
           <line>195</line>
           <option name="timeStamp" value="29" />
@@ -274,11 +258,6 @@
           <url>file://$PROJECT_DIR$/test/test_bsp.py</url>
           <line>35</line>
           <option name="timeStamp" value="45" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/pychop3d/debug.py</url>
-          <line>19</line>
-          <option name="timeStamp" value="64" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
