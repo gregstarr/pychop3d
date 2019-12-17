@@ -1,0 +1,1 @@
+Command '['C:\\Program', 'Files\\OpenSCAD\\openscad.exe', 'C:\\Users\\Greg\\AppData\\Local\\Temp\\tmpjwqi31l0', '-o', 'C:\\Users\\Greg\\AppData\\Local\\Temp\\tmpjss7al1b.stl']' returned non-zero exit status 1.None
