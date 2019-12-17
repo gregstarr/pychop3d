@@ -1,1 +1,0 @@
-'NoneType' object has no attribute 'get_node'None

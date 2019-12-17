@@ -1,1 +1,0 @@
-A LinearRing must have at least 3 coordinate tuplesNone
