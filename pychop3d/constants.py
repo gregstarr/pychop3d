@@ -48,4 +48,5 @@ ANNEALING_ITERATIONS = 300_000
 
 default_config = {'mesh': "C:\\Users\\Greg\\Downloads\\Low_Poly_Stanford_Bunny\\files\\Bunny-LowPoly.stl",
                   'directory': "C:\\Users\\Greg\\code\\pychop3d\\debug",
-                  'scale': False}
+                  'scale': False,
+                  'beam_width': 2}

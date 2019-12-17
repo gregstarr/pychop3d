@@ -67,6 +67,7 @@ class BSPNode:
         return planes
 
     def different_from(self, other_node, threshold):
+        # TODO add angle difference as differentiator
         plane_transform = trimesh.points.plane_transform(*self.plane)
         o = other_node.plane[0]
         op = np.array([o[0], o[1], o[2], 1], dtype=float)
@@ -204,116 +205,20 @@ class BSPTree:
             scene.add_geometry(leaf.part)
         scene.show()
 
-    def setup_connector_placement(self):
-        self.connected_component = []
-        self.sites = []
-        self.normals = []
-        self.sides = []
-        self.connected_component_nodes = []
-        self.connected_component_areas = []
-        cci = 0
-        for n, node in enumerate(self.nodes):
-            if node.connector_data is None:
-                continue
-            for cc in node.connector_data:
-                self.connected_component_nodes.append(n)
-                self.connected_component.append(np.ones(cc['sites'].shape[0], dtype=int) * cci)
-                self.sites.append(cc['sites'])
-                self.normals.append(cc['normals'])
-                self.sides.append(cc['side'])
-                self.connected_component_areas.append(cc['area'])
-                cci += 1
-        self.connected_component = np.concatenate(self.connected_component, axis=0)
-        self.sites = np.concatenate(self.sites, axis=0)
-        self.normals = np.concatenate(self.normals, axis=0)
-        self.sides = np.concatenate(self.sides, axis=0)
-        self.connected_component_nodes = np.array(self.connected_component_nodes)
-        connectors = []
-        for site, normal in zip(self.sites, self.normals):
-            box = trimesh.primitives.Box(extents=np.ones(3) * constants.CONNECTOR_DIAMETER)
-            box.apply_transform(np.linalg.inv(trimesh.points.plane_transform(site, normal)))
-            box.apply_transform(trimesh.transformations.translation_matrix(normal * (constants.CONNECTOR_DIAMETER / 2 - .1)))
-            connectors.append(box)
-        self.connectors = np.array(connectors)
-        self.connection_matrix = np.zeros((self.sites.shape[0], self.sites.shape[0]), dtype=bool)
-        for i, j in itertools.combinations(range(self.sites.shape[0]), 2):
-            a = self.connectors[i]
-            b = self.connectors[j]
-            if (np.any(a.contains(b.vertices + .1 * np.random.rand(3))) or
-                    np.any(b.contains(a.vertices + np.random.rand(3) * .1))):
-                self.connection_matrix[i, j] = True
-
-    def evaluate_connector_objective(self, state):
-        objective = 0
-        n_collisions = self.connection_matrix[state, :][:, state].sum()
-        objective += constants.CONNECTOR_COLLISION_WEIGHT * n_collisions
-
-        for cci in range(len(self.connected_component_areas)):
-            comp_area = self.connected_component_areas[cci]
-            rc = min(np.sqrt(comp_area) / 2, 10 * constants.CONNECTOR_DIAMETER)
-            mask = (self.connected_component == cci) * state
-            ci = 0
-            if mask.sum():
-                sites = self.sites[mask]
-                ci = mask.sum() * np.pi * rc**2
-                for i, j in itertools.combinations(range(mask.sum()), 2):
-                    d = np.sqrt(((sites[i, :3] - sites[j, :3]) ** 2).sum())
-                    if d < 2 * rc:
-                        ci -= 2 * np.pi * (rc - d/2) ** 2
-            objective += comp_area / (10**-5 + max(0, ci))
-            if ci < 0:
-                objective -= ci / comp_area
-
-        return objective
-
-    def simulated_annealing_connector_placement(self):
-        self.setup_connector_placement()
-        state = np.random.rand(self.sites.shape[0]) > (1 - constants.INITIAL_CONNECTOR_RATIO)
-        objective = self.evaluate_connector_objective(state)
-        print(f"initial objective: {objective}")
-        # initialization
-        for i in range(constants.INITIALIZATION_ITERATIONS):
-            if not i % (constants.INITIALIZATION_ITERATIONS // 10):
-                print('.', end='')
-            state, objective = self.SA_iteration(state, objective, 0)
-
-        print(f"\npost initialization objective: {objective}")
-        initial_temp = objective / 2
-        for i, temp in enumerate(np.linspace(initial_temp, 0, constants.ANNEALING_ITERATIONS)):
-            if not i % (constants.ANNEALING_ITERATIONS // 10):
-                print('.', end='')
-            state, objective = self.SA_iteration(state, objective, temp)
-
-        print(f"\nfinal objective: {objective}")
-        return state
-
-    def SA_iteration(self, state, objective, temp):
-        new_state = state.copy()
-        if np.random.randint(0, 2):
-            e = np.random.randint(0, self.sites.shape[0])
-            new_state[e] = 0 if state[e] else 1
-        else:
-            add = np.random.choice(np.argwhere(~state)[:, 0])
-            remove = np.random.choice(np.argwhere(state)[:, 0])
-            new_state[add] = 1
-            new_state[remove] = 0
-
-        new_objective = self.evaluate_connector_objective(new_state)
-        if new_objective < objective:
-            return new_state, new_objective
-        elif temp > 0:
-            if np.random.rand() < np.exp(-(new_objective - objective) / temp):
-                return new_state, new_objective
-        return state, objective
-
-    def save(self, filename, state):
+    def save(self, filename, config, state=None):
         nodes = []
         for node in self.nodes:
             if node.plane is not None:
                 this_node = {'path': node.path, 'origin': list(node.plane[0]), 'normal': list(node.plane[1])}
                 nodes.append(this_node)
-        with open(filename, 'w') as f:
-            json.dump({'nodes': nodes, 'state': [bool(s) for s in state]}, f)
+
+        config['nodes'] = nodes
+
+        if state is not None:
+            config['state'] = [bool(s) for s in state]
+
+        with open(os.path.join(config['directory'], filename), 'w') as f:
+            json.dump(config, f)
 
     @classmethod
     def from_json(cls, mesh, filename):
