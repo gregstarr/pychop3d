@@ -13,6 +13,7 @@ class ConnectedComponent:
                                           constants.CONNECTOR_DIAMETER_MIN,
                                           constants.CONNECTOR_DIAMETER_MAX)
         self.area = polygon.area
+        self.normal = cross_section.normal
         plane_samples = self.grid_sample_polygon(polygon)
 
         if plane_samples.size == 0:
@@ -36,8 +37,11 @@ class ConnectedComponent:
         convex_hull_area = sg.MultiPoint(plane_samples[ch_area_mask]).buffer(self.connector_diameter / 2).convex_hull.area
         self.objective = max(self.area / convex_hull_area - constants.CONNECTOR_OBJECTIVE_THRESHOLD, 0)
         self.positive_sites = mesh_samples[pos_valid_mask]
+        self.pos_index = None
         self.negative_sites = mesh_samples[neg_valid_mask]
+        self.neg_index = None
         self.all_sites = np.concatenate((self.positive_sites, self.negative_sites), axis=0)
+        self.all_index = None
         self.valid = True
 
     def grid_sample_polygon(self, polygon):
@@ -51,6 +55,14 @@ class ConnectedComponent:
             if point.within(polygon):
                 mask[i] = True
         return xy[mask]
+
+    def get_sites(self, state):
+        return self.all_sites[np.isin(self.all_index, np.arange(state.shape[0])[state])]
+
+    def register_sites(self, n_connectors):
+        self.pos_index = np.arange(n_connectors, n_connectors + self.positive_sites.shape[0])
+        self.neg_index = np.arange(n_connectors + self.positive_sites.shape[0], n_connectors + self.all_sites.shape[0])
+        self.all_index = np.arange(n_connectors, n_connectors + self.all_sites.shape[0])
 
 
 class CrossSection:
@@ -146,7 +158,7 @@ class BSPMesh(trimesh.Trimesh):
 
         return positive, negative, cross_section
 
-    def copy(self, include_cache=False):
-        copied = super().copy(include_cache)
-        copied_chull = self.convex_hull.copy()
-        return BSPMesh.from_trimesh(copied, copied_chull)
+    # def copy(self, include_cache=False):
+    #     copied = super().copy(False)
+    #     copied_chull = self.convex_hull.copy(False)
+    #     return BSPMesh.from_trimesh(copied, copied_chull)

@@ -17,6 +17,7 @@ class ConnectorPlacer:
             if node.cross_section is None:
                 continue
             for cc in node.cross_section.connected_components:
+                cc.register_sites(len(self.connectors))
                 self.connected_components.append(cc)
                 for site in cc.positive_sites:
                     box = trimesh.primitives.Box(extents=np.ones(3) * cc.connector_diameter)

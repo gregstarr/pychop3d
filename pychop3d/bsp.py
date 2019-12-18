@@ -16,12 +16,12 @@ class BSPNode:
         self.part = part
         self.parent = parent
         self.children = {}
-        self.path = []
+        self.path = tuple()
         self.plane = None
         self.cross_section = None
         # if this isn't the root node
         if self.parent is not None:
-            self.path = self.parent.path + [num]
+            self.path = (*self.parent.path, num)
 
     def split(self, plane):
         self.plane = plane
@@ -66,13 +66,16 @@ class BSPNode:
         planes = [(d * normal, normal) for d in np.arange(limits[0], limits[1], plane_spacing)][1:]
         return planes
 
-    def different_from(self, other_node, threshold):
-        # TODO add angle difference as differentiator
+    def different_from(self, other_node):
         plane_transform = trimesh.points.plane_transform(*self.plane)
         o = other_node.plane[0]
         op = np.array([o[0], o[1], o[2], 1], dtype=float)
         op = (plane_transform @ op)[:3]
-        return np.sqrt(np.sum(op ** 2)) > threshold
+        angle = trimesh.transformations.angle_between_vectors(self.plane[1], other_node.plane[1])
+        angle = min(np.pi - angle, angle)
+
+        return (np.sqrt(np.sum(op ** 2)) > constants.DIFFERENT_ORIGIN_THRESHOLD or
+                angle > constants.DIFFERENT_ANGLE_THRESHOLD)
 
     def get_connection_objective(self):
         return max([cc.objective for cc in self.cross_section.connected_components])
@@ -82,12 +85,64 @@ class BSPTree:
 
     def __init__(self, part: trimesh.Trimesh):
         self.nodes = [BSPNode(part)]
+        self._node_data = {}
+        self._objective = None
+
         self.a_part = constants.A_PART
         self.a_util = constants.A_UTIL
         self.a_connector = constants.A_CONNECTOR
         self.a_fragility = constants.A_FRAGILITY
         self.a_seam = constants.A_SEAM
         self.a_symmetry = constants.A_SYMMETRY
+
+    @property
+    def objective(self):
+        if self._objective is None:
+            self._objective = self.get_objective()
+        return self._objective
+
+    @classmethod
+    def from_json(cls, config_fn):
+        with open(config_fn) as f:
+            config = json.load(f)
+
+        mesh, config = utils.open_mesh(config)
+
+        node_data = config['nodes']
+        tree = cls(mesh)
+        for n in node_data:
+            plane = (np.array(n['origin']), np.array(n['normal']))
+            node = tree.get_node(n['path'])
+            tree = tree.expand_node(plane, node)
+
+        return tree, config
+
+    @classmethod
+    def from_node_data(cls, part, node_data):
+        tree = cls(part)
+        for path, plane in node_data.items():
+            node = tree.get_node(path)
+            tree = tree.expand_node(plane, node)
+        return tree
+
+    def copy(self):
+        # return BSPTree.from_node_data(self.nodes[0].part.copy(), self._node_data)
+        return copy.deepcopy(self)
+
+    def expand_node(self, plane, node):
+        new_tree = self.copy()
+        for n in new_tree.nodes:
+            old_node = self.get_node(n.path)
+            chull = old_node.part.convex_hull.copy()
+            part = old_node.part.copy()
+            n.part = bsp_mesh.BSPMesh.from_trimesh(part, chull)
+
+        new_node = new_tree.get_node(node.path)
+        if not new_node.split(plane):
+            return None
+        new_tree._node_data[node.path] = plane
+        new_tree.nodes += list(new_node.children.values())
+        return new_tree
 
     def get_node(self, path=None):
         node = self.nodes[0]
@@ -97,15 +152,6 @@ class BSPTree:
             for i in path:
                 node = node.children[i]
         return node
-
-    def expand_node(self, plane, node):
-        new_tree = copy.deepcopy(self)
-        node = new_tree.get_node(node.path)
-        success = node.split(plane)
-        new_tree.nodes += list(node.children.values())
-        if success:
-            return new_tree
-        return None
 
     def get_leaves(self):
         nodes = [self.nodes[0]]
@@ -128,18 +174,18 @@ class BSPTree:
     def largest_part(self):
         return sorted(self.get_leaves(), key=lambda x: x.number_of_parts_estimate())[-1]
 
-    def sufficiently_different(self, node, tree_set, threshold=constants.SUFFICIENTLY_DIFFERENT_THRESHOLD):
+    def sufficiently_different(self, node, tree_set):
         if not tree_set:
             return True
         for tree in tree_set:
-            if not self.different_from(tree, node, threshold):
+            if not self.different_from(tree, node):
                 return False
         return True
 
-    def different_from(self, tree, node, threshold):
+    def different_from(self, tree, node):
         self_node = self.get_node(node.path)
         other_node = tree.get_node(node.path)
-        return self_node.different_from(other_node, threshold)
+        return self_node.different_from(other_node)
 
     def nparts_objective(self):
         theta_0 = self.nodes[0].number_of_parts_estimate()
@@ -220,20 +266,7 @@ class BSPTree:
         with open(os.path.join(config['directory'], filename), 'w') as f:
             json.dump(config, f)
 
-    @classmethod
-    def from_json(cls, mesh, filename):
-        with open(filename) as f:
-            data = json.load(f)
-
-        node_data = data['nodes']
-        tree = cls(mesh)
-        for n in node_data:
-            plane = (np.array(n['origin']), np.array(n['normal']))
-            node = tree.get_node(n['path'])
-            tree = tree.expand_node(plane, node)
-        return tree, np.array(data['state'], dtype=bool)
-
-    def export_stl(self, dirname):
+    def export_stl(self, config):
         for i, leaf in enumerate(self.get_leaves()):
-            leaf.part.export(os.path.join(dirname, f"{i}.stl"))
+            leaf.part.export(os.path.join(config['directory'], f"{i}.stl"))
 

@@ -19,7 +19,8 @@ N_THETA = 5
 N_PHI = 5
 UNIFORM_NORMALS = uniform_normals(N_THETA, N_PHI)
 
-SUFFICIENTLY_DIFFERENT_THRESHOLD = .1 * np.sqrt(np.sum(PRINTER_EXTENTS ** 2))
+DIFFERENT_ORIGIN_THRESHOLD = .1 * np.sqrt(np.sum(PRINTER_EXTENTS ** 2))
+DIFFERENT_ANGLE_THRESHOLD = np.pi/10
 
 # objective weightings
 A_PART = 1
@@ -48,5 +49,5 @@ ANNEALING_ITERATIONS = 300_000
 
 default_config = {'mesh': "C:\\Users\\Greg\\Downloads\\Low_Poly_Stanford_Bunny\\files\\Bunny-LowPoly.stl",
                   'directory': "C:\\Users\\Greg\\code\\pychop3d\\debug",
-                  'scale': False,
+                  'scale': True,
                   'beam_width': 2}

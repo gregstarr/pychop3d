@@ -27,7 +27,6 @@ class Node:
         self.cross_section = cross_section
         if not self.cross_section.find_connector_sites(positive, negative):
             return False
-        print('.', end='')
         self.children[0] = Node(positive, parent=self, num=0)
         self.children[1] = Node(negative, parent=self, num=1)
         return True
