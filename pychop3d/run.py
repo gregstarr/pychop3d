@@ -1,10 +1,18 @@
 """
 TODO:
-    1) rebuild
-        - node subclasses
-        - random thing downlaoder
-        - config
-        - chopper class
+    - node subclasses
+        - plane node
+        - root node
+        - separation node
+    - random thing downlaoder
+    - config
+    - chopper class
+    - cross section area penalty
+    - tests for all objectives
+        - fragility has known issues
+    - other connectors
+        - tabs for bolting
+        - shell / sheath type
 """
 import trimesh
 import os
@@ -19,22 +27,14 @@ from pychop3d import constants
 from pychop3d import connector
 
 config = constants.default_config.copy()
-config['scale'] = True
 mesh, config = utils.open_mesh(config)
 
 t0 = time.time()
 best_tree = beam_search(mesh, config)
 print(f"Best BSP-tree found in {time.time() - t0} seconds")
+best_tree.save("final_tree.json", config)
 
 t0 = time.time()
 connector_placer = connector.ConnectorPlacer(best_tree)
 connector_placer.simulated_annealing_connector_placement()
 print(f"Best connector arrangement found in {time.time() - t0} seconds")
-
-new_directory = os.path.join(os.path.dirname(__file__), "..\\output", datetime.datetime.now().strftime('%Y%m%d_%H%M%S'))
-os.makedirs(new_directory, exist_ok=True)
-
-best_tree.save(os.path.join(new_directory, "tree.json"), state)
-
-best_tree = insert_connectors(best_tree, state)
-best_tree.export_stl(new_directory)

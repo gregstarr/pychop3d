@@ -46,7 +46,8 @@ def beam_search(starter, config):
             new_bsps += evaluate_cuts(tree, largest_node)
 
         current_trees += new_bsps
-        current_trees = sorted(current_trees, key=lambda x: x.objective)[:config['beam_width']]
+        current_trees = sorted(current_trees, key=lambda x: x.objective)
+        current_trees = current_trees[:config['beam_width']]
 
         print(f"Splits: {splits}, best objective: {current_trees[0].objective}, estimated number of parts: "
               f"{current_trees[0].largest_part().number_of_parts_estimate()}")

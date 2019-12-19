@@ -12,7 +12,7 @@ tree.save("final_tree.json", config)
 tree.export_stl(config)
 
 connector_placer = connector.ConnectorPlacer(tree)
-connector_placer.simulated_annealing_connector_placement()
-
-tree = insert_connectors(best_tree, state)
+state = connector_placer.simulated_annealing_connector_placement()
+connector_placer.evaluate_connector_objective(state)
+tree = connector_placer.insert_connectors(tree, state)
 tree.export_stl(config)

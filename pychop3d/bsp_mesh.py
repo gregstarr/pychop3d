@@ -9,7 +9,7 @@ class ConnectedComponent:
 
     def __init__(self, cross_section, polygon, positive, negative):
         self.valid = False
-        self.connector_diameter = np.clip(np.sqrt(polygon.area) / 4,
+        self.connector_diameter = np.clip(np.sqrt(polygon.area) / 6,
                                           constants.CONNECTOR_DIAMETER_MIN,
                                           constants.CONNECTOR_DIAMETER_MAX)
         self.area = polygon.area
@@ -63,6 +63,11 @@ class ConnectedComponent:
         self.pos_index = np.arange(n_connectors, n_connectors + self.positive_sites.shape[0])
         self.neg_index = np.arange(n_connectors + self.positive_sites.shape[0], n_connectors + self.all_sites.shape[0])
         self.all_index = np.arange(n_connectors, n_connectors + self.all_sites.shape[0])
+
+    def get_indices(self, state):
+        pos_ind = np.isin(np.arange(state.shape[0]), self.pos_index) * state
+        neg_ind = np.isin(np.arange(state.shape[0]), self.neg_index) * state
+        return np.argwhere(pos_ind)[:, 0], np.argwhere(neg_ind)[:, 0]
 
 
 class CrossSection:

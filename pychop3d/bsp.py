@@ -244,6 +244,17 @@ class BSPTree:
         symmetry = self.a_symmetry * self.symmetry_objective()
         return part + util + connector + fragility + seam + symmetry
 
+    def report_objectives(self):
+        objectives = {
+            'part': self.nparts_objective(),
+            'utilization': self.utilization_objective(),
+            'connector': self.connector_objective(),
+            'fragility': self.fragility_objective(),
+            'seam': self.seam_objective(),
+            'symmetry': self.symmetry_objective()
+        }
+        return objectives
+
     def preview(self):
         scene = trimesh.scene.Scene()
         for leaf in self.get_leaves():
