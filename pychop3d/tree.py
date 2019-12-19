@@ -141,7 +141,7 @@ class BSPTree:
             scene.add_geometry(leaf.part)
         scene.show()
 
-    def save(self, filename, config):
+    def save(self, filename, cfg):
         nodes = []
         for node in self.nodes:
             if node.plane is not None:

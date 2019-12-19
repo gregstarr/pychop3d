@@ -10,12 +10,12 @@ def test_number_of_parts():
     mesh = trimesh.primitives.Sphere(radius=10)
     tree = bsp.BSPTree(mesh)
     assert tree.nparts_objective() == 1
-    assert tree.root.number_of_parts_estimate() == 1
+    assert tree.nodes[0].number_of_parts_estimate() == 1
     # test on a large box
     mesh = trimesh.primitives.Box(extents=(10, 10, 220))
     tree = bsp.BSPTree(mesh)
     assert tree.nparts_objective() == 1
-    assert tree.root.number_of_parts_estimate() == 2
+    assert tree.nodes[0].number_of_parts_estimate() == 2
     # test splitting the box into 2 through the middle
     tree = tree.expand_node((np.zeros(3), np.array([0, 0, 1])), tree.root)
     assert tree.nparts_objective() == 1
@@ -25,10 +25,10 @@ def test_number_of_parts():
     mesh.apply_transform(trimesh.transformations.random_rotation_matrix())
     tree = bsp.BSPTree(mesh)
     assert tree.nparts_objective() == 1
-    assert tree.root.number_of_parts_estimate() == 2
+    assert tree.nodes[0].number_of_parts_estimate() == 2
 
 
-def test_utilization():
+def test_utilization_1():
     # check that as the sphere gets larger, the utilization goes down
     mesh1 = trimesh.primitives.Sphere(radius=20)
     tree1 = bsp.BSPTree(mesh1)

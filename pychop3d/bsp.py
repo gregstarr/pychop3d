@@ -6,8 +6,11 @@ import json
 import os
 
 from pychop3d import constants
-from pychop3d import utils
 from pychop3d import bsp_mesh
+from pychop3d.config import Configuration
+
+
+cfg = Configuration.cfg
 
 
 class BSPNode:
@@ -51,16 +54,16 @@ class BSPNode:
             return point_cloud.bounding_box_oriented
 
     def terminated(self):
-        return np.all(self.get_bounding_box_oriented().primitive.extents < constants.PRINTER_EXTENTS)
+        return np.all(self.get_bounding_box_oriented().primitive.extents < cfg.printer_extents)
 
     def number_of_parts_estimate(self):
-        return np.prod(np.ceil(self.get_bounding_box_oriented().primitive.extents / constants.PRINTER_EXTENTS))
+        return np.prod(np.ceil(self.get_bounding_box_oriented().primitive.extents / cfg.printer_extents))
 
     def auxiliary_normals(self):
         obb_xform = np.array(self.get_bounding_box_oriented().primitive.transform)
         return obb_xform[:3, :3]
 
-    def get_planes(self, normal, plane_spacing=constants.PLANE_SPACING):
+    def get_planes(self, normal, plane_spacing=cfg.plane_spacing):
         projection = self.part.vertices @ normal
         limits = [projection.min(), projection.max()]
         planes = [(d * normal, normal) for d in np.arange(limits[0], limits[1], plane_spacing)][1:]
@@ -74,8 +77,8 @@ class BSPNode:
         angle = trimesh.transformations.angle_between_vectors(self.plane[1], other_node.plane[1])
         angle = min(np.pi - angle, angle)
 
-        return (np.sqrt(np.sum(op ** 2)) > constants.DIFFERENT_ORIGIN_THRESHOLD or
-                angle > constants.DIFFERENT_ANGLE_THRESHOLD)
+        return (np.sqrt(np.sum(op ** 2)) > cfg.different_origin_th or
+                angle > cfg.different_angle_th)
 
     def get_connection_objective(self):
         return max([cc.objective for cc in self.cross_section.connected_components])
@@ -88,34 +91,18 @@ class BSPTree:
         self._node_data = {}
         self._objective = None
 
-        self.a_part = constants.A_PART
-        self.a_util = constants.A_UTIL
-        self.a_connector = constants.A_CONNECTOR
-        self.a_fragility = constants.A_FRAGILITY
-        self.a_seam = constants.A_SEAM
-        self.a_symmetry = constants.A_SYMMETRY
+        self.a_part = cfg.part_weight
+        self.a_util = cfg.utilization_weight
+        self.a_connector = cfg.connector_weight
+        self.a_fragility = cfg.fragility_weight
+        self.a_seam = cfg.seam_weight
+        self.a_symmetry = cfg.symmetry_weight
 
     @property
     def objective(self):
         if self._objective is None:
             self._objective = self.get_objective()
         return self._objective
-
-    @classmethod
-    def from_json(cls, config_fn):
-        with open(config_fn) as f:
-            config = json.load(f)
-
-        mesh, config = utils.open_mesh(config)
-
-        node_data = config['nodes']
-        tree = cls(mesh)
-        for n in node_data:
-            plane = (np.array(n['origin']), np.array(n['normal']))
-            node = tree.get_node(n['path'])
-            tree = tree.expand_node(plane, node)
-
-        return tree, config
 
     @classmethod
     def from_node_data(cls, part, node_data):
@@ -127,7 +114,9 @@ class BSPTree:
 
     def copy(self):
         # return BSPTree.from_node_data(self.nodes[0].part.copy(), self._node_data)
-        return copy.deepcopy(self)
+        new_tree = copy.deepcopy(self)
+        new_tree._objective = None
+        return new_tree
 
     def expand_node(self, plane, node):
         new_tree = self.copy()
@@ -192,7 +181,7 @@ class BSPTree:
         return sum([l.number_of_parts_estimate() for l in self.get_leaves()]) / theta_0
 
     def utilization_objective(self):
-        V = np.prod(constants.PRINTER_EXTENTS)
+        V = np.prod(cfg.printer_extents)
         return max([1 - leaf.part.volume / (leaf.number_of_parts_estimate() * V) for leaf in self.get_leaves()])
 
     def connector_objective(self):
@@ -209,7 +198,7 @@ class BSPTree:
         for node in nodes.values():
             origin, normal = node.plane
             mesh = node.part
-            possibly_fragile = np.abs(mesh.vertex_normals @ normal) > constants.FRAGILITY_THRESHOLD
+            possibly_fragile = np.abs(mesh.vertex_normals @ normal) > cfg.fragility_objective_th
             if not np.any(possibly_fragile):
                 continue
             ray_origins = mesh.vertices[possibly_fragile] - .1 * mesh.vertex_normals[possibly_fragile]
@@ -262,22 +251,21 @@ class BSPTree:
             scene.add_geometry(leaf.part)
         scene.show()
 
-    def save(self, filename, config, state=None):
+    def save(self, filename, state=None):
         nodes = []
         for node in self.nodes:
             if node.plane is not None:
                 this_node = {'path': node.path, 'origin': list(node.plane[0]), 'normal': list(node.plane[1])}
                 nodes.append(this_node)
 
-        config['nodes'] = nodes
+        cfg.nodes = nodes
 
         if state is not None:
-            config['state'] = [bool(s) for s in state]
+            cfg.state = [bool(s) for s in state]
 
-        with open(os.path.join(config['directory'], filename), 'w') as f:
-            json.dump(config, f)
+        cfg.save(filename)
 
-    def export_stl(self, config):
+    def export_stl(self):
         for i, leaf in enumerate(self.get_leaves()):
-            leaf.part.export(os.path.join(config['directory'], f"{i}.stl"))
+            leaf.part.export(os.path.join(cfg.directory, f"{i}.stl"))
 

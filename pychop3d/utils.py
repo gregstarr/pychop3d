@@ -3,26 +3,36 @@ import trimesh
 
 from pychop3d import constants
 from pychop3d import bsp_mesh
+from pychop3d import bsp
 
 
-def open_mesh(config):
-    mesh = trimesh.load(config['mesh'])
+def open_mesh(cfg):
+    mesh = trimesh.load(cfg.mesh)
 
-    if 'scale' in config and config['scale']:
-        if 'factor' in config:
-            factor = config['factor']
+    if cfg.scale:
+        if hasattr(cfg, 'factor'):
+            factor = cfg.factor
         else:
-            factor = np.ceil(1.1 / np.max(mesh.extents / constants.PRINTER_EXTENTS))
+            factor = np.ceil(1.1 / np.max(mesh.extents / cfg.printer_extents))
         if factor > 1:
             mesh.apply_scale(factor)
-            config['factor'] = factor
-    else:
-        config['scale'] = False
+            cfg.factor = factor
 
     chull = mesh.convex_hull
     mesh = bsp_mesh.BSPMesh.from_trimesh(mesh, chull)
 
-    return mesh, config
+    return mesh
+
+
+def open_tree(cfg):
+    mesh = cfg.open_mesh()
+    tree = bsp.BSPTree(mesh)
+    if cfg.nodes is not None:
+        for n in cfg.nodes:
+            plane = (np.array(n['origin']), np.array(n['normal']))
+            node = tree.get_node(n['path'])
+            tree = tree.expand_node(plane, node)
+    return tree
 
 
 def all_at_goal(trees):

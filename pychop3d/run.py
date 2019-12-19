@@ -13,28 +13,39 @@ TODO:
     - other connectors
         - tabs for bolting
         - shell / sheath type
+    - calculate objectives for many planes at once
+        - fragility speedup
+        - trimesh.intersections.mesh_multiplane
 """
-import trimesh
-import os
 import time
-import datetime
 
 from pychop3d.search import beam_search
-from pychop3d.bsp_mesh import BSPMesh
-from pychop3d.bsp import BSPTree
-from pychop3d import utils
-from pychop3d import constants
 from pychop3d import connector
+from pychop3d.config import Configuration
+from pychop3d import utils
 
-config = constants.default_config.copy()
-mesh, config = utils.open_mesh(config)
 
-t0 = time.time()
-best_tree = beam_search(mesh, config)
-print(f"Best BSP-tree found in {time.time() - t0} seconds")
-best_tree.save("final_tree.json", config)
+def run():
+    cfg = Configuration.cfg
+    if cfg.nodes is None:
+        starter = utils.open_mesh(cfg)
+    else:
+        starter = utils.open_tree(cfg)
 
-t0 = time.time()
-connector_placer = connector.ConnectorPlacer(best_tree)
-connector_placer.simulated_annealing_connector_placement()
-print(f"Best connector arrangement found in {time.time() - t0} seconds")
+    t0 = time.time()
+    tree = beam_search(starter, cfg)
+    print(f"Best BSP-tree found in {time.time() - t0} seconds")
+    tree.save("final_tree.json")
+
+    t0 = time.time()
+    connector_placer = connector.ConnectorPlacer(tree)
+    state = connector_placer.simulated_annealing_connector_placement()
+    tree = connector_placer.insert_connectors(tree, state)
+    print(f"Best connector arrangement found in {time.time() - t0} seconds")
+
+    tree.export_stl(cfg)
+    tree.save("final_tree_with_connectors.json", cfg, state)
+
+
+if __name__ == "__main__":
+    run()

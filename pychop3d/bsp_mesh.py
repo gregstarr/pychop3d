@@ -2,18 +2,21 @@ import trimesh
 import numpy as np
 import shapely.geometry as sg
 
-from pychop3d import constants
+from pychop3d.config import Configuration
+
+
+cfg = Configuration.cfg
 
 
 class ConnectedComponent:
 
     def __init__(self, cross_section, polygon, positive, negative):
         self.valid = False
-        self.connector_diameter = np.clip(np.sqrt(polygon.area) / 6,
-                                          constants.CONNECTOR_DIAMETER_MIN,
-                                          constants.CONNECTOR_DIAMETER_MAX)
+        self.connector_diameter = np.clip(np.sqrt(polygon.area) / 6, cfg.connector_diameter_min,
+                                          cfg.connector_diameter_max)
         self.area = polygon.area
         self.normal = cross_section.normal
+        self.origin = cross_section.origin
         plane_samples = self.grid_sample_polygon(polygon)
 
         if plane_samples.size == 0:
@@ -35,7 +38,7 @@ class ConnectedComponent:
             return
 
         convex_hull_area = sg.MultiPoint(plane_samples[ch_area_mask]).buffer(self.connector_diameter / 2).convex_hull.area
-        self.objective = max(self.area / convex_hull_area - constants.CONNECTOR_OBJECTIVE_THRESHOLD, 0)
+        self.objective = max(self.area / convex_hull_area - cfg.connector_objective_th, 0)
         self.positive_sites = mesh_samples[pos_valid_mask]
         self.pos_index = None
         self.negative_sites = mesh_samples[neg_valid_mask]

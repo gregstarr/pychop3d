@@ -2,8 +2,11 @@ import numpy as np
 import itertools
 import trimesh
 
-from pychop3d import constants
+from pychop3d.config import Configuration
 from pychop3d import bsp
+
+
+cfg = Configuration.cfg
 
 
 class ConnectorPlacer:
@@ -35,17 +38,23 @@ class ConnectorPlacer:
         self.n_connectors = self.connectors.shape[0]
         self.collisions = np.zeros((self.n_connectors, self.n_connectors), dtype=bool)
 
+        print("determining connector-cut intersections")
         for i, connector in enumerate(self.connectors):
+            print('.', end='')
+            th = connector.primitive.extents[0] / 2
             intersections = 0
             for m in cross_section_meshes:
+                if m.nearest.on_surface(connector.vertices)[1].min() > th:
+                    continue
                 try:
                     m.intersection(connector, engine='scad')
                     intersections += 1
                 except Exception as e:
-                    pass
+                    continue
             if intersections != 1:
                 self.collisions[i, :] = True
                 self.collisions[:, i] = True
+        print("\ndetermining connector-connector intersections")
         for i, j in itertools.combinations(range(self.n_connectors), 2):
             a = self.connectors[i]
             b = self.connectors[j]
@@ -56,7 +65,7 @@ class ConnectorPlacer:
     def evaluate_connector_objective(self, state):
         objective = 0
         n_collisions = self.collisions[state, :][:, state].sum()
-        objective += constants.CONNECTOR_COLLISION_WEIGHT * n_collisions
+        objective += cfg.connector_collision_penalty * n_collisions
 
         for cc in self.connected_components:
             rc = min(np.sqrt(cc.area) / 2, 10 * cc.connector_diameter)
@@ -75,19 +84,19 @@ class ConnectorPlacer:
         return objective
 
     def simulated_annealing_connector_placement(self):
-        state = np.random.rand(self.n_connectors) > (1 - constants.INITIAL_CONNECTOR_RATIO)
+        state = np.random.rand(self.n_connectors) > (1 - cfg.sa_initial_connector_ratio)
         objective = self.evaluate_connector_objective(state)
         print(f"initial objective: {objective}")
         # initialization
-        for i in range(constants.INITIALIZATION_ITERATIONS):
-            if not i % (constants.INITIALIZATION_ITERATIONS // 10):
+        for i in range(cfg.sa_initialization_iterations):
+            if not i % (cfg.sa_initialization_iterations // 10):
                 print('.', end='')
             state, objective = self.sa_iteration(state, objective, 0)
 
         print(f"\npost initialization objective: {objective}")
         initial_temp = objective / 2
-        for i, temp in enumerate(np.linspace(initial_temp, 0, constants.ANNEALING_ITERATIONS)):
-            if not i % (constants.ANNEALING_ITERATIONS // 10):
+        for i, temp in enumerate(np.linspace(initial_temp, 0, cfg.sa_iterations)):
+            if not i % (cfg.sa_iterations // 10):
                 print('.', end='')
             state, objective = self.sa_iteration(state, objective, temp)
 
@@ -127,14 +136,14 @@ class ConnectorPlacer:
                 for idx in pos_index:
                     xform = self.connectors[idx].primitive.transform
                     slot = trimesh.primitives.Box(
-                        extents=np.ones(3) * (cc.connector_diameter + constants.CONNECTOR_TOLERANCE),
+                        extents=np.ones(3) * (cc.connector_diameter + cfg.connector_tolerance),
                         transform=xform)
                     new_node.children[0].part = new_node.children[0].part.difference(slot, engine='scad')
                     new_node.children[1].part = new_node.children[1].part.union(self.connectors[idx], engine='scad')
                 for idx in neg_index:
                     xform = self.connectors[idx].primitive.transform
                     slot = trimesh.primitives.Box(
-                        extents=np.ones(3) * (cc.connector_diameter + constants.CONNECTOR_TOLERANCE),
+                        extents=np.ones(3) * (cc.connector_diameter + cfg.connector_tolerance),
                         transform=xform)
                     new_node.children[1].part = new_node.children[1].part.difference(slot, engine='scad')
                     new_node.children[0].part = new_node.children[0].part.union(self.connectors[idx], engine='scad')
