@@ -1,4 +1,5 @@
 import trimesh
+import trimesh
 import numpy as np
 import copy
 import itertools
@@ -8,6 +9,10 @@ import os
 from pychop3d import constants
 from pychop3d import utils
 from pychop3d import bsp_mesh
+from pychop3d.configuration import Configuration
+
+
+config = Configuration.config
 
 
 class BSPNode:
@@ -19,6 +24,8 @@ class BSPNode:
         self.path = []
         self.plane = None
         self.connector_data = None
+        self.n_parts = np.prod(np.ceil(self.get_bounding_box_oriented().primitive.extents / config.printer_extents))
+        self.terminated = np.all(self.get_bounding_box_oriented().primitive.extents < config.printer_extents)
         # if this isn't the root node
         if self.parent is not None:
             self.path = self.parent.path + [num]
@@ -51,17 +58,11 @@ class BSPNode:
             point_cloud = trimesh.PointCloud(samples)
             return point_cloud.bounding_box_oriented
 
-    def terminated(self):
-        return np.all(self.get_bounding_box_oriented().primitive.extents < constants.PRINTER_EXTENTS)
-
-    def number_of_parts_estimate(self):
-        return np.prod(np.ceil(self.get_bounding_box_oriented().primitive.extents / constants.PRINTER_EXTENTS))
-
     def auxiliary_normals(self):
         obb_xform = np.array(self.get_bounding_box_oriented().primitive.transform)
         return obb_xform[:3, :3]
 
-    def get_planes(self, normal, plane_spacing=constants.PLANE_SPACING):
+    def get_planes(self, normal, plane_spacing=config.plane_spacing):
         projection = self.part.vertices @ normal
         limits = [projection.min(), projection.max()]
         planes = [(d * normal, normal) for d in np.arange(limits[0], limits[1], plane_spacing)][1:]
@@ -82,12 +83,12 @@ class BSPTree:
 
     def __init__(self, part: trimesh.Trimesh):
         self.nodes = [BSPNode(part)]
-        self.a_part = constants.A_PART
-        self.a_util = constants.A_UTIL
-        self.a_connector = constants.A_CONNECTOR
-        self.a_fragility = constants.A_FRAGILITY
-        self.a_seam = constants.A_SEAM
-        self.a_symmetry = constants.A_SYMMETRY
+        self.a_part = config.objective_weights['part']
+        self.a_util = config.objective_weights['utilization']
+        self.a_connector = config.objective_weights['connector']
+        self.a_fragility = config.objective_weights['fragility']
+        self.a_seam = config.objective_weights['seam']
+        self.a_symmetry = config.objective_weights['symmetry']
 
     def get_node(self, path=None):
         node = self.nodes[0]
@@ -121,12 +122,12 @@ class BSPTree:
     def terminated(self):
         leaves = self.get_leaves()
         for leaf in leaves:
-            if not leaf.terminated():
+            if not leaf.terminated:
                 return False
         return True
 
     def largest_part(self):
-        return sorted(self.get_leaves(), key=lambda x: x.number_of_parts_estimate())[-1]
+        return sorted(self.get_leaves(), key=lambda x: x.n_parts)[-1]
 
     def sufficiently_different(self, node, tree_set, threshold=constants.SUFFICIENTLY_DIFFERENT_THRESHOLD):
         if not tree_set:
@@ -142,12 +143,12 @@ class BSPTree:
         return self_node.different_from(other_node, threshold)
 
     def nparts_objective(self):
-        theta_0 = self.nodes[0].number_of_parts_estimate()
-        return sum([l.number_of_parts_estimate() for l in self.get_leaves()]) / theta_0
+        theta_0 = self.nodes[0].n_parts
+        return sum([l.n_parts for l in self.get_leaves()]) / theta_0
 
     def utilization_objective(self):
-        V = np.prod(constants.PRINTER_EXTENTS)
-        return max([1 - leaf.part.volume / (leaf.number_of_parts_estimate() * V) for leaf in self.get_leaves()])
+        V = np.prod(config.printer_extents)
+        return max([1 - leaf.part.volume / (leaf.n_parts * V) for leaf in self.get_leaves()])
 
     def connector_objective(self):
         """
@@ -168,7 +169,7 @@ class BSPTree:
         for node in nodes.values():
             origin, normal = node.plane
             mesh = node.part
-            possibly_fragile = np.abs(mesh.vertex_normals @ normal) > constants.FRAGILITY_THRESHOLD
+            possibly_fragile = np.abs(mesh.vertex_normals @ normal) > config.fragility_objective_th
             if not np.any(possibly_fragile):
                 continue
             ray_origins = mesh.vertices[possibly_fragile] - .1 * mesh.vertex_normals[possibly_fragile]
@@ -177,13 +178,13 @@ class BSPTree:
             ray_directions = np.ones((ray_origins.shape[0], 1)) * normal[None, :]
             ray_directions[side_mask] *= -1
             hits = mesh.ray.intersects_any(ray_origins, ray_directions)
-            if np.any(distance_to_plane[~hits] < 1.5 * constants.CONNECTOR_DIAMETER):
+            if np.any(distance_to_plane[~hits] < 1.5 * config.connector_diameter):
                 return np.inf
             if not np.any(hits):
                 continue
             locs, index_ray, index_tri = mesh.ray.intersects_location(ray_origins, ray_directions)
             ray_mesh_dist = np.sqrt(np.sum((ray_origins[index_ray] - locs) ** 2, axis=1))
-            if np.any((distance_to_plane[index_ray] < 1.5 * constants.CONNECTOR_DIAMETER) *
+            if np.any((distance_to_plane[index_ray] < 1.5 * config.connector_diameter) *
                       (distance_to_plane[index_ray] < ray_mesh_dist)):
                 return np.inf
         return 0
@@ -236,9 +237,9 @@ class BSPTree:
         self.connected_component_nodes = np.array(self.connected_component_nodes)
         connectors = []
         for site, normal in zip(self.sites, self.normals):
-            box = trimesh.primitives.Box(extents=np.ones(3) * constants.CONNECTOR_DIAMETER)
+            box = trimesh.primitives.Box(extents=np.ones(3) * config.connector_diameter)
             box.apply_transform(np.linalg.inv(trimesh.points.plane_transform(site, normal)))
-            box.apply_transform(trimesh.transformations.translation_matrix(normal * (constants.CONNECTOR_DIAMETER / 2 - .1)))
+            box.apply_transform(trimesh.transformations.translation_matrix(normal * (config.connector_diameter / 2 - .1)))
             connectors.append(box)
         self.connectors = np.array(connectors)
         self.connection_matrix = np.zeros((self.sites.shape[0], self.sites.shape[0]), dtype=bool)
@@ -252,11 +253,11 @@ class BSPTree:
     def evaluate_connector_objective(self, state):
         objective = 0
         n_collisions = self.connection_matrix[state, :][:, state].sum()
-        objective += constants.CONNECTOR_COLLISION_WEIGHT * n_collisions
+        objective += config.connector_collision_penalty * n_collisions
 
         for cci in range(len(self.connected_component_areas)):
             comp_area = self.connected_component_areas[cci]
-            rc = min(np.sqrt(comp_area) / 2, 10 * constants.CONNECTOR_DIAMETER)
+            rc = min(np.sqrt(comp_area) / 2, 10 * config.connector_diameter)
             mask = (self.connected_component == cci) * state
             ci = 0
             if mask.sum():
@@ -274,19 +275,19 @@ class BSPTree:
 
     def simulated_annealing_connector_placement(self):
         self.setup_connector_placement()
-        state = np.random.rand(self.sites.shape[0]) > (1 - constants.INITIAL_CONNECTOR_RATIO)
+        state = np.random.rand(self.sites.shape[0]) > (1 - config.sa_initial_connector_ratio)
         objective = self.evaluate_connector_objective(state)
         print(f"initial objective: {objective}")
         # initialization
-        for i in range(constants.INITIALIZATION_ITERATIONS):
-            if not i % (constants.INITIALIZATION_ITERATIONS // 10):
+        for i in range(config.sa_initialization_iterations):
+            if not i % (config.sa_initialization_iterations // 10):
                 print('.', end='')
             state, objective = self.SA_iteration(state, objective, 0)
 
         print(f"\npost initialization objective: {objective}")
         initial_temp = objective / 2
-        for i, temp in enumerate(np.linspace(initial_temp, 0, constants.ANNEALING_ITERATIONS)):
-            if not i % (constants.ANNEALING_ITERATIONS // 10):
+        for i, temp in enumerate(np.linspace(initial_temp, 0, config.sa_iterations)):
+            if not i % (config.sa_iterations // 10):
                 print('.', end='')
             state, objective = self.SA_iteration(state, objective, temp)
 

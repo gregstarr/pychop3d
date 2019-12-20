@@ -1,19 +1,34 @@
 import trimesh
 import os
 import numpy as np
+import pytest
 
 from pychop3d import bsp_mesh
 from pychop3d import search
 from pychop3d import bsp
+from pychop3d.configuration import Configuration
 
 
-def test_regression():
+config = Configuration.config
+
+
+files = [("regression_test_tree.json", "regression_test_config.yml"),
+         ("regression_tree_25.json", "regression_config_25.yml")]
+
+
+@pytest.mark.parametrize('file_pair', files)
+def test_regression(file_pair):
+    print()
     # files
-    mesh_file = "C:\\Users\\Greg\\Downloads\\Low_Poly_Stanford_Bunny\\files\\Bunny-LowPoly.stl"
-    tree_file = os.path.join(os.path.dirname(__file__), "regression_test_tree.json")
+    tree_file, config_file = file_pair
+    tree_file = os.path.join(os.path.dirname(__file__), tree_file)
+    config_file = os.path.join(os.path.dirname(__file__), config_file)
+    config = Configuration(config_file)
+    Configuration.config = config
+
     # open and prepare mesh
-    mesh = trimesh.load(mesh_file, validate=True)
-    mesh.apply_scale(2)
+    mesh = trimesh.load(config.mesh, validate=True)
+    mesh.apply_scale(config.scale_factor)
     chull = mesh.convex_hull
     mesh = bsp_mesh.BSPMesh.from_trimesh(mesh)
     mesh._convex_hull = chull

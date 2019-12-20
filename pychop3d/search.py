@@ -2,10 +2,14 @@ import numpy as np
 
 from pychop3d import utils
 from pychop3d import bsp
+from pychop3d.configuration import Configuration
+
+
+config = Configuration.config
 
 
 def evaluate_cuts(base_tree, node):
-    N = utils.uniform_normals()
+    N = config.normals
     Np = node.auxiliary_normals()
     N = utils.get_unique_normals(np.concatenate((N, Np), axis=0))
     trees = []
@@ -26,7 +30,7 @@ def evaluate_cuts(base_tree, node):
     return result_set
 
 
-def beam_search(obj, b=2):
+def beam_search(obj):
     current_trees = [bsp.BSPTree(obj)]
     splits = 1
     while not utils.all_at_goal(current_trees):
@@ -35,8 +39,8 @@ def beam_search(obj, b=2):
             current_trees.remove(tree)
             largest_node = tree.largest_part()
             new_bsps += evaluate_cuts(tree, largest_node)
-        current_trees = sorted(new_bsps, key=lambda x: x.get_objective())[:b]
+        current_trees = sorted(new_bsps, key=lambda x: x.get_objective())[:config.beam_width]
         print(f"Splits: {splits}, best objective: {current_trees[0].get_objective()}, estimated number of parts: "
-              f"{current_trees[0].largest_part().number_of_parts_estimate()}")
+              f"{current_trees[0].largest_part().n_parts}")
         splits += 1
     return current_trees[0]
