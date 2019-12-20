@@ -1,4 +1,4 @@
- """
+"""
 desired features of configuration:
     - once you set the configuration, every module has access
     - modify configuration
@@ -9,6 +9,7 @@ possible features:
     - convenience method to create temporary directories
     - convenience method to create timestamped directory
 """
+
 import trimesh
 import numpy as np
 import tempfile
