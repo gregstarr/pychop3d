@@ -1,4 +1,5 @@
 import trimesh
+import trimesh
 import numpy as np
 import copy
 import itertools
@@ -7,10 +8,10 @@ import os
 
 from pychop3d import constants
 from pychop3d import bsp_mesh
-from pychop3d.config import Configuration
+from pychop3d.configuration import Configuration
 
 
-cfg = Configuration.cfg
+config = Configuration.config
 
 
 class BSPNode:
@@ -22,6 +23,8 @@ class BSPNode:
         self.path = tuple()
         self.plane = None
         self.cross_section = None
+        self.n_parts = np.prod(np.ceil(self.get_bounding_box_oriented().primitive.extents / config.printer_extents))
+        self.terminated = np.all(self.get_bounding_box_oriented().primitive.extents < config.printer_extents)
         # if this isn't the root node
         if self.parent is not None:
             self.path = (*self.parent.path, num)
@@ -53,17 +56,11 @@ class BSPNode:
             point_cloud = trimesh.PointCloud(samples)
             return point_cloud.bounding_box_oriented
 
-    def terminated(self):
-        return np.all(self.get_bounding_box_oriented().primitive.extents < cfg.printer_extents)
-
-    def number_of_parts_estimate(self):
-        return np.prod(np.ceil(self.get_bounding_box_oriented().primitive.extents / cfg.printer_extents))
-
     def auxiliary_normals(self):
         obb_xform = np.array(self.get_bounding_box_oriented().primitive.transform)
         return obb_xform[:3, :3]
 
-    def get_planes(self, normal, plane_spacing=cfg.plane_spacing):
+    def get_planes(self, normal, plane_spacing=config.plane_spacing):
         projection = self.part.vertices @ normal
         limits = [projection.min(), projection.max()]
         planes = [(d * normal, normal) for d in np.arange(limits[0], limits[1], plane_spacing)][1:]
@@ -77,11 +74,18 @@ class BSPNode:
         angle = trimesh.transformations.angle_between_vectors(self.plane[1], other_node.plane[1])
         angle = min(np.pi - angle, angle)
 
-        return (np.sqrt(np.sum(op ** 2)) > cfg.different_origin_th or
-                angle > cfg.different_angle_th)
+        return (np.sqrt(np.sum(op ** 2)) > config.different_origin_th or
+                angle > config.different_angle_th)
 
     def get_connection_objective(self):
         return max([cc.objective for cc in self.cross_section.connected_components])
+
+    def copy(self):
+        copied = copy.deepcopy(self)
+        chull = self.part.convex_hull.copy()
+        part = self.part.copy()
+        copied.part = bsp_mesh.BSPMesh.from_trimesh(part, chull)
+        return copied
 
 
 class BSPTree:
@@ -90,13 +94,12 @@ class BSPTree:
         self.nodes = [BSPNode(part)]
         self._node_data = {}
         self._objective = None
-
-        self.a_part = cfg.part_weight
-        self.a_util = cfg.utilization_weight
-        self.a_connector = cfg.connector_weight
-        self.a_fragility = cfg.fragility_weight
-        self.a_seam = cfg.seam_weight
-        self.a_symmetry = cfg.symmetry_weight
+        self.a_part = config.objective_weights['part']
+        self.a_util = config.objective_weights['utilization']
+        self.a_connector = config.objective_weights['connector']
+        self.a_fragility = config.objective_weights['fragility']
+        self.a_seam = config.objective_weights['seam']
+        self.a_symmetry = config.objective_weights['symmetry']
 
     @property
     def objective(self):
@@ -156,12 +159,12 @@ class BSPTree:
     def terminated(self):
         leaves = self.get_leaves()
         for leaf in leaves:
-            if not leaf.terminated():
+            if not leaf.terminated:
                 return False
         return True
 
     def largest_part(self):
-        return sorted(self.get_leaves(), key=lambda x: x.number_of_parts_estimate())[-1]
+        return sorted(self.get_leaves(), key=lambda x: x.n_parts)[-1]
 
     def sufficiently_different(self, node, tree_set):
         if not tree_set:
@@ -177,12 +180,12 @@ class BSPTree:
         return self_node.different_from(other_node)
 
     def nparts_objective(self):
-        theta_0 = self.nodes[0].number_of_parts_estimate()
-        return sum([l.number_of_parts_estimate() for l in self.get_leaves()]) / theta_0
+        theta_0 = self.nodes[0].n_parts
+        return sum([l.n_parts for l in self.get_leaves()]) / theta_0
 
     def utilization_objective(self):
-        V = np.prod(cfg.printer_extents)
-        return max([1 - leaf.part.volume / (leaf.number_of_parts_estimate() * V) for leaf in self.get_leaves()])
+        V = np.prod(config.printer_extents)
+        return max([1 - leaf.part.volume / (leaf.n_parts * V) for leaf in self.get_leaves()])
 
     def connector_objective(self):
         return max([n.get_connection_objective() for n in self.nodes if n.cross_section is not None])
@@ -198,7 +201,7 @@ class BSPTree:
         for node in nodes.values():
             origin, normal = node.plane
             mesh = node.part
-            possibly_fragile = np.abs(mesh.vertex_normals @ normal) > cfg.fragility_objective_th
+            possibly_fragile = np.abs(mesh.vertex_normals @ normal) > config.fragility_objective_th
             if not np.any(possibly_fragile):
                 continue
             ray_origins = mesh.vertices[possibly_fragile] - .1 * mesh.vertex_normals[possibly_fragile]
@@ -258,14 +261,14 @@ class BSPTree:
                 this_node = {'path': node.path, 'origin': list(node.plane[0]), 'normal': list(node.plane[1])}
                 nodes.append(this_node)
 
-        cfg.nodes = nodes
+        config.nodes = nodes
 
         if state is not None:
-            cfg.state = [bool(s) for s in state]
+            config.state = [bool(s) for s in state]
 
-        cfg.save(filename)
+        config.save(filename)
 
     def export_stl(self):
         for i, leaf in enumerate(self.get_leaves()):
-            leaf.part.export(os.path.join(cfg.directory, f"{i}.stl"))
+            leaf.part.export(os.path.join(config.directory, f"{i}.stl"))
 

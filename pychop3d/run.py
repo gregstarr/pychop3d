@@ -18,22 +18,21 @@ TODO:
         - trimesh.intersections.mesh_multiplane
 """
 import time
+import datetime
 
 from pychop3d.search import beam_search
 from pychop3d import connector
-from pychop3d.config import Configuration
+from pychop3d.configuration import Configuration
 from pychop3d import utils
 
 
 def run():
-    cfg = Configuration.cfg
-    if cfg.nodes is None:
-        starter = utils.open_mesh(cfg)
-    else:
-        starter = utils.open_tree(cfg)
+    # collect the already set config
+    config = Configuration.config
+    starter = utils.open_mesh(config)
 
     t0 = time.time()
-    tree = beam_search(starter, cfg)
+    tree = beam_search(starter)
     print(f"Best BSP-tree found in {time.time() - t0} seconds")
     tree.save("final_tree.json")
 
@@ -43,9 +42,13 @@ def run():
     tree = connector_placer.insert_connectors(tree, state)
     print(f"Best connector arrangement found in {time.time() - t0} seconds")
 
-    tree.export_stl(cfg)
-    tree.save("final_tree_with_connectors.json", cfg, state)
+    tree.export_stl(config)
+    tree.save("final_tree_with_connectors.json", state)
 
 
 if __name__ == "__main__":
+    # name and save the config
+    date_string = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
+    config = Configuration.config
+    config.save(f"{date_string}_config.yml")
     run()

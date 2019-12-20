@@ -1,0 +1,33 @@
+beam_width: 2
+connector_collision_penalty: 10000000000
+connector_diameter: 10
+connector_diameter_max: 30
+connector_diameter_min: 5
+connector_objective_th: 5
+connector_tolerance: 1
+different_angle_th: 0.3141592653589793
+different_origin_th: 34.64101615137755
+directory: C:\Users\Greg\code\pychop3d\debug
+do_not_save:
+- normals
+fragility_objective_th: 0.95
+mesh: C:\Users\Greg\Downloads\Low_Poly_Stanford_Bunny\files\Bunny-LowPoly.stl
+n_phi: 5
+n_theta: 5
+objective_weights:
+  connector: 1
+  fragility: 1
+  part: 1
+  seam: 0
+  symmetry: 0
+  utilization: 0.25
+plane_spacing: 30
+printer_extents:
+- 200.0
+- 200.0
+- 200.0
+sa_initial_connector_ratio: 0.1
+sa_initialization_iterations: 15000
+sa_iterations: 300000
+scale: true
+scale_factor: 2.5

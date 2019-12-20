@@ -3,17 +3,16 @@ import trimesh
 
 from pychop3d import utils
 from pychop3d import bsp
-from pychop3d.config import Configuration
+from pychop3d.configuration import Configuration
 
 
-cfg = Configuration.cfg
+config = Configuration.config
 
 
 def evaluate_cuts(base_tree, node):
-    N = cfg.normals
+    N = config.normals
     Np = node.auxiliary_normals()
-    N = np.concatenate((N, Np), axis=0)
-    N = utils.get_unique_normals(N)
+    N = utils.get_unique_normals(np.concatenate((N, Np), axis=0))
     trees = []
     for i in range(N.shape[0]):
         normal = N[i]
@@ -32,7 +31,7 @@ def evaluate_cuts(base_tree, node):
     return result_set
 
 
-def beam_search(starter, cfg):
+def beam_search(starter):
     if isinstance(starter, trimesh.Trimesh):
         current_trees = [bsp.BSPTree(starter)]
     elif isinstance(starter, bsp.BSPTree):
@@ -50,13 +49,14 @@ def beam_search(starter, cfg):
 
         current_trees += new_bsps
         current_trees = sorted(current_trees, key=lambda x: x.objective)
-        current_trees = current_trees[:cfg.beam_width]
+        current_trees = current_trees[:config.beam_width]
 
         print(f"Splits: {splits}, best objective: {current_trees[0].objective}, estimated number of parts: "
-              f"{current_trees[0].largest_part().number_of_parts_estimate()}")
+              f"{current_trees[0].largest_part().n_parts}")
 
         for i, tree in enumerate(current_trees):
             tree.save(f"{i}.json")
 
         splits += 1
+
     return current_trees[0]

@@ -1,5 +1,6 @@
 import numpy as np
 import trimesh
+import json
 
 from pychop3d import constants
 from pychop3d import bsp_mesh
@@ -10,13 +11,13 @@ def open_mesh(cfg):
     mesh = trimesh.load(cfg.mesh)
 
     if cfg.scale:
-        if hasattr(cfg, 'factor'):
-            factor = cfg.factor
+        if hasattr(cfg, 'scale_factor'):
+            factor = cfg.scale_factor
         else:
             factor = np.ceil(1.1 / np.max(mesh.extents / cfg.printer_extents))
         if factor > 1:
             mesh.apply_scale(factor)
-            cfg.factor = factor
+            cfg.scale_factor = factor
 
     chull = mesh.convex_hull
     mesh = bsp_mesh.BSPMesh.from_trimesh(mesh, chull)
@@ -24,14 +25,16 @@ def open_mesh(cfg):
     return mesh
 
 
-def open_tree(cfg):
-    mesh = cfg.open_mesh()
+def open_tree(mesh, tree_file):
+    with open(tree_file) as f:
+        data = json.load(f)
+
+    node_data = data['nodes']
     tree = bsp.BSPTree(mesh)
-    if cfg.nodes is not None:
-        for n in cfg.nodes:
-            plane = (np.array(n['origin']), np.array(n['normal']))
-            node = tree.get_node(n['path'])
-            tree = tree.expand_node(plane, node)
+    for n in node_data:
+        plane = (np.array(n['origin']), np.array(n['normal']))
+        node = tree.get_node(n['path'])
+        tree = tree.expand_node(plane, node)
     return tree
 
 
@@ -61,4 +64,3 @@ def plane(normal, origin, w=100):
     xform = np.linalg.inv(trimesh.points.plane_transform(origin, normal))
     box = trimesh.primitives.Box(extents=(w, w, .5), transform=xform)
     return box
-
