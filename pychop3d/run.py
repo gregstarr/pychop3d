@@ -21,13 +21,13 @@ from pychop3d.utils import insert_connectors
 
 fn = "C:\\Users\\Greg\\Downloads\\Low_Poly_Stanford_Bunny\\files\\Bunny-LowPoly.stl"
 mesh = trimesh.load(fn, validate=True)
-mesh.apply_scale(3)
+mesh.apply_scale(2)
 chull = mesh.convex_hull
 mesh = BSPMesh.from_trimesh(mesh)
 mesh._convex_hull = chull
 
 t0 = time.time()
-best_tree = beam_search(mesh, 4)
+best_tree = beam_search(mesh)
 print(f"Best BSP-tree found in {time.time() - t0} seconds")
 
 t0 = time.time()

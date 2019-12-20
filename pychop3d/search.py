@@ -7,7 +7,7 @@ from pychop3d import bsp
 def evaluate_cuts(base_tree, node):
     N = utils.uniform_normals()
     Np = node.auxiliary_normals()
-    N = np.concatenate((N, Np), axis=0)
+    N = utils.get_unique_normals(np.concatenate((N, Np), axis=0))
     trees = []
     for i in range(N.shape[0]):
         normal = N[i]

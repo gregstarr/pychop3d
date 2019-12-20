@@ -21,12 +21,22 @@ def not_at_goal_set(trees):
     return not_at_goal
 
 
-def uniform_normals(n=constants.N_RANDOM_NORMALS):
+def uniform_normals():
     """http://corysimon.github.io/articles/uniformdistn-on-sphere/
     """
-    theta = np.random.rand(n) * 2 * np.pi
-    phi = np.arccos(1 - 2 * np.random.rand(n))
+    theta = np.arange(0, np.pi, np.pi / constants.N_THETA)
+    phi = np.arccos(1 - np.arccos(1 - np.arange(0, 1, 1 / constants.N_PHI)))
+    theta, phi = np.meshgrid(theta, phi)
+    theta = theta.ravel()
+    phi = phi.ravel()
     return np.stack((np.sin(phi) * np.cos(theta), np.sin(phi) * np.sin(theta), np.cos(phi)), axis=1)
+
+
+def get_unique_normals(non_unique_normals):
+    rounded = np.round(non_unique_normals, 3)
+    view = rounded.view(dtype=[('', float), ('', float), ('', float)])
+    unique = np.unique(view)
+    return unique.view(dtype=float).reshape((unique.shape[0], -1))
 
 
 def bidirectional_split(mesh, origin, normal, get_connections=True):
@@ -136,12 +146,14 @@ def insert_connectors(tree, state):
         slot = trimesh.primitives.Box(
             extents=np.ones(3) * (constants.CONNECTOR_DIAMETER + constants.CONNECTOR_TOLERANCE),
             transform=xform)
-
-        if tree.sides[state][i] == 1:
-            new_node.children[0].part = new_node.children[0].part.difference(slot, engine='scad')
-            new_node.children[1].part = new_node.children[1].part.union(tree.connectors[state][i], engine='scad')
-        else:
-            new_node.children[1].part = new_node.children[1].part.difference(slot, engine='scad')
-            new_node.children[0].part = new_node.children[0].part.union(tree.connectors[state][i], engine='scad')
+        try:
+            if tree.sides[state][i] == 1:
+                new_node.children[0].part = new_node.children[0].part.difference(slot, engine='scad')
+                new_node.children[1].part = new_node.children[1].part.union(tree.connectors[state][i], engine='scad')
+            else:
+                new_node.children[1].part = new_node.children[1].part.difference(slot, engine='scad')
+                new_node.children[0].part = new_node.children[0].part.union(tree.connectors[state][i], engine='scad')
+        except:
+            print()
 
     return new_tree

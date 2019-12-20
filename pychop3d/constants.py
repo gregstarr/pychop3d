@@ -2,8 +2,9 @@ import numpy as np
 import trimesh
 
 PRINTER_EXTENTS = np.array([180, 180, 180], dtype=float)
-PLANE_SPACING = 10
-N_RANDOM_NORMALS = 40
+PLANE_SPACING = 30
+N_THETA = 5
+N_PHI = 5
 
 SUFFICIENTLY_DIFFERENT_THRESHOLD = .1 * np.sqrt(np.sum(PRINTER_EXTENTS ** 2))
 
