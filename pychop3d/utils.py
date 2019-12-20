@@ -8,7 +8,7 @@ from pychop3d import bsp
 
 def all_at_goal(trees):
     for tree in trees:
-        if not tree.terminated:
+        if not tree.terminated():
             return False
     return True
 
@@ -16,7 +16,7 @@ def all_at_goal(trees):
 def not_at_goal_set(trees):
     not_at_goal = []
     for tree in trees:
-        if not tree.terminated:
+        if not tree.terminated():
             not_at_goal.append(tree)
     return not_at_goal
 

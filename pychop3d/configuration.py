@@ -68,7 +68,7 @@ class Configuration:
         """http://corysimon.github.io/articles/uniformdistn-on-sphere/
         """
         theta = np.arange(0, np.pi, np.pi / self.n_theta)
-        phi = np.arccos(1 - np.arccos(1 - np.arange(0, 1, 1 / self.n_phi)))
+        phi = np.arccos(np.arange(0, 1, 1 / self.n_phi))
         theta, phi = np.meshgrid(theta, phi)
         theta = theta.ravel()
         phi = phi.ravel()
