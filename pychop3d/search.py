@@ -37,6 +37,6 @@ def beam_search(obj, b=2):
             new_bsps += evaluate_cuts(tree, largest_node)
         current_trees = sorted(new_bsps, key=lambda x: x.get_objective())[:b]
         print(f"Splits: {splits}, best objective: {current_trees[0].get_objective()}, estimated number of parts: "
-              f"{current_trees[0].largest_part().number_of_parts_estimate()}")
+              f"{current_trees[0].largest_part().n_parts}")
         splits += 1
     return current_trees[0]

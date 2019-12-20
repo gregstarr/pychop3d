@@ -9,6 +9,7 @@ dependencies:
    - networkx
    - shapely
    - rtree
+   - pyyaml
    - pip:
       - trimesh
       - pyglet

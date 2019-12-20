@@ -10,22 +10,22 @@ def test_number_of_parts():
     mesh = trimesh.primitives.Sphere(radius=10)
     tree = bsp.BSPTree(mesh)
     assert tree.nparts_objective() == 1
-    assert tree.root.number_of_parts_estimate() == 1
+    assert tree.root.n_parts == 1
     # test on a large box
     mesh = trimesh.primitives.Box(extents=(10, 10, 220))
     tree = bsp.BSPTree(mesh)
     assert tree.nparts_objective() == 1
-    assert tree.root.number_of_parts_estimate() == 2
+    assert tree.root.n_parts == 2
     # test splitting the box into 2 through the middle
     tree = tree.expand_node((np.zeros(3), np.array([0, 0, 1])), tree.root)
     assert tree.nparts_objective() == 1
-    assert tree.get_node((0,)).number_of_parts_estimate() == 1
-    assert tree.get_node((1,)).number_of_parts_estimate() == 1
+    assert tree.get_node((0,)).n_parts == 1
+    assert tree.get_node((1,)).n_parts == 1
     # rotate the box
     mesh.apply_transform(trimesh.transformations.random_rotation_matrix())
     tree = bsp.BSPTree(mesh)
     assert tree.nparts_objective() == 1
-    assert tree.root.number_of_parts_estimate() == 2
+    assert tree.root.n_parts == 2
 
 
 def test_utilization():
