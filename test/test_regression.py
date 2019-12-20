@@ -46,6 +46,8 @@ def test_regression(file_pair):
             assert baseline_node.plane is None
         else:
             # same origin
+            print(f"baseline origin {baseline_node.plane[0]}, test origin {node.plane[0]}")
             assert np.all(baseline_node.plane[0] == node.plane[0])
             # same normal
+            print(f"baseline normal {baseline_node.plane[1]}, test normal {node.plane[1]}")
             assert np.all(baseline_node.plane[1] == node.plane[1])
