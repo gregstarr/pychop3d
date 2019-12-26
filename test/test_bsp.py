@@ -107,6 +107,6 @@ def test_expand_node():
     node = tree.largest_part()
     extents = node.part.bounding_box_oriented.primitive.extents
     normal = np.array([1, 0, 0])
-    planes = node.get_planes(normal, extents.min() / 10)
+    planes = node.get_planes(normal)
     plane = planes[len(planes) // 2]
     tree = tree.expand_node(plane, node)
