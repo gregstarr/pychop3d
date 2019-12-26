@@ -2,8 +2,6 @@
 TODO:
     1) TESTS!
         - tests for all objectives
-        - more config tests
-        - better expand node tests
         - connector placement tests
         - make a stable master branch
         - random thing downlaoder

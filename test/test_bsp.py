@@ -5,7 +5,7 @@ import copy
 
 from pychop3d import bsp
 from pychop3d.configuration import Configuration
-from pychop3d import bsp_mesh
+from pychop3d import section
 
 
 def test_expand_node():

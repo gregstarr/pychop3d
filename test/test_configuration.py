@@ -21,7 +21,7 @@ import os
 
 from pychop3d.configuration import Configuration
 from pychop3d import bsp
-from pychop3d import bsp_mesh
+from pychop3d import section
 
 
 def test_modify_configuration():
@@ -90,3 +90,35 @@ def test_save():
         assert path == os.path.join(tempdir, 'test_config.yml')
 
     config.restore_defaults()
+
+
+def test_functions():
+    """modify the config and verify that various functions correctly use the updated version
+    """
+    config = Configuration.config
+    mesh = trimesh.load(config.mesh, validate=True)
+    print()
+    # BSPNode instantiation (n_parts)
+    n_parts_1 = bsp.BSPNode(mesh).n_parts
+    config.printer_extents = np.array([20, 20, 20])
+    n_parts_2 = bsp.BSPNode(mesh).n_parts
+    assert n_parts_1 != n_parts_2
+    config.restore_defaults()
+
+    # get_planes (plane_spacing, default is )
+    node = bsp.BSPNode(mesh)
+    planes_1 = node.get_planes(np.array([0, 1, 0]))
+    config.plane_spacing /= 2
+    planes_2 = node.get_planes(np.array([0, 1, 0]))
+    assert len(planes_2) > len(planes_1)
+    config.restore_defaults()
+
+    # uniform normals
+    normals1 = config.normals.copy()
+    config.n_theta = 10
+    normals2 = config.normals.copy()
+    config.n_phi = 10
+    normals3 = config.normals.copy()
+    assert normals1.size < normals2.size < normals3.size
+    config.restore_defaults()
+    # etc, etc ...

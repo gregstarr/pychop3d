@@ -2,7 +2,7 @@ import trimesh
 import numpy as np
 
 from pychop3d import bsp
-from pychop3d import bsp_mesh
+from pychop3d import section
 from pychop3d.configuration import Configuration
 
 

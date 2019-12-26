@@ -3,7 +3,7 @@ import os
 import numpy as np
 import pytest
 
-from pychop3d import bsp_mesh
+from pychop3d import section
 from pychop3d import search
 from pychop3d import bsp
 from pychop3d import utils

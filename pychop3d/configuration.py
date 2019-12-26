@@ -25,14 +25,32 @@ class Configuration:
 
         self.printer_extents = np.array(self.printer_extents, dtype=float)
 
+    @property
+    def n_theta(self):
+        return self._n_theta
+
+    @n_theta.setter
+    def n_theta(self, value):
+        self._n_theta = value
+        self.normals = self.uniform_normals()
+
+    @property
+    def n_phi(self):
+        return self._n_phi
+
+    @n_phi.setter
+    def n_phi(self, value):
+        self._n_phi = value
+        self.normals = self.uniform_normals()
+
     def restore_defaults(self):
         self.do_not_save = ['normals']
         # printer parameters
         self.printer_extents = np.array([200, 200, 200], dtype=float)
         # plane selection parameters
         self.plane_spacing = 20
-        self.n_theta = 5
-        self.n_phi = 5
+        self._n_theta = 5
+        self._n_phi = 5
         self.normals = self.uniform_normals()
         # plane uniqueness parameters
         self.different_origin_th = float(.1 * np.sqrt(np.sum(self.printer_extents ** 2)))

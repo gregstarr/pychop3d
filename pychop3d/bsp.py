@@ -7,7 +7,7 @@ import json
 import os
 
 from pychop3d import constants
-from pychop3d import bsp_mesh
+from pychop3d import section
 from pychop3d.configuration import Configuration
 
 
@@ -30,7 +30,7 @@ class BSPNode:
     def split(self, plane):
         self.plane = plane
         origin, normal = plane
-        positive, negative, cross_section = bsp_mesh.bidirectional_split(self.part, origin, normal)
+        positive, negative, cross_section = section.bidirectional_split(self.part, origin, normal)
 
         if None in [positive, negative, cross_section]:
             return False
