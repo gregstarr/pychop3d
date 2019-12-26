@@ -19,6 +19,7 @@ TODO:
 """
 import time
 import datetime
+import os
 
 from pychop3d.search import beam_search
 from pychop3d import connector
@@ -49,6 +50,9 @@ def run():
 if __name__ == "__main__":
     # name and save the config
     date_string = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
+    new_directory = os.path.join(os.path.dirname(__file__), '..', 'output', date_string)
+    os.mkdir(new_directory)
     config = Configuration.config
+    config.directory = new_directory
     config.save(f"{date_string}_config.yml")
     run()

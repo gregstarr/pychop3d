@@ -2,11 +2,8 @@ import numpy as np
 import itertools
 import trimesh
 
-from pychop3d.config import Configuration
+from pychop3d.configuration import Configuration
 from pychop3d import bsp
-
-
-cfg = Configuration.cfg
 
 
 class ConnectorPlacer:
@@ -63,9 +60,10 @@ class ConnectorPlacer:
                 self.collisions[i, j] = True
 
     def evaluate_connector_objective(self, state):
+        config = Configuration.config
         objective = 0
         n_collisions = self.collisions[state, :][:, state].sum()
-        objective += cfg.connector_collision_penalty * n_collisions
+        objective += config.connector_collision_penalty * n_collisions
 
         for cc in self.connected_components:
             rc = min(np.sqrt(cc.area) / 2, 10 * cc.connector_diameter)
@@ -84,19 +82,20 @@ class ConnectorPlacer:
         return objective
 
     def simulated_annealing_connector_placement(self):
-        state = np.random.rand(self.n_connectors) > (1 - cfg.sa_initial_connector_ratio)
+        config = Configuration.config
+        state = np.random.rand(self.n_connectors) > (1 - config.sa_initial_connector_ratio)
         objective = self.evaluate_connector_objective(state)
         print(f"initial objective: {objective}")
         # initialization
-        for i in range(cfg.sa_initialization_iterations):
-            if not i % (cfg.sa_initialization_iterations // 10):
+        for i in range(config.sa_initialization_iterations):
+            if not i % (config.sa_initialization_iterations // 10):
                 print('.', end='')
             state, objective = self.sa_iteration(state, objective, 0)
 
         print(f"\npost initialization objective: {objective}")
         initial_temp = objective / 2
-        for i, temp in enumerate(np.linspace(initial_temp, 0, cfg.sa_iterations)):
-            if not i % (cfg.sa_iterations // 10):
+        for i, temp in enumerate(np.linspace(initial_temp, 0, config.sa_iterations)):
+            if not i % (config.sa_iterations // 10):
                 print('.', end='')
             state, objective = self.sa_iteration(state, objective, temp)
 
@@ -123,6 +122,7 @@ class ConnectorPlacer:
         return state, objective
 
     def insert_connectors(self, tree, state):
+        config = Configuration.config
         new_tree = bsp.BSPTree(tree.nodes[0].part)
         for node in tree.nodes:
             if node.plane is None:
@@ -136,14 +136,14 @@ class ConnectorPlacer:
                 for idx in pos_index:
                     xform = self.connectors[idx].primitive.transform
                     slot = trimesh.primitives.Box(
-                        extents=np.ones(3) * (cc.connector_diameter + cfg.connector_tolerance),
+                        extents=np.ones(3) * (cc.connector_diameter + config.connector_tolerance),
                         transform=xform)
                     new_node.children[0].part = new_node.children[0].part.difference(slot, engine='scad')
                     new_node.children[1].part = new_node.children[1].part.union(self.connectors[idx], engine='scad')
                 for idx in neg_index:
                     xform = self.connectors[idx].primitive.transform
                     slot = trimesh.primitives.Box(
-                        extents=np.ones(3) * (cc.connector_diameter + cfg.connector_tolerance),
+                        extents=np.ones(3) * (cc.connector_diameter + config.connector_tolerance),
                         transform=xform)
                     new_node.children[1].part = new_node.children[1].part.difference(slot, engine='scad')
                     new_node.children[0].part = new_node.children[0].part.union(self.connectors[idx], engine='scad')

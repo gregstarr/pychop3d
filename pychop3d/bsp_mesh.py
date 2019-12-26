@@ -5,12 +5,10 @@ import shapely.geometry as sg
 from pychop3d.configuration import Configuration
 
 
-config = Configuration.config
-
-
 class ConnectedComponent:
 
     def __init__(self, cross_section, polygon, positive, negative):
+        config = Configuration.config
         self.valid = False
         self.connector_diameter = np.clip(np.sqrt(polygon.area) / 6, config.connector_diameter_min,
                                           config.connector_diameter_max)

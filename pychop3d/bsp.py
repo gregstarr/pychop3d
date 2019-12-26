@@ -11,12 +11,10 @@ from pychop3d import bsp_mesh
 from pychop3d.configuration import Configuration
 
 
-config = Configuration.config
-
-
 class BSPNode:
 
     def __init__(self, part, parent=None, num=None):
+        config = Configuration.config
         self.part = part
         self.parent = parent
         self.children = {}
@@ -60,13 +58,15 @@ class BSPNode:
         obb_xform = np.array(self.get_bounding_box_oriented().primitive.transform)
         return obb_xform[:3, :3]
 
-    def get_planes(self, normal, plane_spacing=config.plane_spacing):
+    def get_planes(self, normal):
+        config = Configuration.config
         projection = self.part.vertices @ normal
         limits = [projection.min(), projection.max()]
-        planes = [(d * normal, normal) for d in np.arange(limits[0], limits[1], plane_spacing)][1:]
+        planes = [(d * normal, normal) for d in np.arange(limits[0], limits[1], config.plane_spacing)][1:]
         return planes
 
     def different_from(self, other_node):
+        config = Configuration.config
         plane_transform = trimesh.points.plane_transform(*self.plane)
         o = other_node.plane[0]
         op = np.array([o[0], o[1], o[2], 1], dtype=float)
@@ -91,6 +91,7 @@ class BSPNode:
 class BSPTree:
 
     def __init__(self, part: trimesh.Trimesh):
+        config = Configuration.config
         self.nodes = [BSPNode(part)]
         self._node_data = {}
         self._objective = None
@@ -184,6 +185,7 @@ class BSPTree:
         return sum([l.n_parts for l in self.get_leaves()]) / theta_0
 
     def utilization_objective(self):
+        config = Configuration.config
         V = np.prod(config.printer_extents)
         return max([1 - leaf.part.volume / (leaf.n_parts * V) for leaf in self.get_leaves()])
 
@@ -191,6 +193,7 @@ class BSPTree:
         return max([n.get_connection_objective() for n in self.nodes if n.cross_section is not None])
 
     def fragility_objective(self):
+        config = Configuration.config
         leaves = self.get_leaves()
         nodes = {}
         for leaf in leaves:
@@ -255,6 +258,7 @@ class BSPTree:
         scene.show()
 
     def save(self, filename, state=None):
+        config = Configuration.config
         nodes = []
         for node in self.nodes:
             if node.plane is not None:
@@ -269,6 +273,7 @@ class BSPTree:
         config.save(filename)
 
     def export_stl(self):
+        config = Configuration.config
         for i, leaf in enumerate(self.get_leaves()):
             leaf.part.export(os.path.join(config.directory, f"{i}.stl"))
 

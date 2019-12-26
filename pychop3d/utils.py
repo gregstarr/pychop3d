@@ -2,22 +2,23 @@ import numpy as np
 import trimesh
 import json
 
-from pychop3d import constants
 from pychop3d import bsp_mesh
 from pychop3d import bsp
+from pychop3d.configuration import Configuration
 
 
-def open_mesh(cfg):
-    mesh = trimesh.load(cfg.mesh)
+def open_mesh():
+    config = Configuration.config
+    mesh = trimesh.load(config.mesh)
 
-    if cfg.scale:
-        if hasattr(cfg, 'scale_factor'):
-            factor = cfg.scale_factor
+    if config.scale:
+        if hasattr(config, 'scale_factor'):
+            factor = config.scale_factor
         else:
-            factor = np.ceil(1.1 / np.max(mesh.extents / cfg.printer_extents))
+            factor = np.ceil(1.1 / np.max(mesh.extents / config.printer_extents))
         if factor > 1:
             mesh.apply_scale(factor)
-            cfg.scale_factor = factor
+            config.scale_factor = factor
 
     chull = mesh.convex_hull
     mesh = bsp_mesh.BSPMesh.from_trimesh(mesh, chull)

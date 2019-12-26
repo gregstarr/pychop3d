@@ -10,9 +10,6 @@ from pychop3d import utils
 from pychop3d.configuration import Configuration
 
 
-config = Configuration.config
-
-
 files = [("regression_test_tree.json", "regression_test_config.yml"),
          ("regression_tree_25.json", "regression_config_25.yml")]
 
@@ -24,14 +21,10 @@ def test_regression(file_pair):
     tree_file, config_file = file_pair
     tree_file = os.path.join(os.path.dirname(__file__), tree_file)
     config_file = os.path.join(os.path.dirname(__file__), config_file)
-    config = Configuration(config_file)
-    Configuration.config = config
+    Configuration.config = Configuration(config_file)
 
     # open and prepare mesh
-    mesh = trimesh.load(config.mesh, validate=True)
-    mesh.apply_scale(config.scale_factor)
-    chull = mesh.convex_hull
-    mesh = bsp_mesh.BSPMesh.from_trimesh(mesh, chull)
+    mesh = utils.open_mesh()
     # open tree baseline
     baseline = utils.open_tree(mesh, tree_file)
     # run new tree

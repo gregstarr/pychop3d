@@ -21,14 +21,12 @@ from pychop3d import bsp
 from pychop3d import bsp_mesh
 
 
-config = Configuration.config
-
-
 def test_modify_configuration():
     """Verify that modifying the configuration modifies the behavior of the other modules. Create a tree with the
     default part and the default configuration, verify that it will fit in the printer volume, then modify the
     printer volume in the config and verify that a newly created tree will have a different n_parts objective
     """
+    config = Configuration.config
     print()
     # open and prepare mesh
     mesh = trimesh.load(config.mesh, validate=True)
@@ -51,6 +49,7 @@ def test_modify_configuration():
 def test_load():
     """load a non-default parameter from a yaml file and verify that the config object matches
     """
+    config = Configuration.config
     with tempfile.TemporaryDirectory() as tempdir:
         params = {
             'printer_extents': [1, 2, 3],
@@ -70,6 +69,7 @@ def test_load():
 def test_save():
     """modify the config, save it, verify that the modified values are saved and can be loaded
     """
+    config = Configuration.config
     config.connector_diameter = 100
     with tempfile.TemporaryDirectory() as tempdir:
         config.directory = tempdir
