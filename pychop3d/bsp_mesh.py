@@ -12,6 +12,7 @@ class ConnectedComponent:
         self.valid = False
         self.connector_diameter = np.clip(np.sqrt(polygon.area) / 6, config.connector_diameter_min,
                                           config.connector_diameter_max)
+        self.connector_diameter = config.connector_diameter
         self.area = polygon.area
         self.normal = cross_section.normal
         self.origin = cross_section.origin
