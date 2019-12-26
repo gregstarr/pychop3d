@@ -67,12 +67,17 @@ class BSPNode:
         planes = [(d * normal, normal) for d in np.arange(limits[0], limits[1], config.plane_spacing)][1:]
         return planes
 
-    def different_from(self, other_node, threshold):
+    def different_from(self, other_node):
+        config = Configuration.config
         plane_transform = trimesh.points.plane_transform(*self.plane)
         o = other_node.plane[0]
         op = np.array([o[0], o[1], o[2], 1], dtype=float)
         op = (plane_transform @ op)[:3]
-        return np.sqrt(np.sum(op ** 2)) > threshold
+        angle = trimesh.transformations.angle_between_vectors(self.plane[1], other_node.plane[1])
+        angle = min(np.pi - angle, angle)
+
+        return (np.sqrt(np.sum(op ** 2)) > config.different_origin_th or
+                angle > config.different_angle_th)
 
     def get_connection_objective(self):
         return max([cc['objective'] for cc in self.connector_data])
@@ -129,18 +134,18 @@ class BSPTree:
     def largest_part(self):
         return sorted(self.get_leaves(), key=lambda x: x.n_parts)[-1]
 
-    def sufficiently_different(self, node, tree_set, threshold=constants.SUFFICIENTLY_DIFFERENT_THRESHOLD):
+    def sufficiently_different(self, node, tree_set):
         if not tree_set:
             return True
         for tree in tree_set:
-            if not self.different_from(tree, node, threshold):
+            if not self.different_from(tree, node):
                 return False
         return True
 
-    def different_from(self, tree, node, threshold):
+    def different_from(self, tree, node):
         self_node = self.get_node(node.path)
         other_node = tree.get_node(node.path)
-        return self_node.different_from(other_node, threshold)
+        return self_node.different_from(other_node)
 
     def nparts_objective(self):
         theta_0 = self.nodes[0].n_parts

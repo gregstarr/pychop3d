@@ -4,6 +4,7 @@ from shapely import geometry as SG
 
 from pychop3d import constants
 from pychop3d import bsp
+from pychop3d.configuration import Configuration
 
 
 def all_at_goal(trees):
@@ -24,8 +25,9 @@ def not_at_goal_set(trees):
 def uniform_normals():
     """http://corysimon.github.io/articles/uniformdistn-on-sphere/
     """
-    theta = np.arange(0, np.pi, np.pi / constants.N_THETA)
-    phi = np.arccos(1 - np.arccos(1 - np.arange(0, 1, 1 / constants.N_PHI)))
+    config = Configuration.config
+    theta = np.arange(0, np.pi, np.pi / config.n_theta)
+    phi = np.arccos(1 - np.arccos(1 - np.arange(0, 1, 1 / config.n_phi)))
     theta, phi = np.meshgrid(theta, phi)
     theta = theta.ravel()
     phi = phi.ravel()
@@ -41,6 +43,7 @@ def get_unique_normals(non_unique_normals):
 
 def bidirectional_split(mesh, origin, normal, get_connections=True):
     """https://github.com/mikedh/trimesh/issues/235"""
+    config = Configuration.config
     s = mesh.section(plane_origin=origin, plane_normal=normal)
     # check for the possibility that the plane passes between separate components and doesn't intersect with anything
     if s is None:
@@ -65,8 +68,6 @@ def bidirectional_split(mesh, origin, normal, get_connections=True):
     positive_capped._validate = True
     positive_capped.process()
     positive_capped.fix_normals()
-    if np.any(positive_capped.extents < constants.EPSILON):
-        return None, None, None
     positive_capped.remove_degenerate_faces()
 
     # get negative section
@@ -75,8 +76,6 @@ def bidirectional_split(mesh, origin, normal, get_connections=True):
     negative_capped._validate = True
     negative_capped.process()
     negative_capped.fix_normals()
-    if np.any(negative_capped.extents < constants.EPSILON):
-        return None, None, None
     negative_capped.remove_degenerate_faces()
 
     if not get_connections:
@@ -88,16 +87,16 @@ def bidirectional_split(mesh, origin, normal, get_connections=True):
         mesh_samples = trimesh.transform_points(np.column_stack((plane_samples, np.zeros(plane_samples.shape[0]))), to_3D)
         if mesh_samples.size == 0:
             return None, None, None
-        pos_dists = positive_capped.nearest.signed_distance(mesh_samples + (1 + constants.CONNECTOR_DIAMETER) * normal)
-        neg_dists = negative_capped.nearest.signed_distance(mesh_samples + (1 + constants.CONNECTOR_DIAMETER) * -1 * normal)
-        pos_valid_mask = pos_dists > constants.CONNECTOR_DIAMETER
-        neg_valid_mask = neg_dists > constants.CONNECTOR_DIAMETER
+        pos_dists = positive_capped.nearest.signed_distance(mesh_samples + (1 + config.connector_diameter) * normal)
+        neg_dists = negative_capped.nearest.signed_distance(mesh_samples + (1 + config.connector_diameter) * -1 * normal)
+        pos_valid_mask = pos_dists > config.connector_diameter
+        neg_valid_mask = neg_dists > config.connector_diameter
         if not np.any(pos_valid_mask) and not np.any(neg_valid_mask):
             return None, None, None
         ch_area_mask = np.logical_or(pos_valid_mask, neg_valid_mask)
-        convex_hull_area = SG.MultiPoint(plane_samples[ch_area_mask]).buffer(constants.CONNECTOR_DIAMETER/2).convex_hull.area
+        convex_hull_area = SG.MultiPoint(plane_samples[ch_area_mask]).buffer(config.connector_diameter/2).convex_hull.area
         component_area = polygon.area
-        objective = max(component_area / convex_hull_area - constants.CONNECTOR_OBJECTIVE_THRESHOLD, 0)
+        objective = max(component_area / convex_hull_area - config.connector_objective_th, 0)
         pos_sites = mesh_samples[pos_valid_mask]
         pos_normals = np.ones((pos_valid_mask.sum(), 1)) * normal[None, :]
         neg_sites = mesh_samples[neg_valid_mask]
@@ -113,9 +112,10 @@ def bidirectional_split(mesh, origin, normal, get_connections=True):
 
 
 def grid_sample_polygon(polygon):
+    config = Configuration.config
     min_x, min_y, max_x, max_y = polygon.bounds
-    X, Y = np.meshgrid(np.arange(min_x, max_x, constants.CONNECTOR_DIAMETER)[1:],
-                       np.arange(min_y, max_y, constants.CONNECTOR_DIAMETER)[1:])
+    X, Y = np.meshgrid(np.arange(min_x, max_x, config.connector_diameter)[1:],
+                       np.arange(min_y, max_y, config.connector_diameter)[1:])
     xy = np.stack((X.ravel(), Y.ravel()), axis=1)
     mask = np.zeros(xy.shape[0], dtype=bool)
     for i in range(xy.shape[0]):
@@ -132,6 +132,7 @@ def plane(normal, origin, w=100):
 
 
 def insert_connectors(tree, state):
+    config = Configuration.config
     new_tree = bsp.BSPTree(tree.nodes[0].part)
     cc_last = None
     for i in range(state.sum()):
@@ -144,7 +145,7 @@ def insert_connectors(tree, state):
 
         xform = tree.connectors[state][i].primitive.transform
         slot = trimesh.primitives.Box(
-            extents=np.ones(3) * (constants.CONNECTOR_DIAMETER + constants.CONNECTOR_TOLERANCE),
+            extents=np.ones(3) * (config.connector_diameter + config.connector_tolerance),
             transform=xform)
         try:
             if tree.sides[state][i] == 1:
