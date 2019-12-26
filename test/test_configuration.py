@@ -4,10 +4,12 @@ desired features of configuration:
     - modify configuration
     - save configuration
     - load configuration
-    - FOR NOW: changing the config should not affect already existing objects
 possible features:
     - convenience method to create temporary directories
     - convenience method to create timestamped directory
+TODO:
+    - should test a variety of functions that use configuration and verify that the output is different
+        when using modified configuration
 """
 
 import trimesh
@@ -19,7 +21,6 @@ import os
 from pychop3d.configuration import Configuration
 from pychop3d import bsp
 from pychop3d import bsp_mesh
-
 
 config = Configuration.config
 
@@ -39,7 +40,7 @@ def test_modify_configuration():
     tree = bsp.BSPTree(mesh)
     print(f"n parts: {tree.nodes[0].n_parts}")
     assert tree.nodes[0].n_parts == 1
-    config.printer_extents = config.printer_extents/2
+    config.printer_extents = config.printer_extents / 2
     print("modified config")
     print(f"original tree n parts: {tree.nodes[0].n_parts}")
     assert tree.nodes[0].n_parts == 1

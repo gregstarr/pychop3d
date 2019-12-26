@@ -12,12 +12,10 @@ from pychop3d import bsp_mesh
 from pychop3d.configuration import Configuration
 
 
-config = Configuration.config
-
-
 class BSPNode:
 
     def __init__(self, part, parent=None, num=None):
+        config = Configuration.config
         self.part = part
         self.parent = parent
         self.children = {}
@@ -62,10 +60,11 @@ class BSPNode:
         obb_xform = np.array(self.get_bounding_box_oriented().primitive.transform)
         return obb_xform[:3, :3]
 
-    def get_planes(self, normal, plane_spacing=config.plane_spacing):
+    def get_planes(self, normal):
+        config = Configuration.config
         projection = self.part.vertices @ normal
         limits = [projection.min(), projection.max()]
-        planes = [(d * normal, normal) for d in np.arange(limits[0], limits[1], plane_spacing)][1:]
+        planes = [(d * normal, normal) for d in np.arange(limits[0], limits[1], config.plane_spacing)][1:]
         return planes
 
     def different_from(self, other_node, threshold):
@@ -82,6 +81,7 @@ class BSPNode:
 class BSPTree:
 
     def __init__(self, part: trimesh.Trimesh):
+        config = Configuration.config
         self.nodes = [BSPNode(part)]
         self.a_part = config.objective_weights['part']
         self.a_util = config.objective_weights['utilization']
@@ -147,6 +147,7 @@ class BSPTree:
         return sum([l.n_parts for l in self.get_leaves()]) / theta_0
 
     def utilization_objective(self):
+        config = Configuration.config
         V = np.prod(config.printer_extents)
         return max([1 - leaf.part.volume / (leaf.n_parts * V) for leaf in self.get_leaves()])
 
@@ -159,6 +160,7 @@ class BSPTree:
         return max([n.get_connection_objective() for n in self.nodes if n.connector_data is not None])
 
     def fragility_objective(self):
+        config = Configuration.config
         leaves = self.get_leaves()
         nodes = {}
         for leaf in leaves:
@@ -212,6 +214,7 @@ class BSPTree:
         scene.show()
 
     def setup_connector_placement(self):
+        config = Configuration.config
         self.connected_component = []
         self.sites = []
         self.normals = []
@@ -251,6 +254,7 @@ class BSPTree:
                 self.connection_matrix[i, j] = True
 
     def evaluate_connector_objective(self, state):
+        config = Configuration.config
         objective = 0
         n_collisions = self.connection_matrix[state, :][:, state].sum()
         objective += config.connector_collision_penalty * n_collisions
@@ -274,6 +278,7 @@ class BSPTree:
         return objective
 
     def simulated_annealing_connector_placement(self):
+        config = Configuration.config
         self.setup_connector_placement()
         state = np.random.rand(self.sites.shape[0]) > (1 - config.sa_initial_connector_ratio)
         objective = self.evaluate_connector_objective(state)

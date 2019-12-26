@@ -5,10 +5,8 @@ from pychop3d import bsp
 from pychop3d.configuration import Configuration
 
 
-config = Configuration.config
-
-
 def evaluate_cuts(base_tree, node):
+    config = Configuration.config
     N = config.normals
     Np = node.auxiliary_normals()
     N = utils.get_unique_normals(np.concatenate((N, Np), axis=0))
@@ -31,6 +29,7 @@ def evaluate_cuts(base_tree, node):
 
 
 def beam_search(obj):
+    config = Configuration.config
     current_trees = [bsp.BSPTree(obj)]
     splits = 1
     while not utils.all_at_goal(current_trees):

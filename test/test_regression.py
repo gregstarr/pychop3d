@@ -9,18 +9,12 @@ from pychop3d import bsp
 from pychop3d.configuration import Configuration
 
 
-config = Configuration.config
-
-
-files = [("regression_test_tree.json", "regression_test_config.yml"),
-         ("regression_tree_25.json", "regression_config_25.yml")]
-
-
-@pytest.mark.parametrize('file_pair', files)
-def test_regression(file_pair):
+@pytest.mark.parametrize('file_number', range(1, 3))
+def test_regression(file_number):
     print()
     # files
-    tree_file, config_file = file_pair
+    tree_file = f"regression_tree_{file_number}.json"
+    config_file = f"regression_config_{file_number}.yml"
     tree_file = os.path.join(os.path.dirname(__file__), tree_file)
     config_file = os.path.join(os.path.dirname(__file__), config_file)
     config = Configuration(config_file)
