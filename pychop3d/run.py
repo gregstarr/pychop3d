@@ -19,6 +19,7 @@ TODO:
         - calculate objectives for many planes at once
             - fragility speedup
             - trimesh.intersections.mesh_multiplane
+        - proper logging
     3) optional future ideas:
         - chopper class?
         - cross section area penalty?

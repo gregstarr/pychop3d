@@ -18,10 +18,6 @@ def evaluate_cuts(base_tree, node):
         print(i, normal, end='')
         for plane in node.get_planes(normal):
             tree2 = base_tree.expand_node(plane, node)
-            if config.log_trees:
-                o, n = plane
-                with open(os.path.join(config.directory, 'log.txt'), 'a') as f:
-                    f.write(f"{str(o): <50s}, {str(n): <50s}, {str(tree2.get_objective()) if tree2 else '---': <50s}\n")
             if tree2:
                 trees.append(tree2)
         print()
