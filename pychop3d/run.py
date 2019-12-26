@@ -2,7 +2,6 @@
 TODO:
     1) TESTS!
         - tests for all objectives
-                - fragility has known issues
         - more config tests
         - better expand node tests
         - connector placement tests
@@ -57,11 +56,10 @@ def run():
 if __name__ == "__main__":
     # name and save the config
     date_string = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
-    new_directory = os.path.join(os.path.dirname(__file__), '..', 'output', date_string)
+    new_directory = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'output', date_string))
     os.mkdir(new_directory)
     config = Configuration.config
     config.directory = new_directory
-    config.scale_factor = 2.5
-    config.plane_spacing = 30
+
     config.save(f"{date_string}_config.yml")
     run()

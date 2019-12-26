@@ -10,7 +10,7 @@ possible features:
 TODO:
     - should test a variety of functions that use configuration and verify that the output is different
         when using modified configuration
-    -
+
 """
 
 import trimesh
@@ -73,10 +73,20 @@ def test_save():
     config = Configuration.config
     config.connector_diameter = 100
     with tempfile.TemporaryDirectory() as tempdir:
+        # change directory
         config.directory = tempdir
+        # save using a file name
         path = config.save("test_config.yml")
-
+        # load the config back
         new_config = Configuration(path)
 
     assert new_config.connector_diameter == 100
+
+    with tempfile.TemporaryDirectory() as tempdir:
+        # change config directory
+        config.directory = tempdir
+        # save using cached name, should be 'test_config.yml'
+        path = config.save()
+        assert path == os.path.join(tempdir, 'test_config.yml')
+
     config.restore_defaults()

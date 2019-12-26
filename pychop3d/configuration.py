@@ -60,9 +60,20 @@ class Configuration:
         self.connector_tolerance = 1
         # run settings
         self.mesh = "C:\\Users\\Greg\\Downloads\\Low_Poly_Stanford_Bunny\\files\\Bunny-LowPoly.stl"
-        self.directory = "C:\\Users\\Greg\\code\\pychop3d\\debug"
+        self._directory = "C:\\Users\\Greg\\code\\pychop3d\\debug"
+        self.save_path = os.path.join(self.directory, 'config.yml')
         self.scale = True
-        self.beam_width = 2
+        self.beam_width = 5
+
+    @property
+    def directory(self):
+        return self._directory
+
+    @directory.setter
+    def directory(self, value):
+        self._directory = value
+        save_name = os.path.basename(self.save_path)
+        self.save_path = os.path.join(self.directory, save_name)
 
     def uniform_normals(self):
         """http://corysimon.github.io/articles/uniformdistn-on-sphere/
@@ -74,7 +85,7 @@ class Configuration:
         phi = phi.ravel()
         return np.stack((np.sin(phi) * np.cos(theta), np.sin(phi) * np.sin(theta), np.cos(phi)), axis=1)
 
-    def save(self, filename):
+    def save(self, filename=None):
         """saves the config file
 
          from pyyaml docs https://pyyaml.org/wiki/PyYAMLDocumentation:
@@ -82,6 +93,9 @@ class Configuration:
 
         therefore the save data will convert any numpy array to list first
         """
+        if filename is not None:
+            self.save_path = os.path.join(self.directory, filename)
+
         save_data = {}
         for key, value in self.__dict__.items():
             if key in self.do_not_save:
@@ -91,11 +105,10 @@ class Configuration:
             else:
                 save_data[key] = value
 
-        save_path = os.path.join(self.directory, filename)
-        with open(save_path, 'w') as f:
+        with open(self.save_path, 'w') as f:
             yaml.dump(save_data, f)
 
-        return save_path
+        return self.save_path
 
 
 config = Configuration()

@@ -71,15 +71,39 @@ def test_different_from():
     assert base_node.different_from(test_node)
 
 
-def test_expand_node():
+def test_copy_tree():
     config = Configuration.config
     mesh = trimesh.load(config.mesh, validate=True)
 
     # make tree, get node, get random normal, pick a plane right through middle, make sure that the slice is good
     tree = bsp.BSPTree(mesh)
     node = tree.largest_part()
-    extents = node.part.bounding_box_oriented.primitive.extents
-    normal = np.array([1, 0, 0])
+    normal = np.array([0, 0, 1])
     planes = node.get_planes(normal)
     plane = planes[len(planes) // 2]
     tree = tree.expand_node(plane, node)
+    print("tree objective: ", tree.objective)
+    assert tree._objective is not None
+    new_tree = tree.copy()
+    assert new_tree._objective is None
+
+
+def test_expand_node():
+    config = Configuration.config
+    mesh = trimesh.load(config.mesh, validate=True)
+
+    # make tree, get node, get random normal, pick a plane right through middle, make sure that the slice is good
+    tree = bsp.BSPTree(mesh)
+
+    node = tree.largest_part()
+    normal = np.array([0, 0, 1])
+    planes = node.get_planes(normal)
+    plane = planes[len(planes) // 2]
+    tree1 = tree.expand_node(plane, node)
+    print("tree objective: ", tree1.objective)
+
+    node = tree1.largest_part()
+    planes = node.get_planes(normal)
+    plane = planes[len(planes) // 2]
+    tree2 = tree1.expand_node(plane, node)
+    assert tree2._objective is None

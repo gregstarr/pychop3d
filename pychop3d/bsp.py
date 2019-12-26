@@ -93,6 +93,17 @@ class BSPTree:
         self.a_fragility = config.objective_weights['fragility']
         self.a_seam = config.objective_weights['seam']
         self.a_symmetry = config.objective_weights['symmetry']
+        self._objective = None
+
+    @property
+    def objective(self):
+        if self._objective is None:
+            self._objective = self.get_objective()
+        return self._objective
+
+    @objective.setter
+    def objective(self, value):
+        self._objective = value
 
     @classmethod
     def from_node_data(cls, part, node_data):
@@ -102,8 +113,13 @@ class BSPTree:
             tree = tree.expand_node(plane, node)
         return tree
 
-    def expand_node(self, plane, node):
+    def copy(self):
         new_tree = copy.deepcopy(self)
+        new_tree._objective = None
+        return new_tree
+
+    def expand_node(self, plane, node):
+        new_tree = self.copy()
         new_node = new_tree.get_node(node.path)
         if not new_node.split(plane):
             return None
@@ -233,18 +249,18 @@ class BSPTree:
 
     def save(self, filename, state=None):
         config = Configuration.config
+
+        if state is None:
+            state = []
+
         nodes = []
         for node in self.nodes:
             if node.plane is not None:
                 this_node = {'path': node.path, 'origin': list(node.plane[0]), 'normal': list(node.plane[1])}
                 nodes.append(this_node)
 
-        config.nodes = nodes
-
-        if state is not None:
-            config.state = [bool(s) for s in state]
-
-        config.save(filename)
+        with open(os.path.join(config.directory, filename), 'w') as f:
+            json.dump({'nodes': nodes, 'state': [bool(s) for s in state]}, f)
 
     def export_stl(self):
         config = Configuration.config

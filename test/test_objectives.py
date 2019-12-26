@@ -31,7 +31,7 @@ def test_number_of_parts():
     assert tree.nodes[0].n_parts == 2
 
 
-def test_utilization_1():
+def test_utilization():
     # check that as the sphere gets larger, the utilization goes down
     mesh1 = trimesh.primitives.Sphere(radius=20)
     tree1 = bsp.BSPTree(mesh1)
@@ -57,10 +57,10 @@ def test_fragility():
     mesh = trimesh.primitives.Box(extents=[50, 50, 200]).subdivide()
 
     tree = bsp.BSPTree(mesh)
-    tree = tree.expand_node((np.array([0, 0, 100 - 1.5 * config.connector_diameter - 1]), np.array([0, 0, 1])), tree.nodes[0])
+    tree = tree.expand_node((np.array([0, 0, 100 - 1.5 * config.connector_diameter_max - 1]), np.array([0, 0, 1])), tree.nodes[0])
     fragility = tree.fragility_objective()
     assert fragility == 0
     tree = bsp.BSPTree(mesh)
-    tree = tree.expand_node((np.array([0, 0, 100 - 1.5 * config.connector_diameter + 1]), np.array([0, 0, 1])), tree.nodes[0])
+    tree = tree.expand_node((np.array([0, 0, 100 - 1.5 * config.connector_diameter_min + 1]), np.array([0, 0, 1])), tree.nodes[0])
     fragility = tree.fragility_objective()
     assert fragility == np.inf
