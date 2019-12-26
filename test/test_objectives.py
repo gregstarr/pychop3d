@@ -9,16 +9,12 @@ from pychop3d.configuration import Configuration
 def test_number_of_parts():
     # test on a small sphere
     mesh = trimesh.primitives.Sphere(radius=10)
-    chull = mesh.convex_hull
-    mesh = bsp_mesh.BSPMesh.from_trimesh(mesh, chull)
 
     tree = bsp.BSPTree(mesh)
     assert tree.nparts_objective() == 1
     assert tree.nodes[0].n_parts == 1
     # test on a large box
     mesh = trimesh.primitives.Box(extents=(50, 50, 220))
-    chull = mesh.convex_hull
-    mesh = bsp_mesh.BSPMesh.from_trimesh(mesh, chull)
 
     tree = bsp.BSPTree(mesh)
     assert tree.nparts_objective() == 1
@@ -58,10 +54,7 @@ def test_utilization_1():
 
 def test_fragility():
     config = Configuration.config
-    # prepare mesh
     mesh = trimesh.primitives.Box(extents=[50, 50, 200]).subdivide()
-    chull = mesh.convex_hull
-    mesh = bsp_mesh.BSPMesh.from_trimesh(mesh, chull)
 
     tree = bsp.BSPTree(mesh)
     tree = tree.expand_node((np.array([0, 0, 100 - 1.5 * config.connector_diameter - 1]), np.array([0, 0, 1])), tree.nodes[0])

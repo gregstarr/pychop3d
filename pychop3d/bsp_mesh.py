@@ -12,7 +12,6 @@ class ConnectedComponent:
         self.valid = False
         self.connector_diameter = np.clip(np.sqrt(polygon.area) / 6, config.connector_diameter_min,
                                           config.connector_diameter_max)
-        self.connector_diameter = config.connector_diameter
         self.area = polygon.area
         self.normal = cross_section.normal
         self.origin = cross_section.origin
@@ -131,41 +130,13 @@ class CrossSection:
         return sum([cc.connector_diameter for cc in self.connected_components]) / len(self.connected_components)
 
 
-class BSPMesh(trimesh.Trimesh):
+def bidirectional_split(mesh, origin, normal):
+    """https://github.com/mikedh/trimesh/issues/235"""
+    cross_section = CrossSection(mesh, origin, normal)
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._convex_hull = None
+    if not cross_section.valid:
+        return None, None, None
 
-    @classmethod
-    def from_trimesh(cls, mesh, chull):
-        bspmesh = cls(mesh.vertices, mesh.faces)
-        bspmesh.convex_hull = chull
-        return bspmesh
+    positive, negative = cross_section.split(mesh)
 
-    @property
-    def convex_hull(self):
-        return self._convex_hull
-
-    @convex_hull.setter
-    def convex_hull(self, chull):
-        self._convex_hull = chull
-
-    def bidirectional_split(self, origin, normal):
-        """https://github.com/mikedh/trimesh/issues/235"""
-        cross_section = CrossSection(self, origin, normal)
-
-        if not cross_section.valid:
-            return None, None, None
-
-        positive, negative = cross_section.split(self)
-        positive_chull, negative_chull = cross_section.split(self.convex_hull)
-        positive = BSPMesh.from_trimesh(positive, positive_chull)
-        negative = BSPMesh.from_trimesh(negative, negative_chull)
-
-        return positive, negative, cross_section
-
-    # def copy(self, include_cache=False):
-    #     copied = super().copy(False)
-    #     copied_chull = self.convex_hull.copy(False)
-    #     return BSPMesh.from_trimesh(copied, copied_chull)
+    return positive, negative, cross_section

@@ -29,11 +29,6 @@ from pychop3d import utils
 
 def run():
     # collect the already set config
-    config = Configuration("C:\\Users\\Greg\\code\\pychop3d\\test\\regression_config_2.yml")
-    config.log_trees = True
-    Configuration.config = config
-    if os.path.isfile(os.path.join(config.directory, 'log.txt')):
-        os.remove(os.path.join(config.directory, 'log.txt'))
     starter = utils.open_mesh()
 
     t0 = time.time()
@@ -58,5 +53,7 @@ if __name__ == "__main__":
     os.mkdir(new_directory)
     config = Configuration.config
     config.directory = new_directory
+    config.scale_factor = 2.5
+    config.plane_spacing = 30
     config.save(f"{date_string}_config.yml")
     run()

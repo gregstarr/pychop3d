@@ -30,7 +30,7 @@ class BSPNode:
     def split(self, plane):
         self.plane = plane
         origin, normal = plane
-        positive, negative, cross_section = self.part.bidirectional_split(origin, normal)
+        positive, negative, cross_section = bsp_mesh.bidirectional_split(self.part, origin, normal)
 
         if None in [positive, negative, cross_section]:
             return False
@@ -80,13 +80,6 @@ class BSPNode:
     def get_connection_objective(self):
         return max([cc.objective for cc in self.cross_section.connected_components])
 
-    def copy(self):
-        copied = copy.deepcopy(self)
-        chull = self.part.convex_hull.copy()
-        part = self.part.copy()
-        copied.part = bsp_mesh.BSPMesh.from_trimesh(part, chull)
-        return copied
-
 
 class BSPTree:
 
@@ -111,12 +104,6 @@ class BSPTree:
 
     def expand_node(self, plane, node):
         new_tree = copy.deepcopy(self)
-        for n in new_tree.nodes:
-            old_node = self.get_node(n.path)
-            chull = old_node.part.convex_hull.copy()
-            part = old_node.part.copy()
-            n.part = bsp_mesh.BSPMesh.from_trimesh(part, chull)
-
         new_node = new_tree.get_node(node.path)
         if not new_node.split(plane):
             return None

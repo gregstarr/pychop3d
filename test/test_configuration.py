@@ -31,10 +31,8 @@ def test_modify_configuration():
     """
     config = Configuration.config
     print()
-    # open and prepare mesh
     mesh = trimesh.load(config.mesh, validate=True)
-    chull = mesh.convex_hull
-    mesh = bsp_mesh.BSPMesh.from_trimesh(mesh, chull)
+
     # create bsp tree
     tree = bsp.BSPTree(mesh)
     print(f"n parts: {tree.nodes[0].n_parts}")

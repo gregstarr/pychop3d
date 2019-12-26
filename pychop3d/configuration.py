@@ -47,7 +47,7 @@ class Configuration:
             'symmetry': 0  # set to zero until implemented
         }
         self.fragility_objective_th = .95
-        self.connector_objective_th = 5
+        self.connector_objective_th = 10
         # connector placement parameters
         self.connector_collision_penalty = 10 ** 10
         self.sa_initial_connector_ratio = .1

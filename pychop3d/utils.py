@@ -14,14 +14,13 @@ def open_mesh():
     if config.scale:
         if hasattr(config, 'scale_factor'):
             factor = config.scale_factor
+            print(f"Configured scale factor: {factor}")
         else:
             factor = np.ceil(1.1 / np.max(mesh.extents / config.printer_extents))
+            print(f"Calculated scale factor: {factor}")
         if factor > 1:
             mesh.apply_scale(factor)
             config.scale_factor = factor
-
-    chull = mesh.convex_hull
-    mesh = bsp_mesh.BSPMesh.from_trimesh(mesh, chull)
 
     return mesh
 
