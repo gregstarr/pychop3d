@@ -1,5 +1,6 @@
 import numpy as np
 import trimesh
+import os
 
 from pychop3d import utils
 from pychop3d import bsp
@@ -17,12 +18,16 @@ def evaluate_cuts(base_tree, node):
         print(i, normal, end='')
         for plane in node.get_planes(normal):
             tree2 = base_tree.expand_node(plane, node)
+            if config.log_trees:
+                o, n = plane
+                with open(os.path.join(config.directory, 'log.txt'), 'a') as f:
+                    f.write(f"{str(o): <50s}, {str(n): <50s}, {str(tree2.get_objective()) if tree2 else '---': <50s}\n")
             if tree2:
                 trees.append(tree2)
         print()
 
     result_set = []
-    for tree in sorted(trees, key=lambda x: x.objective):
+    for tree in sorted(trees, key=lambda x: x.get_objective()):
         if tree.sufficiently_different(node, result_set):
             result_set.append(tree)
     print(f"{len(result_set)} valid trees")
@@ -47,10 +52,10 @@ def beam_search(starter):
             new_bsps += evaluate_cuts(tree, largest_node)
 
         current_trees += new_bsps
-        current_trees = sorted(current_trees, key=lambda x: x.objective)
+        current_trees = sorted(current_trees, key=lambda x: x.get_objective())
         current_trees = current_trees[:config.beam_width]
 
-        print(f"Splits: {splits}, best objective: {current_trees[0].objective}, estimated number of parts: "
+        print(f"Splits: {splits}, best objective: {current_trees[0].get_objective()}, estimated number of parts: "
               f"{current_trees[0].largest_part().n_parts}")
 
         for i, tree in enumerate(current_trees):

@@ -63,6 +63,7 @@ class Configuration:
         self.directory = "C:\\Users\\Greg\\code\\pychop3d\\debug"
         self.scale = True
         self.beam_width = 2
+        self.log_trees = False
 
     def uniform_normals(self):
         """http://corysimon.github.io/articles/uniformdistn-on-sphere/

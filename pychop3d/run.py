@@ -29,8 +29,11 @@ from pychop3d import utils
 
 def run():
     # collect the already set config
-    config = Configuration.config
-    starter = utils.open_mesh(config)
+    config = Configuration("C:\\Users\\Greg\\code\\pychop3d\\test\\regression_config_2.yml")
+    config.log_trees = True
+    Configuration.config = config
+    os.remove(os.path.join(config.directory, 'log.txt'))
+    starter = utils.open_mesh()
 
     t0 = time.time()
     tree = beam_search(starter)
@@ -43,7 +46,7 @@ def run():
     tree = connector_placer.insert_connectors(tree, state)
     print(f"Best connector arrangement found in {time.time() - t0} seconds")
 
-    tree.export_stl(config)
+    tree.export_stl()
     tree.save("final_tree_with_connectors.json", state)
 
 

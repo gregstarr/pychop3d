@@ -94,19 +94,12 @@ class BSPTree:
         config = Configuration.config
         self.nodes = [BSPNode(part)]
         self._node_data = {}
-        self._objective = None
         self.a_part = config.objective_weights['part']
         self.a_util = config.objective_weights['utilization']
         self.a_connector = config.objective_weights['connector']
         self.a_fragility = config.objective_weights['fragility']
         self.a_seam = config.objective_weights['seam']
         self.a_symmetry = config.objective_weights['symmetry']
-
-    @property
-    def objective(self):
-        if self._objective is None:
-            self._objective = self.get_objective()
-        return self._objective
 
     @classmethod
     def from_node_data(cls, part, node_data):
@@ -116,14 +109,8 @@ class BSPTree:
             tree = tree.expand_node(plane, node)
         return tree
 
-    def copy(self):
-        # return BSPTree.from_node_data(self.nodes[0].part.copy(), self._node_data)
-        new_tree = copy.deepcopy(self)
-        new_tree._objective = None
-        return new_tree
-
     def expand_node(self, plane, node):
-        new_tree = self.copy()
+        new_tree = copy.deepcopy(self)
         for n in new_tree.nodes:
             old_node = self.get_node(n.path)
             chull = old_node.part.convex_hull.copy()
