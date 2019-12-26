@@ -8,10 +8,8 @@ from pychop3d.configuration import Configuration
 from pychop3d import bsp_mesh
 
 
-config = Configuration.config
-
-
 def test_expand_node():
+    config = Configuration.config
     print()
     # open and prepare mesh
     mesh = trimesh.load(config.mesh, validate=True)
@@ -38,7 +36,7 @@ def test_different_from():
     root = tree.nodes[0]
     extents = root.part.bounding_box_oriented.primitive.extents
     normal = trimesh.unitize(np.random.rand(3))
-    planes = root.get_planes(normal, extents.min() / 10)
+    planes = root.get_planes(normal)
     plane = planes[np.random.randint(0, len(planes))]
     base_node = root.copy()
     base_node.split(plane)

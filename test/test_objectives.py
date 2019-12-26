@@ -6,9 +6,6 @@ from pychop3d import bsp_mesh
 from pychop3d.configuration import Configuration
 
 
-config = Configuration.config
-
-
 def test_number_of_parts():
     # test on a small sphere
     mesh = trimesh.primitives.Sphere(radius=10)
@@ -60,6 +57,7 @@ def test_utilization_1():
 
 
 def test_fragility():
+    config = Configuration.config
     # prepare mesh
     mesh = trimesh.primitives.Box(extents=[50, 50, 200]).subdivide()
     chull = mesh.convex_hull

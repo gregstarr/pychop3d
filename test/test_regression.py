@@ -9,6 +9,7 @@ from pychop3d import bsp
 from pychop3d import utils
 from pychop3d.configuration import Configuration
 
+
 @pytest.mark.parametrize('file_number', range(1, 3))
 def test_regression(file_number):
     print()
@@ -36,7 +37,7 @@ def test_regression(file_number):
         else:
             # same origin
             print(f"baseline origin {baseline_node.plane[0]}, test origin {node.plane[0]}")
-            assert np.all(baseline_node.plane[0] == node.plane[0])
             # same normal
             print(f"baseline normal {baseline_node.plane[1]}, test normal {node.plane[1]}")
+            assert np.all(baseline_node.plane[0] == node.plane[0])
             assert np.all(baseline_node.plane[1] == node.plane[1])

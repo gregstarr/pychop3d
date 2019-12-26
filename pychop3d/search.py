@@ -22,7 +22,7 @@ def evaluate_cuts(base_tree, node):
         print()
 
     result_set = []
-    for tree in sorted(trees, key=lambda x: x.get_objective()):
+    for tree in sorted(trees, key=lambda x: x.objective):
         if tree.sufficiently_different(node, result_set):
             result_set.append(tree)
     print(f"{len(result_set)} valid trees")

@@ -10,6 +10,7 @@ possible features:
 TODO:
     - should test a variety of functions that use configuration and verify that the output is different
         when using modified configuration
+    -
 """
 
 import trimesh
