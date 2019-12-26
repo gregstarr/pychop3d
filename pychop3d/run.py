@@ -32,7 +32,8 @@ def run():
     config = Configuration("C:\\Users\\Greg\\code\\pychop3d\\test\\regression_config_2.yml")
     config.log_trees = True
     Configuration.config = config
-    os.remove(os.path.join(config.directory, 'log.txt'))
+    if os.path.isfile(os.path.join(config.directory, 'log.txt')):
+        os.remove(os.path.join(config.directory, 'log.txt'))
     starter = utils.open_mesh()
 
     t0 = time.time()
