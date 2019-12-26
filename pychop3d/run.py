@@ -1,21 +1,28 @@
 """
 TODO:
-    - node subclasses
-        - plane node
-        - root node
-        - separation node
-    - random thing downlaoder
-    - config
-    - chopper class
-    - cross section area penalty
-    - tests for all objectives
-        - fragility has known issues
-    - other connectors
-        - tabs for bolting
-        - shell / sheath type
-    - calculate objectives for many planes at once
-        - fragility speedup
-        - trimesh.intersections.mesh_multiplane
+    1) TESTS!
+        - tests for all objectives
+                - fragility has known issues
+        - more config tests
+        - better expand node tests
+        - connector placement tests
+        - make a stable master branch
+        - random thing downlaoder
+    2) features:
+        - node subclasses
+            - plane node
+            - root node
+            - separation node
+        - other connectors
+            - tabs for bolting
+            - shell / sheath type
+        - calculate objectives for many planes at once
+            - fragility speedup
+            - trimesh.intersections.mesh_multiplane
+    3) optional future ideas:
+        - chopper class?
+        - cross section area penalty?
+        - website
 """
 import time
 import datetime
