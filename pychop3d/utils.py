@@ -22,18 +22,6 @@ def not_at_goal_set(trees):
     return not_at_goal
 
 
-def uniform_normals():
-    """http://corysimon.github.io/articles/uniformdistn-on-sphere/
-    """
-    config = Configuration.config
-    theta = np.arange(0, np.pi, np.pi / config.n_theta)
-    phi = np.arccos(1 - np.arccos(1 - np.arange(0, 1, 1 / config.n_phi)))
-    theta, phi = np.meshgrid(theta, phi)
-    theta = theta.ravel()
-    phi = phi.ravel()
-    return np.stack((np.sin(phi) * np.cos(theta), np.sin(phi) * np.sin(theta), np.cos(phi)), axis=1)
-
-
 def get_unique_normals(non_unique_normals):
     rounded = np.round(non_unique_normals, 3)
     view = rounded.view(dtype=[('', float), ('', float), ('', float)])

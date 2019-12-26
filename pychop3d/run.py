@@ -23,7 +23,7 @@ from pychop3d.configuration import Configuration
 date_string = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
 config = Configuration.config
 config.plane_spacing = 30
-config.scale_factor = 2.5
+config.scale_factor = 2
 config.save(f"{date_string}_config.yml")
 
 mesh = trimesh.load(config.mesh, validate=True)
