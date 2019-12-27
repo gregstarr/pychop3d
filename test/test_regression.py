@@ -3,31 +3,27 @@ import os
 import numpy as np
 import pytest
 
-from pychop3d import bsp_mesh
+from pychop3d import section
 from pychop3d import search
 from pychop3d import bsp
+from pychop3d import utils
 from pychop3d.configuration import Configuration
 
 
-@pytest.mark.parametrize('file_number', range(1, 3))
+@pytest.mark.parametrize('file_number', range(1, 4))
 def test_regression(file_number):
     print()
     # files
     tree_file = f"regression_tree_{file_number}.json"
     config_file = f"regression_config_{file_number}.yml"
-    tree_file = os.path.join(os.path.dirname(__file__), tree_file)
-    config_file = os.path.join(os.path.dirname(__file__), config_file)
-    config = Configuration(config_file)
-    Configuration.config = config
+    tree_file = os.path.join(os.path.dirname(__file__), 'regression_test_data', tree_file)
+    config_file = os.path.join(os.path.dirname(__file__), 'regression_test_data', config_file)
+    Configuration.config = Configuration(config_file)
 
     # open and prepare mesh
-    mesh = trimesh.load(config.mesh, validate=True)
-    mesh.apply_scale(config.scale_factor)
-    chull = mesh.convex_hull
-    mesh = bsp_mesh.BSPMesh.from_trimesh(mesh)
-    mesh._convex_hull = chull
+    mesh = utils.open_mesh()
     # open tree baseline
-    baseline, *_ = bsp.BSPTree.from_json(mesh, tree_file)
+    baseline = utils.open_tree(mesh, tree_file)
     # run new tree
     tree = search.beam_search(mesh)
     # verify they are the same
@@ -40,6 +36,8 @@ def test_regression(file_number):
             assert baseline_node.plane is None
         else:
             # same origin
-            assert np.all(baseline_node.plane[0] == node.plane[0])
+            print(f"baseline origin {baseline_node.plane[0]}, test origin {node.plane[0]}")
             # same normal
+            print(f"baseline normal {baseline_node.plane[1]}, test normal {node.plane[1]}")
+            assert np.all(baseline_node.plane[0] == node.plane[0])
             assert np.all(baseline_node.plane[1] == node.plane[1])

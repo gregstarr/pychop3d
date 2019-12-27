@@ -10,6 +10,7 @@ possible features:
 TODO:
     - should test a variety of functions that use configuration and verify that the output is different
         when using modified configuration
+
 """
 
 import trimesh
@@ -20,9 +21,7 @@ import os
 
 from pychop3d.configuration import Configuration
 from pychop3d import bsp
-from pychop3d import bsp_mesh
-
-config = Configuration.config
+from pychop3d import section
 
 
 def test_modify_configuration():
@@ -30,12 +29,10 @@ def test_modify_configuration():
     default part and the default configuration, verify that it will fit in the printer volume, then modify the
     printer volume in the config and verify that a newly created tree will have a different n_parts objective
     """
+    config = Configuration.config
     print()
-    # open and prepare mesh
     mesh = trimesh.load(config.mesh, validate=True)
-    chull = mesh.convex_hull
-    mesh = bsp_mesh.BSPMesh.from_trimesh(mesh)
-    mesh._convex_hull = chull
+
     # create bsp tree
     tree = bsp.BSPTree(mesh)
     print(f"n parts: {tree.nodes[0].n_parts}")
@@ -53,6 +50,7 @@ def test_modify_configuration():
 def test_load():
     """load a non-default parameter from a yaml file and verify that the config object matches
     """
+    config = Configuration.config
     with tempfile.TemporaryDirectory() as tempdir:
         params = {
             'printer_extents': [1, 2, 3],
@@ -72,12 +70,55 @@ def test_load():
 def test_save():
     """modify the config, save it, verify that the modified values are saved and can be loaded
     """
+    config = Configuration.config
     config.connector_diameter = 100
     with tempfile.TemporaryDirectory() as tempdir:
+        # change directory
         config.directory = tempdir
+        # save using a file name
         path = config.save("test_config.yml")
-
+        # load the config back
         new_config = Configuration(path)
 
     assert new_config.connector_diameter == 100
+
+    with tempfile.TemporaryDirectory() as tempdir:
+        # change config directory
+        config.directory = tempdir
+        # save using cached name, should be 'test_config.yml'
+        path = config.save()
+        assert path == os.path.join(tempdir, 'test_config.yml')
+
     config.restore_defaults()
+
+
+def test_functions():
+    """modify the config and verify that various functions correctly use the updated version
+    """
+    config = Configuration.config
+    mesh = trimesh.load(config.mesh, validate=True)
+    print()
+    # BSPNode instantiation (n_parts)
+    n_parts_1 = bsp.BSPNode(mesh).n_parts
+    config.printer_extents = np.array([20, 20, 20])
+    n_parts_2 = bsp.BSPNode(mesh).n_parts
+    assert n_parts_1 != n_parts_2
+    config.restore_defaults()
+
+    # get_planes (plane_spacing, default is )
+    node = bsp.BSPNode(mesh)
+    planes_1 = node.get_planes(np.array([0, 1, 0]))
+    config.plane_spacing /= 2
+    planes_2 = node.get_planes(np.array([0, 1, 0]))
+    assert len(planes_2) > len(planes_1)
+    config.restore_defaults()
+
+    # uniform normals
+    normals1 = config.normals.copy()
+    config.n_theta = 10
+    normals2 = config.normals.copy()
+    config.n_phi = 10
+    normals3 = config.normals.copy()
+    assert len(normals1) < len(normals2) < len(normals3)
+    config.restore_defaults()
+    # etc, etc ...

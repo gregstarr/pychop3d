@@ -4,5 +4,10 @@ profile
 .idea
 .pytest_cache
 pychop3d/__pycache__
+<<<<<<< HEAD
+failed
+debug
+=======
 debug
 failed
+>>>>>>> 3ffe6d7706b5673a461d3578dc72a75b2eb4d919

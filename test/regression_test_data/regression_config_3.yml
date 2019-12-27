@@ -1,13 +1,13 @@
-beam_width: 2
+_directory: C:\Users\Greg\code\pychop3d\output\20191226_160235
+beam_width: 5
 connector_collision_penalty: 10000000000
 connector_diameter: 10
 connector_diameter_max: 30
 connector_diameter_min: 5
-connector_objective_th: 5
+connector_objective_th: 10
 connector_tolerance: 1
 different_angle_th: 0.3141592653589793
 different_origin_th: 34.64101615137755
-directory: C:\Users\Greg\code\pychop3d\debug
 do_not_save:
 - normals
 fragility_objective_th: 0.95
@@ -21,7 +21,7 @@ objective_weights:
   seam: 0
   symmetry: 0
   utilization: 0.25
-plane_spacing: 30
+plane_spacing: 20
 printer_extents:
 - 200.0
 - 200.0
@@ -29,5 +29,6 @@ printer_extents:
 sa_initial_connector_ratio: 0.1
 sa_initialization_iterations: 15000
 sa_iterations: 300000
+save_path: C:\Users\Greg\code\pychop3d\output\20191226_160235\20191226_160235_config.yml
 scale: true
-scale_factor: 2.5
+scale_factor: 3
