@@ -18,6 +18,9 @@ TODO:
         - proper logging
         - instead of fixing the connector diameter based on some arbitrary function of the cc area,
             why not consider several different sizes of connector and let the SA objective function decide?
+        - metadata
+            - time taken for the run
+            - number of faces, verts, edges
     3) optional future ideas:
         - chopper class?
         - cross section area penalty?
