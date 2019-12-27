@@ -2,7 +2,6 @@
 TODO:
     1) TESTS!
         - tests for all objectives
-        - connector placement tests
         - make a stable master branch
         - random thing downlaoder
     2) features:
@@ -10,13 +9,15 @@ TODO:
             - plane node
             - root node
             - separation node
-        - other connectors
+        - other connectors / connector class
             - tabs for bolting
             - shell / sheath type
         - calculate objectives for many planes at once
             - fragility speedup
             - trimesh.intersections.mesh_multiplane
         - proper logging
+        - instead of fixing the connector diameter based on some arbitrary function of the cc area,
+            why not consider several different sizes of connector and let the SA objective function decide?
     3) optional future ideas:
         - chopper class?
         - cross section area penalty?

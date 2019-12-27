@@ -16,8 +16,8 @@ def test_regression(file_number):
     # files
     tree_file = f"regression_tree_{file_number}.json"
     config_file = f"regression_config_{file_number}.yml"
-    tree_file = os.path.join(os.path.dirname(__file__), tree_file)
-    config_file = os.path.join(os.path.dirname(__file__), config_file)
+    tree_file = os.path.join(os.path.dirname(__file__), 'regression_test_data', tree_file)
+    config_file = os.path.join(os.path.dirname(__file__), 'regression_test_data', config_file)
     Configuration.config = Configuration(config_file)
 
     # open and prepare mesh

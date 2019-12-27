@@ -10,8 +10,11 @@ class ConnectedComponent:
     def __init__(self, cross_section, polygon, positive, negative):
         config = Configuration.config
         self.valid = False
-        self.connector_diameter = np.clip(np.sqrt(polygon.area) / 6, config.connector_diameter_min,
-                                          config.connector_diameter_max)
+        if config.adaptive_connector_size:
+            self.connector_diameter = np.clip(np.sqrt(polygon.area) / 6, config.connector_diameter_min,
+                                              config.connector_diameter_max)
+        else:
+            self.connector_diameter = config.connector_diameter
         self.area = polygon.area
         self.normal = cross_section.normal
         self.origin = cross_section.origin
@@ -26,8 +29,8 @@ class ConnectedComponent:
                                                 cross_section.xform)
         pos_dists = positive.nearest.signed_distance(mesh_samples + (1 + self.connector_diameter) * cross_section.normal)
         neg_dists = negative.nearest.signed_distance(mesh_samples + (1 + self.connector_diameter) * -1 * cross_section.normal)
-        pos_valid_mask = pos_dists > self.connector_diameter
-        neg_valid_mask = neg_dists > self.connector_diameter
+        pos_valid_mask = pos_dists > self.connector_diameter / 2
+        neg_valid_mask = neg_dists > self.connector_diameter / 2
         ch_area_mask = np.logical_or(pos_valid_mask, neg_valid_mask)
 
         if ch_area_mask.sum() == 0:
@@ -47,8 +50,11 @@ class ConnectedComponent:
 
     def grid_sample_polygon(self, polygon):
         min_x, min_y, max_x, max_y = polygon.bounds
-        X, Y = np.meshgrid(np.arange(min_x, max_x, self.connector_diameter)[1:],
-                           np.arange(min_y, max_y, self.connector_diameter)[1:])
+        xp = np.arange(min_x + self.connector_diameter / 2, max_x - self.connector_diameter / 2, self.connector_diameter)
+        xp += (min_x + max_x) / 2 - (xp.min() + xp.max()) / 2
+        yp = np.arange(min_y + self.connector_diameter / 2, max_y - self.connector_diameter / 2, self.connector_diameter)
+        yp += (min_y + max_y) / 2 - (yp.min() + yp.max()) / 2
+        X, Y = np.meshgrid(xp, yp)
         xy = np.stack((X.ravel(), Y.ravel()), axis=1)
         mask = np.zeros(xy.shape[0], dtype=bool)
         for i in range(xy.shape[0]):

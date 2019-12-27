@@ -75,7 +75,7 @@ class ConnectorPlacer:
                     d = np.sqrt(((sites[i, :3] - sites[j, :3]) ** 2).sum())
                     if d < 2 * rc:
                         ci -= 2 * np.pi * (rc - d/2) ** 2
-            objective += cc.area / (10**-5 + max(0, ci))
+            objective += cc.area / (config.empty_cc_penalty + max(0, ci))
             if ci < 0:
                 objective -= ci / cc.area
 

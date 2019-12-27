@@ -8,20 +8,6 @@ from pychop3d.configuration import Configuration
 from pychop3d import section
 
 
-def test_expand_node():
-    config = Configuration.config
-    print()
-    mesh = trimesh.load(config.mesh, validate=True)
-
-    tree = bsp.BSPTree(mesh)
-    node = tree.nodes[0]
-    extents = node.part.bounding_box_oriented.primitive.extents
-    normal = trimesh.unitize(np.random.rand(3))
-    planes = node.get_planes(normal, extents.min()/10)
-    plane = planes[np.random.randint(0, len(planes))]
-    tree = tree.expand_node(plane, node)
-
-
 def test_different_from():
     config = Configuration.config
     print()
@@ -107,3 +93,27 @@ def test_expand_node():
     plane = planes[len(planes) // 2]
     tree2 = tree1.expand_node(plane, node)
     assert tree2._objective is None
+
+
+def test_grid_sample():
+    config = Configuration.config
+    origin, normal = (np.zeros(3), np.array([0, 0, 1]))
+
+    cd = config.connector_diameter
+    mesh = trimesh.primitives.Box(extents=[cd / 1.9, cd / 1.9, 40])
+    positive, negative, cross_section = section.bidirectional_split(mesh, origin, normal)
+    polygon = cross_section.path2d.polygons_full[0]
+    cc = section.ConnectedComponent(cross_section, polygon, positive, negative)
+    assert cc.valid
+
+    mesh.apply_translation([3, 0, 0])
+    positive, negative, cross_section = section.bidirectional_split(mesh, origin, normal)
+    polygon = cross_section.path2d.polygons_full[0]
+    cc = section.ConnectedComponent(cross_section, polygon, positive, negative)
+    assert cc.valid
+
+    mesh.apply_transform(trimesh.transformations.rotation_matrix(np.pi/4, np.array([0, 0, 1])))
+    positive, negative, cross_section = section.bidirectional_split(mesh, origin, normal)
+    polygon = cross_section.path2d.polygons_full[0]
+    cc = section.ConnectedComponent(cross_section, polygon, positive, negative)
+    assert cc.valid

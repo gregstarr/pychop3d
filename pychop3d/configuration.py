@@ -68,10 +68,12 @@ class Configuration:
         self.connector_objective_th = 10
         # connector placement parameters
         self.connector_collision_penalty = 10 ** 10
+        self.empty_cc_penalty = 10**-5
         self.sa_initial_connector_ratio = .1
         self.sa_initialization_iterations = 15_000
         self.sa_iterations = 300_000
         # connector settings
+        self.adaptive_connector_size = True
         self.connector_diameter_min = 5
         self.connector_diameter_max = 30
         self.connector_diameter = 10
