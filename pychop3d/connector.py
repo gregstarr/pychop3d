@@ -69,7 +69,7 @@ class ConnectorPlacer:
             rc = min(np.sqrt(cc.area) / 2, 10 * cc.connector_diameter)
             sites = cc.get_sites(state)
             ci = 0
-            if sites.size > 0:
+            if len(sites) > 0:
                 ci = len(sites) * np.pi * rc**2
                 for i, j in itertools.combinations(range(len(sites)), 2):
                     d = np.sqrt(((sites[i, :3] - sites[j, :3]) ** 2).sum())

@@ -9,13 +9,13 @@ from pychop3d import section
 
 
 def test_different_from():
+    # TODO: this one can fail
     config = Configuration.config
     print()
     mesh = trimesh.load(config.mesh, validate=True)
 
     tree = bsp.BSPTree(mesh)
     root = tree.nodes[0]
-    extents = root.part.bounding_box_oriented.primitive.extents
     normal = trimesh.unitize(np.random.rand(3))
     planes = root.get_planes(normal)
     plane = planes[np.random.randint(0, len(planes))]

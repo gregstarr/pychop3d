@@ -119,6 +119,6 @@ def test_functions():
     normals2 = config.normals.copy()
     config.n_phi = 10
     normals3 = config.normals.copy()
-    assert normals1.size < normals2.size < normals3.size
+    assert len(normals1) < len(normals2) < len(normals3)
     config.restore_defaults()
     # etc, etc ...

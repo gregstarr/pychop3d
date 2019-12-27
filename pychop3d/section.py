@@ -20,7 +20,7 @@ class ConnectedComponent:
         self.origin = cross_section.origin
         plane_samples = self.grid_sample_polygon(polygon)
 
-        if plane_samples.size == 0:
+        if len(plane_samples) == 0:
             # no 'Connector' locations
             print('C', end='')
             return
@@ -51,8 +51,12 @@ class ConnectedComponent:
     def grid_sample_polygon(self, polygon):
         min_x, min_y, max_x, max_y = polygon.bounds
         xp = np.arange(min_x + self.connector_diameter / 2, max_x - self.connector_diameter / 2, self.connector_diameter)
+        if len(xp) == 0:
+            return []
         xp += (min_x + max_x) / 2 - (xp.min() + xp.max()) / 2
         yp = np.arange(min_y + self.connector_diameter / 2, max_y - self.connector_diameter / 2, self.connector_diameter)
+        if len(yp) == 0:
+            return []
         yp += (min_y + max_y) / 2 - (yp.min() + yp.max()) / 2
         X, Y = np.meshgrid(xp, yp)
         xy = np.stack((X.ravel(), Y.ravel()), axis=1)
