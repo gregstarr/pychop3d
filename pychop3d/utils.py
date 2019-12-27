@@ -18,7 +18,6 @@ def open_mesh():
         else:
             factor = int(np.ceil(1.1 / np.max(mesh.extents / config.printer_extents)))
             config.scale_factor = factor
-            config.save()
             print(f"Calculated scale factor: {factor}")
         if factor > 1:
             mesh.apply_scale(factor)
