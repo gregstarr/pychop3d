@@ -2,9 +2,8 @@
 TODO:
     1) TESTS!
         - tests for all objectives
-        - make a stable master branch
-        - random thing downlaoder
     2) features:
+        - random thing downlaoder
         - node subclasses
             - plane node
             - root node
