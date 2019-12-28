@@ -4,6 +4,7 @@ import trimesh
 
 from pychop3d.configuration import Configuration
 from pychop3d import bsp
+from pychop3d import utils
 
 
 class ConnectorPlacer:
@@ -13,6 +14,8 @@ class ConnectorPlacer:
         self.connectors = []
         self.n_connectors = 0
         cross_section_meshes = []
+        if len(tree.nodes) < 2:
+            raise Exception("input tree needs to have a chop")
         for n, node in enumerate(tree.nodes):
             if node.cross_section is None:
                 continue
@@ -138,14 +141,18 @@ class ConnectorPlacer:
                     slot = trimesh.primitives.Box(
                         extents=np.ones(3) * (cc.connector_diameter + config.connector_tolerance),
                         transform=xform)
+                    utils.trimesh_repair(new_node.children[0].part)
                     new_node.children[0].part = new_node.children[0].part.difference(slot, engine='scad')
+                    utils.trimesh_repair(new_node.children[1].part)
                     new_node.children[1].part = new_node.children[1].part.union(self.connectors[idx], engine='scad')
                 for idx in neg_index:
                     xform = self.connectors[idx].primitive.transform
                     slot = trimesh.primitives.Box(
                         extents=np.ones(3) * (cc.connector_diameter + config.connector_tolerance),
                         transform=xform)
+                    utils.trimesh_repair(new_node.children[1].part)
                     new_node.children[1].part = new_node.children[1].part.difference(slot, engine='scad')
+                    utils.trimesh_repair(new_node.children[0].part)
                     new_node.children[0].part = new_node.children[0].part.union(self.connectors[idx], engine='scad')
 
         return new_tree
