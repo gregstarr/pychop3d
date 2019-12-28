@@ -10,13 +10,13 @@ from pychop3d.configuration import Configuration
 def open_mesh():
     config = Configuration.config
     mesh = trimesh.load(config.mesh)
-
+    trimesh_repair(mesh)
     if config.scale:
         if hasattr(config, 'scale_factor'):
             factor = config.scale_factor
             print(f"Configured scale factor: {factor}")
         else:
-            factor = int(np.ceil(1.1 / np.max(mesh.extents / config.printer_extents)))
+            factor = int(np.ceil(1.1 / np.max(mesh.bounding_box_oriented.primitive.extents / config.printer_extents)))
             config.scale_factor = factor
             print(f"Calculated scale factor: {factor}")
         if factor > 1:
@@ -64,3 +64,10 @@ def plane(normal, origin, w=100):
     xform = np.linalg.inv(trimesh.points.plane_transform(origin, normal))
     box = trimesh.primitives.Box(extents=(w, w, .5), transform=xform)
     return box
+
+
+def trimesh_repair(mesh):
+    trimesh.repair.fill_holes(mesh)
+    trimesh.repair.fix_winding(mesh)
+    trimesh.repair.fix_inversion(mesh)
+    trimesh.repair.fix_normals(mesh)

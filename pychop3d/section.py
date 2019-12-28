@@ -27,10 +27,14 @@ class ConnectedComponent:
 
         mesh_samples = trimesh.transform_points(np.column_stack((plane_samples, np.zeros(plane_samples.shape[0]))),
                                                 cross_section.xform)
-        pos_dists = positive.nearest.signed_distance(mesh_samples + (1 + self.connector_diameter) * cross_section.normal)
-        neg_dists = negative.nearest.signed_distance(mesh_samples + (1 + self.connector_diameter) * -1 * cross_section.normal)
-        pos_valid_mask = pos_dists > self.connector_diameter / 2
-        neg_valid_mask = neg_dists > self.connector_diameter / 2
+        pos_dists = positive.nearest.signed_distance(mesh_samples + (1 + self.connector_diameter) *
+                                                     cross_section.normal)
+        neg_dists = negative.nearest.signed_distance(mesh_samples + (1 + self.connector_diameter) *
+                                                     -1 * cross_section.normal)
+        # the 1.5 is a slight overestimate of sqrt(2) to make the radius larger than
+        # half the diagonal of a square connector
+        pos_valid_mask = pos_dists > 1.5 * self.connector_diameter / 2
+        neg_valid_mask = neg_dists > 1.5 * self.connector_diameter / 2
         ch_area_mask = np.logical_or(pos_valid_mask, neg_valid_mask)
 
         if ch_area_mask.sum() == 0:
@@ -98,6 +102,7 @@ class CrossSection:
 
         # triangulate the cross section
         self.path2d, self.xform = path3d.to_planar()
+        self.path2d.merge_vertices()
         v, f = [], []
         for polygon in self.path2d.polygons_full:
             tri = trimesh.creation.triangulate_polygon(polygon, triangle_args='p', allow_boundary_steiner=False)

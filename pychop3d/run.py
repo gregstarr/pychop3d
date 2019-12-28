@@ -3,7 +3,6 @@ TODO:
     1) TESTS!
         - tests for all objectives
     2) features:
-        - random thing downlaoder
         - node subclasses
             - plane node
             - root node
@@ -37,8 +36,8 @@ from pychop3d import utils
 
 def run():
     # collect the already set config
+    config.save()
     starter = utils.open_mesh()
-
     t0 = time.time()
     tree = beam_search(starter)
     print(f"Best BSP-tree found in {time.time() - t0} seconds")
@@ -61,6 +60,5 @@ if __name__ == "__main__":
     os.mkdir(new_directory)
     config = Configuration.config
     config.directory = new_directory
-
-    config.save(f"{date_string}_config.yml")
+    config.mesh = "C:\\Users\\Greg\\code\\pychop3d\\failed\\20191226_220940\\3980365.stl"
     run()

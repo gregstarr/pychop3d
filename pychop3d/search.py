@@ -51,6 +51,9 @@ def beam_search(starter):
         current_trees = sorted(current_trees, key=lambda x: x.get_objective())
         current_trees = current_trees[:config.beam_width]
 
+        if len(current_trees) == 0:
+            raise Exception("Pychop3D failed")
+
         print(f"Splits: {splits}, best objective: {current_trees[0].get_objective()}, estimated number of parts: "
               f"{current_trees[0].largest_part().n_parts}")
 

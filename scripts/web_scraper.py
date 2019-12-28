@@ -3,6 +3,9 @@ I want this script to download and unzip a random thing from thingiverse, then f
 it using default settings. It should work out of a temporary directory, but if any STL fails to chop,
 it should move the STL and all of the logs, jsons and yamls to a timestamped folder in 'failed'. This
 script should make 100 attempts to chop STLs, then report the success rate.
+
+TODO:
+    - memory leak
 """
 import os
 import tempfile
@@ -33,8 +36,16 @@ def download_stl(directory):
         if req.url.split('.')[-1].lower() != 'stl':
             continue
         file_name = os.path.join(directory, f"{thing_number}.stl")
-        with open(file_name, 'wb') as f:
-            f.write(req.content)
+        try:
+            content = req.content.decode()
+            with open(file_name, 'w') as f:
+                f.write(content)
+        except UnicodeDecodeError:
+            with open(file_name, 'wb') as f:
+                f.write(req.content)
+        except Exception as e:
+            print(e)
+            raise e
         return file_name
 
 
@@ -61,6 +72,9 @@ if __name__ == "__main__":
     N_ITERATIONS = 10
     n_failed = 0
     for _ in range(N_ITERATIONS):
+        print(f"*********************************************************")
+        print(f"********* ITERATION: {_}, FAILED: {n_failed}")
+        print(f"*********************************************************")
         # create temporary directory
         with tempfile.TemporaryDirectory() as tempdir:
             # create timestamped directory within temporary directory
@@ -87,4 +101,4 @@ if __name__ == "__main__":
                 shutil.move(timestamped_dir, failed_directory)
                 config.directory = failed_directory
                 config.save()
-    print(f"{N_ITERATIONS - n_failed} / {N_ITERATIONS} Successes: {(N_ITERATIONS - n_failed) / N_ITERATIONS}")
+    print(f"{N_ITERATIONS} attempts: {(N_ITERATIONS - n_failed) / N_ITERATIONS} success rate")
