@@ -3,6 +3,8 @@ TODO:
     1) TESTS!
         - tests for all objectives
     2) features:
+        - memory issue
+        - oriented bounding box alternate
         - node subclasses
             - plane node
             - root node
@@ -36,7 +38,6 @@ from pychop3d import utils
 
 def run():
     # collect the already set config
-    config.save()
     starter = utils.open_mesh()
     t0 = time.time()
     tree = beam_search(starter)
@@ -51,6 +52,8 @@ def run():
 
     tree.export_stl()
     tree.save("final_tree_with_connectors.json", state)
+    config = Configuration.config
+    config.save()
 
 
 if __name__ == "__main__":

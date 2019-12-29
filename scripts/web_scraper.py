@@ -69,11 +69,11 @@ def dump_error(timestamped_dir):
 
 
 if __name__ == "__main__":
-    N_ITERATIONS = 10
+    N_ITERATIONS = 20
     n_failed = 0
     for _ in range(N_ITERATIONS):
         print(f"*********************************************************")
-        print(f"********* ITERATION: {_}, FAILED: {n_failed}")
+        print(f"           ITERATION: {_}, FAILED: {n_failed}            ")
         print(f"*********************************************************")
         # create temporary directory
         with tempfile.TemporaryDirectory() as tempdir:
