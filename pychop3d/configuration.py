@@ -54,7 +54,7 @@ class Configuration:
         self.normals = self.uniform_normals()
         # plane uniqueness parameters
         self.different_origin_th = float(.1 * np.sqrt(np.sum(self.printer_extents ** 2)))
-        self.different_angle_th = np.pi / 10
+        self.different_angle_th = np.pi / 18
         # objective parameters
         self.objective_weights = {
             'part': 1,
@@ -82,8 +82,9 @@ class Configuration:
         self.mesh = "C:\\Users\\Greg\\Downloads\\Low_Poly_Stanford_Bunny\\files\\Bunny-LowPoly.stl"
         self._directory = "C:\\Users\\Greg\\code\\pychop3d\\debug"
         self.save_path = os.path.join(self.directory, 'config.yml')
-        self.scale = True
+        self.scale = False
         self.beam_width = 5
+        self.subdivide = False
 
     @property
     def directory(self):

@@ -21,6 +21,8 @@ def open_mesh():
             print(f"Calculated scale factor: {factor}")
         if factor > 1:
             mesh.apply_scale(factor)
+    if config.subdivide:
+        mesh = mesh.subdivide()
 
     return mesh
 
@@ -60,7 +62,7 @@ def get_unique_normals(non_unique_normals):
     return unique.view(dtype=float).reshape((unique.shape[0], -1))
 
 
-def plane(normal, origin, w=100):
+def plane(origin, normal, w=100):
     xform = np.linalg.inv(trimesh.points.plane_transform(origin, normal))
     box = trimesh.primitives.Box(extents=(w, w, .5), transform=xform)
     return box

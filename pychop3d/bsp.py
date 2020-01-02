@@ -8,6 +8,7 @@ import os
 
 from pychop3d import constants
 from pychop3d import section
+from pychop3d import utils
 from pychop3d.configuration import Configuration
 
 
@@ -17,7 +18,7 @@ class BSPNode:
         config = Configuration.config
         self.part = part
         self.parent = parent
-        self.children = {}
+        self.children = []
         self.path = tuple()
         self.plane = None
         self.cross_section = None
@@ -30,17 +31,14 @@ class BSPNode:
     def split(self, plane):
         self.plane = plane
         origin, normal = plane
-        positive, negative, cross_section = section.bidirectional_split(self.part, origin, normal)
+        parts, cross_section = section.bidirectional_split(self.part, origin, normal)
 
-        if None in [positive, negative, cross_section]:
-            return False
-
-        if not cross_section.find_connector_sites(positive, negative):
+        if None in [parts, cross_section]:
             return False
 
         self.cross_section = cross_section
-        self.children[0] = BSPNode(positive, parent=self, num=0)
-        self.children[1] = BSPNode(negative, parent=self, num=1)
+        for i, part in enumerate(parts):
+            self.children.append(BSPNode(part, parent=self, num=i))
         print('.', end='')
         return True
 
@@ -67,15 +65,13 @@ class BSPNode:
 
     def different_from(self, other_node):
         config = Configuration.config
-        plane_transform = trimesh.points.plane_transform(*self.plane)
         o = other_node.plane[0]
-        op = np.array([o[0], o[1], o[2], 1], dtype=float)
-        op = (plane_transform @ op)[:3]
+        delta = o - self.plane[0]
+        dist = abs(self.plane[1] @ delta)
         angle = trimesh.transformations.angle_between_vectors(self.plane[1], other_node.plane[1])
         angle = min(np.pi - angle, angle)
 
-        return (np.sqrt(np.sum(op ** 2)) > config.different_origin_th or
-                angle > config.different_angle_th)
+        return dist > config.different_origin_th or angle > config.different_angle_th
 
     def get_connection_objective(self):
         return max([cc.objective for cc in self.cross_section.connected_components])
@@ -124,7 +120,7 @@ class BSPTree:
         if not new_node.split(plane):
             return None
         new_tree._node_data[node.path] = plane
-        new_tree.nodes += list(new_node.children.values())
+        new_tree.nodes += new_node.children
         return new_tree
 
     def get_node(self, path=None):
@@ -141,10 +137,10 @@ class BSPTree:
         leaves = []
         while nodes:
             node = nodes.pop()
-            if node.children == {}:
+            if len(node.children) == 0:
                 leaves.append(node)
             else:
-                nodes += list(node.children.values())
+                nodes += node.children
         return leaves
 
     def terminated(self):
@@ -162,6 +158,7 @@ class BSPTree:
             return True
         for tree in tree_set:
             if not self.different_from(tree, node):
+                self.different_from(tree, node)
                 return False
         return True
 
@@ -245,6 +242,7 @@ class BSPTree:
         for leaf in self.get_leaves():
             leaf.part.visual.face_colors = np.random.rand(3)*255
             scene.add_geometry(leaf.part)
+        scene.camera.z_far = 10_000
         scene.show()
 
     def save(self, filename, state=None):

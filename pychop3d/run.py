@@ -29,6 +29,7 @@ TODO:
 import time
 import datetime
 import os
+import numpy as np
 
 from pychop3d.search import beam_search
 from pychop3d import connector
@@ -62,6 +63,9 @@ if __name__ == "__main__":
     new_directory = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'output', date_string))
     os.mkdir(new_directory)
     config = Configuration.config
+    config.printer_extents = np.array([500, 500, 500], dtype=float)
+    config.mesh = "C:\\Users\\Greg\\Documents\\shoe rack v12.stl"
     config.directory = new_directory
-    config.mesh = "C:\\Users\\Greg\\code\\pychop3d\\failed\\20191226_220940\\3980365.stl"
+    config.plane_spacing = 40
+    config.beam_width = 3
     run()

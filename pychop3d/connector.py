@@ -13,14 +13,14 @@ class ConnectorPlacer:
         self.connected_components = []
         self.connectors = []
         self.n_connectors = 0
-        cross_section_meshes = []
+        caps = []
         if len(tree.nodes) < 2:
             raise Exception("input tree needs to have a chop")
         for n, node in enumerate(tree.nodes):
             if node.cross_section is None:
                 continue
-            cross_section_meshes.append(node.cross_section.mesh)
             for cc in node.cross_section.connected_components:
+                caps.append(cc.mesh)
                 cc.register_sites(len(self.connectors))
                 self.connected_components.append(cc)
                 for site in cc.positive_sites:
@@ -43,7 +43,7 @@ class ConnectorPlacer:
             print('.', end='')
             th = connector.primitive.extents[0] / 2
             intersections = 0
-            for m in cross_section_meshes:
+            for m in caps:
                 if m.nearest.on_surface(connector.vertices)[1].min() > th:
                     continue
                 try:
@@ -136,23 +136,25 @@ class ConnectorPlacer:
                 continue
             for cc in node.cross_section.connected_components:
                 pos_index, neg_index = cc.get_indices(state)
+                pi = cc.positive
+                ni = cc.negative
                 for idx in pos_index:
                     xform = self.connectors[idx].primitive.transform
                     slot = trimesh.primitives.Box(
                         extents=np.ones(3) * (cc.connector_diameter + config.connector_tolerance),
                         transform=xform)
-                    utils.trimesh_repair(new_node.children[0].part)
-                    new_node.children[0].part = new_node.children[0].part.difference(slot, engine='scad')
-                    utils.trimesh_repair(new_node.children[1].part)
-                    new_node.children[1].part = new_node.children[1].part.union(self.connectors[idx], engine='scad')
+                    utils.trimesh_repair(new_node.children[pi].part)
+                    new_node.children[pi].part = new_node.children[pi].part.difference(slot, engine='scad')
+                    utils.trimesh_repair(new_node.children[ni].part)
+                    new_node.children[ni].part = new_node.children[ni].part.union(self.connectors[idx], engine='scad')
                 for idx in neg_index:
                     xform = self.connectors[idx].primitive.transform
                     slot = trimesh.primitives.Box(
                         extents=np.ones(3) * (cc.connector_diameter + config.connector_tolerance),
                         transform=xform)
-                    utils.trimesh_repair(new_node.children[1].part)
-                    new_node.children[1].part = new_node.children[1].part.difference(slot, engine='scad')
-                    utils.trimesh_repair(new_node.children[0].part)
-                    new_node.children[0].part = new_node.children[0].part.union(self.connectors[idx], engine='scad')
+                    utils.trimesh_repair(new_node.children[ni].part)
+                    new_node.children[ni].part = new_node.children[ni].part.difference(slot, engine='scad')
+                    utils.trimesh_repair(new_node.children[pi].part)
+                    new_node.children[pi].part = new_node.children[pi].part.union(self.connectors[idx], engine='scad')
 
         return new_tree

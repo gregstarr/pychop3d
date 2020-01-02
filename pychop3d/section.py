@@ -3,34 +3,55 @@ import numpy as np
 import shapely.geometry as sg
 
 from pychop3d.configuration import Configuration
+from pychop3d import utils
 
 
 class ConnectedComponent:
 
-    def __init__(self, cross_section, polygon, positive, negative):
+    def __init__(self, polygon, xform, normal, origin):
         config = Configuration.config
-        self.valid = False
+        self.polygon = polygon
+        self.normal = normal
+        self.origin = origin
+        self.xform = xform
+        self.area = self.polygon.area
+        self.positive = None
+        self.negative = None
+        self.connector_diameter = None
+        self.objective = None
+        self.positive_sites = None
+        self.pos_index = None
+        self.negative_sites = None
+        self.neg_index = None
+        self.all_sites = None
+        self.all_index = None
+
         if config.adaptive_connector_size:
-            self.connector_diameter = np.clip(np.sqrt(polygon.area) / 6, config.connector_diameter_min,
+            self.connector_diameter = np.clip(np.sqrt(self.polygon.area) / 6, config.connector_diameter_min,
                                               config.connector_diameter_max)
         else:
             self.connector_diameter = config.connector_diameter
-        self.area = polygon.area
-        self.normal = cross_section.normal
-        self.origin = cross_section.origin
-        plane_samples = self.grid_sample_polygon(polygon)
+
+        verts, faces = trimesh.creation.triangulate_polygon(polygon, triangle_args='p', allow_boundary_steiner=False)
+        verts = np.column_stack((verts, np.zeros(len(verts))))
+        verts = trimesh.transform_points(verts, xform)
+        faces = np.fliplr(faces)
+        self.mesh = trimesh.Trimesh(verts, faces)
+
+    def evaluate_interface(self, positive, negative):
+        config = Configuration.config
+
+        plane_samples = self.grid_sample_polygon()
 
         if len(plane_samples) == 0:
             # no 'Connector' locations
             print('C', end='')
-            return
+            return False
 
         mesh_samples = trimesh.transform_points(np.column_stack((plane_samples, np.zeros(plane_samples.shape[0]))),
-                                                cross_section.xform)
-        pos_dists = positive.nearest.signed_distance(mesh_samples + (1 + self.connector_diameter) *
-                                                     cross_section.normal)
-        neg_dists = negative.nearest.signed_distance(mesh_samples + (1 + self.connector_diameter) *
-                                                     -1 * cross_section.normal)
+                                                self.xform)
+        pos_dists = positive.nearest.signed_distance(mesh_samples + (1 + self.connector_diameter) * self.normal)
+        neg_dists = negative.nearest.signed_distance(mesh_samples + (1 + self.connector_diameter) * -1 * self.normal)
         # the 1.5 is a slight overestimate of sqrt(2) to make the radius larger than
         # half the diagonal of a square connector
         pos_valid_mask = pos_dists > 1.5 * self.connector_diameter / 2
@@ -40,20 +61,17 @@ class ConnectedComponent:
         if ch_area_mask.sum() == 0:
             # no 'Connector' locations
             print('C', end='')
-            return
+            return False
 
         convex_hull_area = sg.MultiPoint(plane_samples[ch_area_mask]).buffer(self.connector_diameter / 2).convex_hull.area
         self.objective = max(self.area / convex_hull_area - config.connector_objective_th, 0)
         self.positive_sites = mesh_samples[pos_valid_mask]
-        self.pos_index = None
         self.negative_sites = mesh_samples[neg_valid_mask]
-        self.neg_index = None
         self.all_sites = np.concatenate((self.positive_sites, self.negative_sites), axis=0)
-        self.all_index = None
-        self.valid = True
+        return True
 
-    def grid_sample_polygon(self, polygon):
-        min_x, min_y, max_x, max_y = polygon.bounds
+    def grid_sample_polygon(self):
+        min_x, min_y, max_x, max_y = self.polygon.bounds
         xp = np.arange(min_x + self.connector_diameter / 2, max_x - self.connector_diameter / 2, self.connector_diameter)
         if len(xp) == 0:
             return []
@@ -67,7 +85,7 @@ class ConnectedComponent:
         mask = np.zeros(xy.shape[0], dtype=bool)
         for i in range(xy.shape[0]):
             point = sg.Point(xy[i])
-            if point.within(polygon):
+            if point.within(self.polygon):
                 mask[i] = True
         return xy[mask]
 
@@ -94,52 +112,34 @@ class CrossSection:
         self.connected_components = []
 
         path3d = mesh.section(plane_origin=origin, plane_normal=normal)
-
         if path3d is None:
-            # plane 'Missed' part
+            # 'Missed' the part basically
             print('M', end='')
             return
 
         # triangulate the cross section
-        self.path2d, self.xform = path3d.to_planar()
-        self.path2d.merge_vertices()
-        v, f = [], []
-        for polygon in self.path2d.polygons_full:
-            tri = trimesh.creation.triangulate_polygon(polygon, triangle_args='p', allow_boundary_steiner=False)
-            v.append(tri[0])
-            f.append(tri[1])
-        vf, ff = trimesh.util.append_faces(v, f)
-        vf = np.column_stack((vf, np.zeros(len(vf))))
-        vf = trimesh.transform_points(vf, self.xform)
-        ff = np.fliplr(ff)
-        # create cap which is the same for both sides of split
-        self.mesh = trimesh.Trimesh(vf, ff)
+        path2d, self.xform = path3d.to_planar()
+        path2d.merge_vertices()
+        for polygon in path2d.polygons_full:
+            self.connected_components.append(ConnectedComponent(polygon, self.xform, self.normal, self.origin))
         self.valid = True
 
     def split(self, mesh):
-        positive_sliced = mesh.slice_plane(plane_origin=self.origin, plane_normal=self.normal)
-        positive_capped = positive_sliced + self.mesh
-        positive_capped._validate = True
-        positive_capped.process()
-        positive_capped.fix_normals()
-        positive_capped.remove_degenerate_faces()
+        cap = np.array([cc.mesh for cc in self.connected_components]).sum()
 
-        negative_sliced = mesh.slice_plane(plane_origin=self.origin, plane_normal=-1 * self.normal)
-        negative_capped = negative_sliced + self.mesh
-        negative_capped._validate = True
-        negative_capped.process()
-        negative_capped.fix_normals()
-        negative_capped.remove_degenerate_faces()
-        return positive_capped, negative_capped
+        positive = mesh.slice_plane(plane_origin=self.origin, plane_normal=self.normal)
+        positive = positive + cap
+        positive._validate = True
+        positive.process()
+        utils.trimesh_repair(positive)
 
-    def find_connector_sites(self, positive, negative):
-        for polygon in self.path2d.polygons_full:
-            cc = ConnectedComponent(self, polygon, positive, negative)
-            if cc.valid:
-                self.connected_components.append(cc)
-            else:
-                return False
-        return True
+        negative = mesh.slice_plane(plane_origin=self.origin, plane_normal=-1 * self.normal)
+        negative = negative + cap
+        negative._validate = True
+        negative.process()
+        utils.trimesh_repair(negative)
+
+        return positive, negative
 
     def get_average_connector_size(self):
         return sum([cc.connector_diameter for cc in self.connected_components]) / len(self.connected_components)
@@ -147,11 +147,50 @@ class CrossSection:
 
 def bidirectional_split(mesh, origin, normal):
     """https://github.com/mikedh/trimesh/issues/235"""
-    cross_section = CrossSection(mesh, origin, normal)
+    tries = 0
+    positive_parts, negative_parts = [], []
+    while (len(positive_parts) == 0 or len(negative_parts) == 0) and tries < 5:
+        tries += 1
+        origin += (np.random.rand() - .5) * normal * .1
+        # determine ConnectedComponents of the cross section
+        cross_section = CrossSection(mesh, origin, normal)
+        if not cross_section.valid:
+            continue
+        # split parts
+        positive, negative = cross_section.split(mesh)
+        positive_parts = positive.split()
+        negative_parts = negative.split()
+        parts_list = list(np.concatenate((positive_parts, negative_parts)))
 
-    if not cross_section.valid:
-        return None, None, None
+    if len(positive_parts) == 0 or len(negative_parts) == 0:
+        # bad 'Separation'
+        print('S', end='')
+        return None, None
 
-    positive, negative = cross_section.split(mesh)
+    for part in parts_list:
+        utils.trimesh_repair(part)
+    # assign 2 parts to each ConnectedComponent of the cross section
+    for cc in cross_section.connected_components:
+        cc_verts = np.round(cc.mesh.vertices, 3).view(dtype=[('', float), ('', float), ('', float)])
+        # assign the cc a positive part
+        for i, part in enumerate(positive_parts):
+            part_verts = np.round(part.vertices, 3).view(dtype=[('', float), ('', float), ('', float)])
+            if np.isin(cc_verts, part_verts).any():
+                cc.positive = i
+                break
+        # assign the cc a negative part
+        for i, part in enumerate(negative_parts):
+            part_verts = np.round(part.vertices, 3).view(dtype=[('', float), ('', float), ('', float)])
+            if np.isin(cc_verts, part_verts).any():
+                cc.negative = i + len(positive_parts)
+                break
 
-    return positive, negative, cross_section
+        if None in [cc.positive, cc.negative]:
+            # bad 'Separation'
+            print('S', end='')
+            return None, None
+
+        if not cc.evaluate_interface(parts_list[cc.positive], parts_list[cc.negative]):
+            return None, None
+
+    return parts_list, cross_section
