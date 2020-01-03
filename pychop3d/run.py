@@ -3,12 +3,10 @@ TODO:
     1) TESTS!
         - tests for all objectives
     2) features:
-        - memory issue
+        - bugs:
+            - memory issue
+            - open scad error
         - oriented bounding box alternate
-        - node subclasses
-            - plane node
-            - root node
-            - separation node
         - other connectors / connector class
             - tabs for bolting
             - shell / sheath type
@@ -45,11 +43,14 @@ def run():
     print(f"Best BSP-tree found in {time.time() - t0} seconds")
     tree.save("final_tree.json")
 
-    t0 = time.time()
-    connector_placer = connector.ConnectorPlacer(tree)
-    state = connector_placer.simulated_annealing_connector_placement()
-    tree = connector_placer.insert_connectors(tree, state)
-    print(f"Best connector arrangement found in {time.time() - t0} seconds")
+    try:
+        t0 = time.time()
+        connector_placer = connector.ConnectorPlacer(tree)
+        state = connector_placer.simulated_annealing_connector_placement()
+        tree = connector_placer.insert_connectors(tree, state)
+        print(f"Best connector arrangement found in {time.time() - t0} seconds")
+    except:
+        print("Connector placement failed")
 
     tree.export_stl()
     tree.save("final_tree_with_connectors.json", state)
@@ -63,9 +64,8 @@ if __name__ == "__main__":
     new_directory = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'output', date_string))
     os.mkdir(new_directory)
     config = Configuration.config
-    config.printer_extents = np.array([500, 500, 500], dtype=float)
     config.mesh = "C:\\Users\\Greg\\Documents\\shoe rack v12.stl"
     config.directory = new_directory
-    config.plane_spacing = 40
     config.beam_width = 3
+    config.different_origin_th = 100
     run()

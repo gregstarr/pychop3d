@@ -10,6 +10,7 @@ class ConnectedComponent:
 
     def __init__(self, polygon, xform, normal, origin):
         config = Configuration.config
+        self.valid = False
         self.polygon = polygon
         self.normal = normal
         self.origin = origin
@@ -32,11 +33,15 @@ class ConnectedComponent:
         else:
             self.connector_diameter = config.connector_diameter
 
+        if self.area < self.connector_diameter ** 2:
+            return
+
         verts, faces = trimesh.creation.triangulate_polygon(polygon, triangle_args='p', allow_boundary_steiner=False)
         verts = np.column_stack((verts, np.zeros(len(verts))))
         verts = trimesh.transform_points(verts, xform)
         faces = np.fliplr(faces)
         self.mesh = trimesh.Trimesh(verts, faces)
+        self.valid = True
 
     def evaluate_interface(self, positive, negative):
         config = Configuration.config
@@ -121,7 +126,12 @@ class CrossSection:
         path2d, self.xform = path3d.to_planar()
         path2d.merge_vertices()
         for polygon in path2d.polygons_full:
-            self.connected_components.append(ConnectedComponent(polygon, self.xform, self.normal, self.origin))
+            cc = ConnectedComponent(polygon, self.xform, self.normal, self.origin)
+            if not cc.valid:
+                # 'Missed' the part basically
+                print('M', end='')
+                return
+            self.connected_components.append(cc)
         self.valid = True
 
     def split(self, mesh):
@@ -157,7 +167,11 @@ def bidirectional_split(mesh, origin, normal):
         if not cross_section.valid:
             continue
         # split parts
-        positive, negative = cross_section.split(mesh)
+        try:
+            positive, negative = cross_section.split(mesh)
+        except Exception as e:
+            print("Unknown problem, skipping", e)
+            continue
         positive_parts = positive.split()
         negative_parts = negative.split()
         parts_list = list(np.concatenate((positive_parts, negative_parts)))

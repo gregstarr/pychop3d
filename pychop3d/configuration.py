@@ -54,7 +54,7 @@ class Configuration:
         self.normals = self.uniform_normals()
         # plane uniqueness parameters
         self.different_origin_th = float(.1 * np.sqrt(np.sum(self.printer_extents ** 2)))
-        self.different_angle_th = np.pi / 18
+        self.different_angle_th = np.pi / 10
         # objective parameters
         self.objective_weights = {
             'part': 1,

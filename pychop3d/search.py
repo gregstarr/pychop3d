@@ -53,7 +53,8 @@ def beam_search(starter):
         current_trees += new_bsps
         current_trees = sorted(current_trees, key=lambda x: x.objective)
         extra_leaves_trees = [t for t in current_trees if len(t.get_leaves()) > n_leaves]
-        current_trees = current_trees[:config.beam_width] + extra_leaves_trees
+        current_trees = current_trees[:config.beam_width]
+        current_trees += [t for t in extra_leaves_trees if t not in current_trees]
 
         if len(current_trees) == 0:
             raise Exception("Pychop3D failed")
@@ -63,5 +64,7 @@ def beam_search(starter):
 
         for i, tree in enumerate(current_trees[:config.beam_width]):
             tree.save(f"{i}.json")
+
+        current_trees[0].export_stl()
 
     return current_trees[0]

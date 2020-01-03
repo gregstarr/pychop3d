@@ -37,8 +37,12 @@ class BSPNode:
             return False
 
         self.cross_section = cross_section
-        for i, part in enumerate(parts):
-            self.children.append(BSPNode(part, parent=self, num=i))
+        try:
+            for i, part in enumerate(parts):
+                self.children.append(BSPNode(part, parent=self, num=i))
+        except Exception as e:
+            print(e)
+            return False
         print('.', end='')
         return True
 
