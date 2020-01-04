@@ -35,9 +35,10 @@ from pychop3d.configuration import Configuration
 from pychop3d import utils
 
 
-def run():
-    # collect the already set config
-    starter = utils.open_mesh()
+def run(starter=None):
+    if starter is None:
+        starter = utils.open_mesh()
+
     t0 = time.time()
     tree = beam_search(starter)
     print(f"Best BSP-tree found in {time.time() - t0} seconds")
@@ -64,8 +65,8 @@ if __name__ == "__main__":
     new_directory = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'output', date_string))
     os.mkdir(new_directory)
     config = Configuration.config
-    config.mesh = "C:\\Users\\Greg\\Documents\\shoe rack v12.stl"
+    config.mesh = "C:\\Users\\Greg\\Documents\\shoe rack v13.stl"
     config.directory = new_directory
     config.beam_width = 3
-    config.different_origin_th = 100
+    config.different_origin_th = 80
     run()

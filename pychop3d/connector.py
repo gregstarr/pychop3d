@@ -143,18 +143,32 @@ class ConnectorPlacer:
                     slot = trimesh.primitives.Box(
                         extents=np.ones(3) * (cc.connector_diameter + config.connector_tolerance),
                         transform=xform)
-                    utils.trimesh_repair(new_node.children[pi].part)
-                    new_node.children[pi].part = new_node.children[pi].part.difference(slot, engine='scad')
-                    utils.trimesh_repair(new_node.children[ni].part)
-                    new_node.children[ni].part = new_node.children[ni].part.union(self.connectors[idx], engine='scad')
+                    try:
+                        utils.trimesh_repair(new_node.children[pi].part)
+                        new_node.children[pi].part = new_node.children[pi].part.difference(slot, engine='scad')
+                        utils.trimesh_repair(new_node.children[ni].part)
+                        new_node.children[ni].part = new_node.children[ni].part.union(self.connectors[idx], engine='scad')
+                    except Exception as e:
+                        utils.trimesh_repair(new_node.children[pi].part)
+                        new_node.children[pi].part = new_node.children[pi].part.difference(slot, engine='scad')
+                        utils.trimesh_repair(new_node.children[ni].part)
+                        new_node.children[ni].part = new_node.children[ni].part.union(self.connectors[idx],
+                                                                                      engine='scad')
                 for idx in neg_index:
                     xform = self.connectors[idx].primitive.transform
                     slot = trimesh.primitives.Box(
                         extents=np.ones(3) * (cc.connector_diameter + config.connector_tolerance),
                         transform=xform)
-                    utils.trimesh_repair(new_node.children[ni].part)
-                    new_node.children[ni].part = new_node.children[ni].part.difference(slot, engine='scad')
-                    utils.trimesh_repair(new_node.children[pi].part)
-                    new_node.children[pi].part = new_node.children[pi].part.union(self.connectors[idx], engine='scad')
+                    try:
+                        utils.trimesh_repair(new_node.children[ni].part)
+                        new_node.children[ni].part = new_node.children[ni].part.difference(slot, engine='scad')
+                        utils.trimesh_repair(new_node.children[pi].part)
+                        new_node.children[pi].part = new_node.children[pi].part.union(self.connectors[idx], engine='scad')
+                    except Exception as e:
+                        utils.trimesh_repair(new_node.children[ni].part)
+                        new_node.children[ni].part = new_node.children[ni].part.difference(slot, engine='scad')
+                        utils.trimesh_repair(new_node.children[pi].part)
+                        new_node.children[pi].part = new_node.children[pi].part.union(self.connectors[idx],
+                                                                                      engine='scad')
 
         return new_tree

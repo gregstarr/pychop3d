@@ -23,7 +23,7 @@ class BSPNode:
         self.plane = None
         self.cross_section = None
         self.n_parts = np.prod(np.ceil(self.get_bounding_box_oriented().primitive.extents / config.printer_extents))
-        self.terminated = np.all(self.get_bounding_box_oriented().primitive.extents < config.printer_extents)
+        self.terminated = np.all(self.get_bounding_box_oriented().primitive.extents <= config.printer_extents)
         # if this isn't the root node
         if self.parent is not None:
             self.path = (*self.parent.path, num)
@@ -65,6 +65,7 @@ class BSPNode:
         projection = self.part.vertices @ normal
         limits = [projection.min(), projection.max()]
         planes = [(d * normal, normal) for d in np.arange(limits[0], limits[1], config.plane_spacing)][1:]
+        planes += [(normal * (projection.min() + projection.max()) / 2, normal)]  # add a plane through the middle
         return planes
 
     def different_from(self, other_node):

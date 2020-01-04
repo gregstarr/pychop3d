@@ -125,6 +125,12 @@ class CrossSection:
         # triangulate the cross section
         path2d, self.xform = path3d.to_planar()
         path2d.merge_vertices()
+        try:
+            path2d.polygons_full
+        except Exception as e:
+            # 'Missed' the part basically
+            print('M', end='')
+            return
         for polygon in path2d.polygons_full:
             cc = ConnectedComponent(polygon, self.xform, self.normal, self.origin)
             if not cc.valid:
@@ -159,9 +165,10 @@ def bidirectional_split(mesh, origin, normal):
     """https://github.com/mikedh/trimesh/issues/235"""
     tries = 0
     positive_parts, negative_parts = [], []
+    multipliers = np.roll(np.arange(-.5, .5, .1), 5)
     while (len(positive_parts) == 0 or len(negative_parts) == 0) and tries < 5:
+        origin += multipliers[tries] * normal * .1
         tries += 1
-        origin += (np.random.rand() - .5) * normal * .1
         # determine ConnectedComponents of the cross section
         cross_section = CrossSection(mesh, origin, normal)
         if not cross_section.valid:
