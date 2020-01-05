@@ -163,6 +163,7 @@ class CrossSection:
 
 def bidirectional_split(mesh, origin, normal):
     """https://github.com/mikedh/trimesh/issues/235"""
+    config = Configuration.config
     tries = 0
     positive_parts, negative_parts = [], []
     multipliers = np.roll(np.arange(-.5, .5, .1), 5)
@@ -173,14 +174,18 @@ def bidirectional_split(mesh, origin, normal):
         cross_section = CrossSection(mesh, origin, normal)
         if not cross_section.valid:
             continue
-        # split parts
         try:
             positive, negative = cross_section.split(mesh)
         except Exception as e:
             print("Unknown problem, skipping", e)
             continue
-        positive_parts = positive.split()
-        negative_parts = negative.split()
+        if config.part_separation:
+            # split parts
+            positive_parts = positive.split()
+            negative_parts = negative.split()
+        else:
+            positive_parts = [positive]
+            negative_parts = [negative]
         parts_list = list(np.concatenate((positive_parts, negative_parts)))
 
     if len(positive_parts) == 0 or len(negative_parts) == 0:

@@ -85,6 +85,7 @@ class Configuration:
         self.scale = False
         self.beam_width = 5
         self.subdivide = False
+        self.part_separation = False
 
     @property
     def directory(self):

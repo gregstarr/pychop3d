@@ -40,7 +40,7 @@ def test_different_from():
         # smaller origin offset, should not be different
         test_node = copy.deepcopy(root)
         test_node.split(plane)
-        if plane[0] @ plane[1] > config.different_origin_th:
+        if abs((plane[0] - planes[0][0]) @ planes[0][1]) > config.different_origin_th:
             assert base_node.different_from(test_node)
         else:
             assert not base_node.different_from(test_node)
@@ -127,6 +127,8 @@ def test_grid_sample():
 
 
 def test_basic_separation():
+    config = Configuration.config
+    config.part_separation = True
     mesh = trimesh.load(os.path.join(os.path.dirname(__file__), 'separate_test.stl'))
     tree = bsp.BSPTree(mesh)
     node = tree.largest_part()
@@ -135,3 +137,4 @@ def test_basic_separation():
     # 1 root, three leaves come out of the split
     assert len(tree.nodes) == 4
     tree.get_objective()
+    config.restore_defaults()

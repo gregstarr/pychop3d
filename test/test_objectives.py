@@ -43,11 +43,11 @@ def test_utilization():
     assert tree1.utilization_objective() > tree2.utilization_objective() > tree3.utilization_objective()
 
     # check that a slice in the middle has a better utilization than a slice not down middle
-    mesh = trimesh.primitives.Box(extents=(100, 100, 220))
+    mesh = trimesh.primitives.Box(extents=(100., 100., 220.))
     tree1 = bsp.BSPTree(mesh)
-    tree1 = tree1.expand_node((np.zeros(3), np.array([0, 0, 1])), tree1.nodes[0])
+    tree1 = tree1.expand_node((np.zeros(3), np.array([0., 0., 1.])), tree1.nodes[0])
     tree2 = bsp.BSPTree(mesh)
-    tree2 = tree2.expand_node((np.array([0, 0, 100]), np.array([0, 0, 1])), tree2.nodes[0])
+    tree2 = tree2.expand_node((np.array([0., 0., 100.]), np.array([0., 0., 1.])), tree2.nodes[0])
     print(f"\n{tree1.utilization_objective()} < {tree2.utilization_objective()}")
     assert tree1.utilization_objective() < tree2.utilization_objective()
 

@@ -52,9 +52,11 @@ def beam_search(starter):
         n_leaves += 1
         current_trees += new_bsps
         current_trees = sorted(current_trees, key=lambda x: x.objective)
-        extra_leaves_trees = [t for t in current_trees if len(t.get_leaves()) > n_leaves]
+        if config.part_separation:
+            extra_leaves_trees = [t for t in current_trees if len(t.get_leaves()) > n_leaves]
         current_trees = current_trees[:config.beam_width]
-        current_trees += [t for t in extra_leaves_trees if t not in current_trees]
+        if config.part_separation:
+            current_trees += [t for t in extra_leaves_trees if t not in current_trees]
 
         if len(current_trees) == 0:
             raise Exception("Pychop3D failed")

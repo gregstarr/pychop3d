@@ -1,4 +1,4 @@
-_directory: C:\Users\Greg\code\pychop3d\output\20191226_102220
+_directory: C:\Users\Greg\code\pychop3d\test\regression_test_data
 beam_width: 2
 connector_collision_penalty: 10000000000
 connector_diameter: 10
@@ -29,6 +29,6 @@ printer_extents:
 sa_initial_connector_ratio: 0.1
 sa_initialization_iterations: 15000
 sa_iterations: 300000
-save_path: C:\Users\Greg\code\pychop3d\output\20191226_102220\20191226_102220_config.yml
+save_path: C:\Users\Greg\code\pychop3d\test\regression_test_data\regression_config_2.yml
 scale: true
 scale_factor: 2.5
