@@ -23,7 +23,7 @@ def evaluate_cuts(base_tree, node):
         print()
 
     result_set = []
-    for tree in sorted(trees, key=lambda x: x.get_objective()):
+    for tree in sorted(trees, key=lambda x: x.objective):
         if tree.sufficiently_different(node, result_set):
             result_set.append(tree)
     print(f"{len(result_set)} valid trees")
@@ -39,27 +39,34 @@ def beam_search(starter):
     else:
         raise NotImplementedError
 
-    splits = 1
+    n_leaves = 1
     while not utils.all_at_goal(current_trees):
         new_bsps = []
         for tree in utils.not_at_goal_set(current_trees):
+            if len(tree.get_leaves()) != n_leaves:
+                continue
             current_trees.remove(tree)
             largest_node = tree.largest_part()
             new_bsps += evaluate_cuts(tree, largest_node)
 
+        n_leaves += 1
         current_trees += new_bsps
-        current_trees = sorted(current_trees, key=lambda x: x.get_objective())
+        current_trees = sorted(current_trees, key=lambda x: x.objective)
+        if config.part_separation:
+            extra_leaves_trees = [t for t in current_trees if len(t.get_leaves()) > n_leaves]
         current_trees = current_trees[:config.beam_width]
+        if config.part_separation:
+            current_trees += [t for t in extra_leaves_trees if t not in current_trees]
 
         if len(current_trees) == 0:
             raise Exception("Pychop3D failed")
 
-        print(f"Splits: {splits}, best objective: {current_trees[0].get_objective()}, estimated number of parts: "
-              f"{current_trees[0].largest_part().n_parts}")
+        print(f"Leaves: {n_leaves}, best objective: {current_trees[0].objective}, estimated number of parts: "
+              f"{sum([p.n_parts for p in current_trees[0].get_leaves()])}")
 
-        for i, tree in enumerate(current_trees):
+        for i, tree in enumerate(current_trees[:config.beam_width]):
             tree.save(f"{i}.json")
 
-        splits += 1
+        current_trees[0].export_stl()
 
     return current_trees[0]

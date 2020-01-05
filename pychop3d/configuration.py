@@ -82,8 +82,10 @@ class Configuration:
         self.mesh = "C:\\Users\\Greg\\Downloads\\Low_Poly_Stanford_Bunny\\files\\Bunny-LowPoly.stl"
         self._directory = "C:\\Users\\Greg\\code\\pychop3d\\debug"
         self.save_path = os.path.join(self.directory, 'config.yml')
-        self.scale = True
+        self.scale = False
         self.beam_width = 5
+        self.subdivide = False
+        self.part_separation = False
 
     @property
     def directory(self):
