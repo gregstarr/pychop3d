@@ -130,7 +130,11 @@ class ConnectorPlacer:
         for node in tree.nodes:
             if node.plane is None:
                 continue
-            new_tree = new_tree.expand_node(node.plane, node)
+            new_tree2 = new_tree.expand_node(node.plane, node)
+            if new_tree is None:
+                new_tree.expand_node(node.plane, node)
+            else:
+                new_tree = new_tree2
             new_node = new_tree.get_node(node.path)
             if node.cross_section is None:
                 continue
