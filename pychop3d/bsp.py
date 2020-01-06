@@ -126,6 +126,7 @@ class BSPTree:
             return None
         new_tree._node_data[node.path] = plane
         new_tree.nodes += new_node.children
+        new_tree.last_cut = new_node.path
         return new_tree
 
     def get_node(self, path=None):
@@ -179,7 +180,7 @@ class BSPTree:
     def utilization_objective(self):
         config = Configuration.config
         V = np.prod(config.printer_extents)
-        return max([1 - leaf.part.volume / (leaf.n_parts * V) for leaf in self.get_leaves()])
+        return max([1 - leaf.get_bounding_box_oriented().volume / (leaf.n_parts * V) for leaf in self.get_leaves()])
 
     def connector_objective(self):
         return max([n.get_connection_objective() for n in self.nodes if n.cross_section is not None])

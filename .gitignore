@@ -3,6 +3,6 @@ profile
 .idea
 .pytest_cache
 pychop3d/__pycache__
-debug
+debug/*
 failed
 output

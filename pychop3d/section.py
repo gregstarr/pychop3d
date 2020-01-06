@@ -1,6 +1,8 @@
 import trimesh
 import numpy as np
 import shapely.geometry as sg
+from shapely import affinity
+import matplotlib.pyplot as plt
 
 from pychop3d.configuration import Configuration
 from pychop3d import utils
@@ -28,7 +30,9 @@ class ConnectedComponent:
         self.all_index = None
 
         if config.adaptive_connector_size:
-            self.connector_diameter = np.clip(np.sqrt(self.polygon.area) / 6, config.connector_diameter_min,
+            edges = np.diff(np.column_stack(polygon.minimum_rotated_rectangle.boundary.xy), axis=0)
+            lengths = np.sqrt(np.sum(edges**2, axis=1))
+            self.connector_diameter = np.clip(lengths.min() / 4, config.connector_diameter_min,
                                               config.connector_diameter_max)
         else:
             self.connector_diameter = config.connector_diameter
@@ -76,7 +80,11 @@ class ConnectedComponent:
         return True
 
     def grid_sample_polygon(self):
-        min_x, min_y, max_x, max_y = self.polygon.bounds
+        mrr_points = np.column_stack(self.polygon.minimum_rotated_rectangle.boundary.xy)
+        mrr_edges = np.diff(mrr_points, axis=0)
+        angle = -1 * np.arctan2(mrr_edges[0, 1], mrr_edges[0, 0])
+        rotated_polygon = affinity.rotate(self.polygon, angle, use_radians=True, origin=(0, 0))
+        min_x, min_y, max_x, max_y = rotated_polygon.bounds
         xp = np.arange(min_x + self.connector_diameter / 2, max_x - self.connector_diameter / 2, self.connector_diameter)
         if len(xp) == 0:
             return []
@@ -87,6 +95,8 @@ class ConnectedComponent:
         yp += (min_y + max_y) / 2 - (yp.min() + yp.max()) / 2
         X, Y = np.meshgrid(xp, yp)
         xy = np.stack((X.ravel(), Y.ravel()), axis=1)
+        rotation = np.array([[np.cos(angle), -np.sin(angle)], [np.sin(angle), np.cos(angle)]])
+        xy = xy @ rotation
         mask = np.zeros(xy.shape[0], dtype=bool)
         for i in range(xy.shape[0]):
             point = sg.Point(xy[i])

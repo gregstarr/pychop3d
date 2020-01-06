@@ -1,5 +1,6 @@
 import trimesh
 import numpy as np
+import os
 
 from pychop3d import bsp
 from pychop3d import section
@@ -62,5 +63,21 @@ def test_fragility():
     assert fragility == 0
     tree = bsp.BSPTree(mesh)
     tree = tree.expand_node((np.array([0, 0, 100 - 1.5 * config.connector_diameter_min + 1]), np.array([0, 0, 1])), tree.nodes[0])
+    fragility = tree.fragility_objective()
+    assert fragility == np.inf
+
+
+def test_fragility_function():
+    config = Configuration.config
+    config.mesh = os.path.join(os.path.dirname(__file__), 'test_meshes', 'fragility_test_1.stl')
+
+    tree = bsp.BSPTree(mesh)
+    tree = tree.expand_node((np.array([0, 0, 100 - 1.5 * config.connector_diameter_max - 1]), np.array([0, 0, 1])),
+                            tree.nodes[0])
+    fragility = tree.fragility_objective()
+    assert fragility == 0
+    tree = bsp.BSPTree(mesh)
+    tree = tree.expand_node((np.array([0, 0, 100 - 1.5 * config.connector_diameter_min + 1]), np.array([0, 0, 1])),
+                            tree.nodes[0])
     fragility = tree.fragility_objective()
     assert fragility == np.inf

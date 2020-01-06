@@ -69,4 +69,5 @@ if __name__ == "__main__":
     config.directory = new_directory
     config.beam_width = 3
     config.different_origin_th = 80
+    config.part_separation = True
     run()

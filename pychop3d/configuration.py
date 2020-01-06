@@ -79,8 +79,8 @@ class Configuration:
         self.connector_diameter = 10
         self.connector_tolerance = 1
         # run settings
-        self.mesh = "C:\\Users\\Greg\\Downloads\\Low_Poly_Stanford_Bunny\\files\\Bunny-LowPoly.stl"
-        self._directory = "C:\\Users\\Greg\\code\\pychop3d\\debug"
+        self.mesh = os.path.join(os.path.dirname(__file__), '..', 'test', 'test_meshes', 'Bunny-LowPoly.stl')
+        self._directory = os.path.join(os.path.dirname(__file__), '..', 'debug')
         self.save_path = os.path.join(self.directory, 'config.yml')
         self.scale = False
         self.beam_width = 5
