@@ -6,3 +6,4 @@ pychop3d/__pycache__
 debug/*
 failed
 output
+!debug/debug.txt
