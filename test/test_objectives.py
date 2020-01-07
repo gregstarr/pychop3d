@@ -121,3 +121,4 @@ def test_edge_fragility():
     plane = (origin, normal)
     fragile_cut_tree = tree.expand_node(plane, tree.nodes[0])
     assert objective_functions.get_fragility_objective([fragile_cut_tree], tree.nodes[0].path)[0] == np.inf
+    config.restore_defaults()
