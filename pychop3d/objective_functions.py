@@ -7,6 +7,7 @@ TODO:
     - improve fragility
 """
 import numpy as np
+import trimesh
 
 from pychop3d.configuration import Configuration
 
@@ -31,25 +32,29 @@ def get_connector_objective(self):
 
 def get_fragility_for_normal(part, normal, origins, normal_parallel_th, connector_sizes):
     fragility_objective = np.zeros(origins.shape[0])
+
+    origin_diffs = part.vertices[None, :, :] - origins[:, None, :]
+    vertex_projections = origin_diffs @ normal
+    distances_to_plane = np.abs(vertex_projections)
+
     # find vertices who's normals are almost parallel to the normal
     possibly_fragile = (part.vertex_normals @ normal) > normal_parallel_th
+    possibly_fragile = (vertex_projections > 0) * possibly_fragile[None, :]
+
     # sink the ray origins inside the part a little
-    ray_origins = part.vertices[possibly_fragile] - .1 * part.vertex_normals[possibly_fragile]
-    ray_directions = np.ones((ray_origins.shape[0], 1)) * normal[None, :]
-    hits = part.ray.intersects_any(ray_origins, ray_directions)  # N possibly fragile verts
+    ray_origins = part.vertices - .1 * part.vertex_normals
+    ray_directions = np.ones((ray_origins.shape[0], 1)) * -1 * normal[None, :]
+    hits = part.ray.intersects_any(ray_origins, ray_directions)
 
-    origin_diffs = origins[:, None, :] - ray_origins[None, :, :]  # N trees X N possibly fragile verts X 3
-    vertex_projections = origin_diffs @ normal  # N trees X N possibly fragile verts
-    distances_to_plane = np.abs(vertex_projections)  # N trees X N possibly fragile verts
-
-    mask = np.any(distances_to_plane[:, ~hits] < 1.5 * connector_sizes, axis=1)
+    no_hit_p_fragile = ~hits[None, :] * possibly_fragile
+    close_to_plane = distances_to_plane < 1.5 * connector_sizes[:, None]
+    mask = np.any(no_hit_p_fragile * close_to_plane, axis=1)
     fragility_objective[mask] = np.inf
 
-    locs, index_ray, index_tri = part.ray.intersects_location(ray_origins, ray_directions)
+    locs, index_ray, index_tri = part.ray.intersects_location(ray_origins[hits], ray_directions[hits], multiple_hits=False)
     ray_mesh_dist = np.sqrt(np.sum((ray_origins[index_ray] - locs) ** 2, axis=1))
-    thin_mask = distances_to_plane[:, index_ray] < 1.5 * connector_sizes
     not_existing = distances_to_plane[:, index_ray] < ray_mesh_dist[None, :]
-    mask = np.any(thin_mask * not_existing, axis=1)
+    mask = np.any(possibly_fragile[:, index_ray] * close_to_plane[:, index_ray] * not_existing, axis=1)
     fragility_objective[mask] = np.inf
 
     return fragility_objective
@@ -63,13 +68,13 @@ def get_fragility_objective(trees, path):
         - if the rays don't intersect the mesh somewhere else,
     """
     config = Configuration.config
-    part = trees[0].get_node(path[:-1]).part
-    normal = trees[0].get_node(path[:-1]).normal
-    origins = np.array([t.get_node(path[:-1]).plane[0] for t in trees])
-    connector_sizes = np.array([t.get_node(path[:-1]).cross_section.get_average_connector_size() for t in trees])
+    part = trees[0].get_node(path).part
+    normal = trees[0].get_node(path).plane[1]
+    origins = np.array([t.get_node(path).plane[0] for t in trees])
+    connector_sizes = np.array([t.get_node(path).cross_section.get_average_connector_size() for t in trees])
 
     positive_fragility = get_fragility_for_normal(part, normal, origins, config.fragility_objective_th, connector_sizes)
-    negative_fragility = get_fragility_for_normal(part, normal, origins, config.fragility_objective_th, connector_sizes)
+    negative_fragility = get_fragility_for_normal(part, -1 * normal, origins, config.fragility_objective_th, connector_sizes)
 
     return positive_fragility + negative_fragility
 
