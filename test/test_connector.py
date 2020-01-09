@@ -40,9 +40,7 @@ def test_sa_objective_2():
     """Verifies:
         - large faces prefer multiple connectors
     """
-    config: Configuration = Configuration.config
-    config.adaptive_connector_size = False
-    config.connector_diameter = 5
+    config = Configuration.config
     mesh = trimesh.primitives.Box(extents=[30, 30, 80])
     tree = bsp.BSPTree(mesh)
     normal = np.array([0, 0, 1])

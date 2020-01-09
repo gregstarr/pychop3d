@@ -34,6 +34,78 @@ def test_number_of_parts():
     assert tree.nodes[0].n_parts == 2
 
 
+def test_nparts_regression():
+    """Verify that the new 'parallel' objective function evaluators give the same results as the old ones
+            nparts
+    """
+    config = Configuration.config
+    config.plane_spacing = 5
+    config.connector_diameter = 5
+    config.scale_factor = 2
+    mesh = utils.open_mesh()
+
+    tree = bsp.BSPTree(mesh)
+    normal = np.array([0., 0., 1.])
+    planes = tree.nodes[0].get_planes(normal)
+    trees = []
+    for plane in planes:
+        candidate = tree.expand_node(plane, tree.nodes[0])
+        if candidate is not None:
+            trees.append(candidate)
+    objective_functions.evaluate_nparts_objective(trees, tree.nodes[0].path)
+    for tree in trees:
+        assert tree.objectives['nparts'] == tree.nparts_objective()
+    config.restore_defaults()
+
+
+def test_utilization_regression():
+    """Verify that the new 'parallel' objective function evaluators give the same results as the old ones
+            utilization
+    """
+    config = Configuration.config
+    config.plane_spacing = 5
+    config.connector_diameter = 5
+    config.scale_factor = 2
+    mesh = utils.open_mesh()
+
+    tree = bsp.BSPTree(mesh)
+    normal = np.array([0., 0., 1.])
+    planes = tree.nodes[0].get_planes(normal)
+    trees = []
+    for plane in planes:
+        candidate = tree.expand_node(plane, tree.nodes[0])
+        if candidate is not None:
+            trees.append(candidate)
+    objective_functions.evaluate_utilization_objective(trees, tree.nodes[0].path)
+    for tree in trees:
+        assert tree.objectives['utilization'] == tree.utilization_objective()
+    config.restore_defaults()
+
+
+def test_connector_regression():
+    """Verify that the new 'parallel' objective function evaluators give the same results as the old ones
+            connector
+    """
+    config = Configuration.config
+    config.plane_spacing = 5
+    config.connector_diameter = 5
+    config.scale_factor = 2
+    mesh = utils.open_mesh()
+
+    tree = bsp.BSPTree(mesh)
+    normal = np.array([0., 0., 1.])
+    planes = tree.nodes[0].get_planes(normal)
+    trees = []
+    for plane in planes:
+        candidate = tree.expand_node(plane, tree.nodes[0])
+        if candidate is not None:
+            trees.append(candidate)
+    objective_functions.evaluate_connector_objective(trees, tree.nodes[0].path)
+    for tree in trees:
+        assert tree.objectives['connector'] == tree.connector_objective()
+    config.restore_defaults()
+
+
 def test_utilization():
     # check that as the sphere gets larger, the utilization goes down
     mesh1 = trimesh.primitives.Sphere(radius=20)
@@ -79,14 +151,14 @@ def test_fragility_function_already_fragile():
     origin = np.zeros(3)
     normal = np.array([0., 0., 1.])
     plane = (origin, normal)
-    non_fragile_cut_tree = tree.expand_node(plane, tree.nodes[0])
-    assert objective_functions.get_fragility_objective([non_fragile_cut_tree], tree.nodes[0].path)[0] == 0
+    trees = [tree.expand_node(plane, tree.nodes[0])]
+    objective_functions.evaluate_fragility_objective(trees, tree.nodes[0].path)
+    assert trees[0].objectives['fragility'] == 0
 
 
 def test_fragility_function_multiple_trees():
     config = Configuration.config
     config.plane_spacing = 5
-    config.adaptive_connector_size = False
     config.connector_diameter = 5
     mesh_fn = os.path.join(os.path.dirname(__file__), 'test_meshes', 'fragility_test_1.stl')
     mesh = trimesh.load(mesh_fn)
@@ -100,25 +172,26 @@ def test_fragility_function_multiple_trees():
     for plane in planes:
         candidate = tree.expand_node(plane, tree.nodes[0])
         trees.append(candidate)
-    fragility = objective_functions.get_fragility_objective(trees, tree.nodes[0].path)
-    assert fragility[0] == np.inf
-    assert fragility[6] == np.inf
-    assert fragility[7] == np.inf
-    assert fragility[11] == np.inf
+    objective_functions.evaluate_fragility_objective(trees, tree.nodes[0].path)
+    assert trees[0].objectives['fragility'] == np.inf
+    assert trees[6].objectives['fragility'] == np.inf
+    assert trees[7].objectives['fragility'] == np.inf
+    assert trees[11].objectives['fragility'] == np.inf
     config.restore_defaults()
 
 
 def test_edge_fragility():
     config = Configuration.config
-    config.adaptive_connector_size = False
-    config.connector_diameter = 1
+    config.connector_diameter = 3
     mesh_fn = os.path.join(os.path.dirname(__file__), 'test_meshes', 'fragility_test_2.stl')
     mesh = trimesh.load(mesh_fn)
+    mesh = mesh.subdivide()
 
     tree = bsp.BSPTree(mesh)
     origin = np.zeros(3)
     normal = np.array([0., 0., 1.])
     plane = (origin, normal)
     fragile_cut_tree = tree.expand_node(plane, tree.nodes[0])
-    assert objective_functions.get_fragility_objective([fragile_cut_tree], tree.nodes[0].path)[0] == np.inf
+    objective_functions.evaluate_fragility_objective([fragile_cut_tree], tree.nodes[0].path)
+    assert fragile_cut_tree.objectives['fragility'] == np.inf
     config.restore_defaults()

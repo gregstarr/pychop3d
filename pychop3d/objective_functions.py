@@ -4,7 +4,6 @@ TODO:
     - objectives should be stored for previous trees to minimize recalculation (most of the nodes are shared)
     - implement symmetry objective
     - add other objectives to make the shoe rack chop better
-    - improve fragility
 """
 import numpy as np
 import trimesh
@@ -12,22 +11,34 @@ import trimesh
 from pychop3d.configuration import Configuration
 
 
-def get_nparts_objective(trees):
+def evaluate_nparts_objective(trees, path):
     """Collect the "number of parts" objective for a set of trees
     """
     theta_0 = trees[0].nodes[0].n_parts
-    return np.array([sum([l.n_parts for l in t.get_leaves()]) for t in trees]) / theta_0
+    for tree in trees:
+        node = tree.get_node(path)
+        tree.objectives['nparts'] += (sum([c.n_parts for c in node.children]) - node.n_parts)/ theta_0
 
 
-def get_utilization_objective(trees):
+def evaluate_utilization_objective(trees, path):
     config = Configuration.config
     V = np.prod(config.printer_extents)
-    return np.array([max([1 - leaf.get_bounding_box_oriented().volume / (leaf.n_parts * V)
-                          for leaf in t.get_leaves()]) for t in trees])
+    if config.obb_utilization:
+        for tree in trees:
+            node = tree.get_node(path)
+            tree.objectives['utilization'] = max(tree.objectives['utilization'],
+                                                 max([1 - c.get_bounding_box_oriented().volume / (c.n_parts * V) for c in node.children]))
+    else:
+        for tree in trees:
+            node = tree.get_node(path)
+            tree.objectives['utilization'] = max(tree.objectives['utilization'],
+                                                 max([1 - c.part.volume / (c.n_parts * V) for c in node.children]))
 
 
-def get_connector_objective(self):
-    return max([n.get_connection_objective() for n in self.nodes if n.cross_section is not None])
+def evaluate_connector_objective(trees, path):
+    for tree in trees:
+        node = tree.get_node(path)
+        tree.objectives['connector'] = max(tree.objectives['connector'], node.get_connection_objective())
 
 
 def get_fragility_for_normal(part, normal, origins, normal_parallel_th, connector_sizes):
@@ -60,12 +71,13 @@ def get_fragility_for_normal(part, normal, origins, normal_parallel_th, connecto
     return fragility_objective
 
 
-def get_fragility_objective(trees, path):
+def evaluate_fragility_objective(trees, path):
     """Get fragility objective for a set of trees who only differ by the origin of their last cut
 
         - figure out possibly fragile points
         - cast rays from those points in the direction of normal
-        - if the rays don't intersect the mesh somewhere else,
+        - if the rays don't intersect the mesh somewhere else, check if the rays are longer than the Thold
+        - if they do, check the thold but also make sure the ray hits the plane first
     """
     config = Configuration.config
     part = trees[0].get_node(path).part
@@ -76,12 +88,23 @@ def get_fragility_objective(trees, path):
     positive_fragility = get_fragility_for_normal(part, normal, origins, config.fragility_objective_th, connector_sizes)
     negative_fragility = get_fragility_for_normal(part, -1 * normal, origins, config.fragility_objective_th, connector_sizes)
 
-    return positive_fragility + negative_fragility
+    fragility = positive_fragility + negative_fragility
+
+    for i, tree in enumerate(trees):
+        tree.objectives['fragility'] += fragility[i]
 
 
-def get_seam_objective(trees):
+def evaluate_seam_objective(trees, path):
     return 0
 
 
-def get_symmetry_objective(trees):
+def evaluate_symmetry_objective(trees, path):
     return 0
+
+
+objectives = {
+    'nparts': evaluate_nparts_objective,
+    'utilization': evaluate_utilization_objective,
+    'connector': evaluate_connector_objective,
+    'fragility': evaluate_fragility_objective
+}

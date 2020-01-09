@@ -37,7 +37,7 @@ class ConnectedComponent:
         else:
             self.connector_diameter = config.connector_diameter
 
-        if self.area < self.connector_diameter ** 2:
+        if self.area < (self.connector_diameter / 2) ** 2:
             return
 
         verts, faces = trimesh.creation.triangulate_polygon(polygon, triangle_args='p', allow_boundary_steiner=False)
@@ -87,11 +87,11 @@ class ConnectedComponent:
         min_x, min_y, max_x, max_y = rotated_polygon.bounds
         xp = np.arange(min_x + self.connector_diameter / 2, max_x - self.connector_diameter / 2, self.connector_diameter)
         if len(xp) == 0:
-            return []
+            return np.array([])
         xp += (min_x + max_x) / 2 - (xp.min() + xp.max()) / 2
         yp = np.arange(min_y + self.connector_diameter / 2, max_y - self.connector_diameter / 2, self.connector_diameter)
         if len(yp) == 0:
-            return []
+            return np.array([])
         yp += (min_y + max_y) / 2 - (yp.min() + yp.max()) / 2
         X, Y = np.meshgrid(xp, yp)
         xy = np.stack((X.ravel(), Y.ravel()), axis=1)
@@ -144,8 +144,8 @@ class CrossSection:
         for polygon in path2d.polygons_full:
             cc = ConnectedComponent(polygon, self.xform, self.normal, self.origin)
             if not cc.valid:
-                # 'Missed' the part basically
-                print('M', end='')
+                # bad 'Connector'
+                print('C', end='')
                 return
             self.connected_components.append(cc)
         self.valid = True

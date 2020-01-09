@@ -24,7 +24,7 @@ def test_regression(file_number):
     # open and prepare mesh
     mesh = utils.open_mesh()
     # open tree baseline
-    baseline = utils.open_tree(mesh, tree_file)
+    baseline = utils.open_tree(tree_file)
     # run new tree
     tree = search.beam_search(mesh)
     # verify they are the same

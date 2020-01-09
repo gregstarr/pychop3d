@@ -21,13 +21,16 @@ def open_mesh():
             print(f"Calculated scale factor: {factor}")
         if factor > 1:
             mesh.apply_scale(factor)
-    if config.subdivide:
-        mesh = mesh.subdivide()
+    if hasattr(config, 'subdivision_resolution'):
+        if config.subdivision_resolution > 0:
+            vertices, faces = trimesh.remesh.subdivide_to_size(mesh.vertices, mesh.faces, config.subdivision_resolution)
+            mesh = trimesh.Trimesh(vertices=vertices, faces=faces, process=True)
 
     return mesh
 
 
-def open_tree(mesh, tree_file):
+def open_tree(tree_file):
+    mesh = open_mesh()
     with open(tree_file) as f:
         data = json.load(f)
 

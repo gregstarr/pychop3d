@@ -29,3 +29,6 @@ sa_initialization_iterations: 15000
 sa_iterations: 300000
 scale: true
 scale_factor: 2.5
+subdivision_resolution: -1
+obb_utilization: false
+add_middle_plane: false
