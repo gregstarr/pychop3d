@@ -170,7 +170,10 @@ class BSPTree:
     def utilization_objective(self):
         config = Configuration.config
         V = np.prod(config.printer_extents)
-        return max([1 - leaf.part.volume / (leaf.n_parts * V) for leaf in self.get_leaves()])
+        if config.obb_utilization:
+            return max([1 - leaf.get_bounding_box_oriented().volume / (leaf.n_parts * V) for leaf in self.get_leaves()])
+        else:
+            return max([1 - leaf.part.volume / (leaf.n_parts * V) for leaf in self.get_leaves()])
 
     def connector_objective(self):
         return max([n.get_connection_objective() for n in self.nodes if n.cross_section is not None])
