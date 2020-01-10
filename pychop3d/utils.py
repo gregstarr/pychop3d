@@ -8,19 +8,17 @@ from pychop3d.configuration import Configuration
 
 
 def open_mesh():
+    """open the mesh according to the configuration and apply any scaling or subdivision
+    """
     config = Configuration.config
+    # OPEN MESH
     mesh = trimesh.load(config.mesh)
+    # REPAIR MESH
     trimesh_repair(mesh)
-    if config.scale:
-        if hasattr(config, 'scale_factor'):
-            factor = config.scale_factor
-            print(f"Configured scale factor: {factor}")
-        else:
-            factor = int(np.ceil(1.1 / np.max(mesh.bounding_box_oriented.primitive.extents / config.printer_extents)))
-            config.scale_factor = factor
-            print(f"Calculated scale factor: {factor}")
-        if factor > 1:
-            mesh.apply_scale(factor)
+    # SCALE MESH
+    if config.scale_factor > 0:
+        mesh.apply_scale(config.scale_factor)
+    # SUBDIVIDE MESH
     if hasattr(config, 'subdivision_resolution'):
         if config.subdivision_resolution > 0:
             vertices, faces = trimesh.remesh.subdivide_to_size(mesh.vertices, mesh.faces, config.subdivision_resolution)

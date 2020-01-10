@@ -85,7 +85,7 @@ class Configuration:
         self.mesh = os.path.join(os.path.dirname(__file__), '..', 'test', 'test_meshes', 'Bunny-LowPoly.stl')
         self._directory = os.path.join(os.path.dirname(__file__), '..', 'debug')
         self.save_path = os.path.join(self.directory, 'config.yml')
-        self.scale = False
+        self.scale_factor = -1
         self.beam_width = 5
         self.subdivision_resolution = -1
         self.part_separation = False

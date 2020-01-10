@@ -1,6 +1,11 @@
+_directory: C:\Users\Greg\code\pychop3d\output\20200109_182009
+_n_phi: 5
+_n_theta: 5
+adaptive_connector_size: false
+add_middle_plane: true
 beam_width: 2
 connector_collision_penalty: 10000000000
-connector_diameter: 10
+connector_diameter: 5
 connector_diameter_max: 30
 connector_diameter_min: 5
 connector_objective_th: 10
@@ -9,9 +14,10 @@ different_angle_th: 0.3141592653589793
 different_origin_th: 34.64101615137755
 do_not_save:
 - normals
+empty_cc_penalty: 1.0e-05
 fragility_objective_th: 0.95
-n_phi: 5
-n_theta: 5
+mesh: C:\Users\Greg\code\pychop3d\pychop3d\..\test\test_meshes\Bunny-LowPoly.stl
+obb_utilization: true
 objective_weights:
   connector: 1
   fragility: 1
@@ -19,6 +25,7 @@ objective_weights:
   seam: 0
   symmetry: 0
   utilization: 0.25
+part_separation: false
 plane_spacing: 30
 printer_extents:
 - 200.0
@@ -27,8 +34,6 @@ printer_extents:
 sa_initial_connector_ratio: 0.1
 sa_initialization_iterations: 15000
 sa_iterations: 300000
-scale: true
+save_path: C:\Users\Greg\code\pychop3d\output\20200109_182009\config.yml
 scale_factor: 2
 subdivision_resolution: -1
-obb_utilization: false
-add_middle_plane: false
