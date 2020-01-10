@@ -82,9 +82,9 @@ class Configuration:
         self.connector_diameter = 5
         self.connector_tolerance = 1
         # run settings
-        self.mesh = os.path.join(os.path.dirname(__file__), '..', 'test', 'test_meshes', 'Bunny-LowPoly.stl')
-        self._directory = os.path.join(os.path.dirname(__file__), '..', 'debug')
-        self.save_path = os.path.join(self.directory, 'config.yml')
+        self.mesh = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'test', 'test_meshes', 'Bunny-LowPoly.stl'))
+        self._directory = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'debug'))
+        self.save_path = os.path.abspath(os.path.join(self.directory, 'config.yml'))
         self.scale_factor = -1
         self.beam_width = 5
         self.subdivision_resolution = -1
@@ -98,7 +98,7 @@ class Configuration:
     def directory(self, value):
         self._directory = value
         save_name = os.path.basename(self.save_path)
-        self.save_path = os.path.join(self.directory, save_name)
+        self.save_path = os.path.abspath(os.path.join(self.directory, save_name))
 
     def uniform_normals(self):
         """http://corysimon.github.io/articles/uniformdistn-on-sphere/
@@ -119,7 +119,7 @@ class Configuration:
         therefore the save data will convert any numpy array to list first
         """
         if filename is not None:
-            self.save_path = os.path.join(self.directory, filename)
+            self.save_path = os.path.abspath(os.path.join(self.directory, filename))
 
         save_data = {}
         for key, value in self.__dict__.items():
