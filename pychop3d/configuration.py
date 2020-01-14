@@ -81,6 +81,7 @@ class Configuration:
         self.connector_diameter_max = 30
         self.connector_diameter = 5
         self.connector_tolerance = 1
+        self.connector_spacing = 10
         # run settings
         self.mesh = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'test', 'test_meshes', 'Bunny-LowPoly.stl'))
         self._directory = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'debug'))

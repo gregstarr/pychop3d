@@ -53,7 +53,7 @@ def get_fragility_for_normal(part, normal, origins, normal_parallel_th, connecto
     possibly_fragile = (vertex_projections > 0) * possibly_fragile[None, :]
 
     # sink the ray origins inside the part a little
-    ray_origins = part.vertices - .1 * part.vertex_normals
+    ray_origins = part.vertices - .001 * part.vertex_normals
     ray_directions = np.ones((ray_origins.shape[0], 1)) * -1 * normal[None, :]
     hits = part.ray.intersects_any(ray_origins, ray_directions)
 

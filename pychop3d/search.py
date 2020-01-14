@@ -22,6 +22,8 @@ def evaluate_cuts(base_tree, node):
             tree = base_tree.expand_node(plane, node)
             if tree:
                 trees_of_this_normal.append(tree)
+        if len(trees_of_this_normal) == 0:
+            continue
         for evaluate_objective_func in objectives.values():
             evaluate_objective_func(trees_of_this_normal, node.path)
         trees += trees_of_this_normal

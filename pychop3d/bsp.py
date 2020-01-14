@@ -39,6 +39,9 @@ class BSPNode:
         self.cross_section = cross_section
         try:
             for i, part in enumerate(parts):
+                if part.volume < .1:
+                    print('V', end='')
+                    return False
                 self.children.append(BSPNode(part, parent=self, num=i))
         except Exception as e:
             print(e)

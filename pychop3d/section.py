@@ -36,6 +36,7 @@ class ConnectedComponent:
                                               config.connector_diameter_max)
         else:
             self.connector_diameter = config.connector_diameter
+            self.connector_spacing = config.connector_spacing
 
         if self.area < (self.connector_diameter / 2) ** 2:
             return
@@ -122,6 +123,7 @@ class CrossSection:
 
     def __init__(self, mesh, origin, normal):
         self.valid = False
+        self.cc_valid = True
         self.origin = origin
         self.normal = normal
         self.connected_components = []
@@ -144,14 +146,13 @@ class CrossSection:
         for polygon in path2d.polygons_full:
             cc = ConnectedComponent(polygon, self.xform, self.normal, self.origin)
             if not cc.valid:
-                # bad 'Connector'
-                print('C', end='')
-                return
+                self.cc_valid = False
             self.connected_components.append(cc)
         self.valid = True
 
     def split(self, mesh):
         cap = np.array([cc.mesh for cc in self.connected_components]).sum()
+        utils.trimesh_repair(cap)
 
         positive = mesh.slice_plane(plane_origin=self.origin, plane_normal=self.normal)
         positive = positive + cap
@@ -178,28 +179,33 @@ def bidirectional_split(mesh, origin, normal):
     positive_parts, negative_parts = [], []
     multipliers = np.roll(np.arange(-.5, .5, .1), 5)
     while (len(positive_parts) == 0 or len(negative_parts) == 0) and tries < 5:
-        origin += multipliers[tries] * normal * .1
+        origin += multipliers[tries] * normal
         tries += 1
         # determine ConnectedComponents of the cross section
         cross_section = CrossSection(mesh, origin, normal)
         if not cross_section.valid:
             continue
+        if not cross_section.cc_valid:
+            # bad 'Connector', usually tiny area
+            print('C', end='')
+            return None, None
         try:
             positive, negative = cross_section.split(mesh)
         except Exception as e:
-            print("Unknown problem, skipping", e)
+            print("Problem splitting mesh", e)
             continue
         if config.part_separation:
             # split parts
-            positive_parts = positive.split()
-            negative_parts = negative.split()
+            positive_parts = positive.split(only_watertight=False)
+            negative_parts = negative.split(only_watertight=False)
         else:
             positive_parts = [positive]
             negative_parts = [negative]
         parts_list = list(np.concatenate((positive_parts, negative_parts)))
 
     if len(positive_parts) == 0 or len(negative_parts) == 0:
-        # bad 'Separation'
+        # TODO: figure this thing out
+        # bad 'Separation', mesh.split() not working, cross_section.split made non watertight meshes
         print('S', end='')
         return None, None
 
