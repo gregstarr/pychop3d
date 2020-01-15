@@ -4,6 +4,7 @@ import os
 
 from pychop3d import utils
 from pychop3d import bsp
+from pychop3d.objective_functions import objectives
 from pychop3d.configuration import Configuration
 
 
@@ -14,16 +15,22 @@ def evaluate_cuts(base_tree, node):
     N = utils.get_unique_normals(np.concatenate((N, Np), axis=0))
     trees = []
     for i in range(N.shape[0]):
+        trees_of_this_normal = []
         normal = N[i]
         print(i, normal, end='')
         for plane in node.get_planes(normal):
-            tree2 = base_tree.expand_node(plane, node)
-            if tree2:
-                trees.append(tree2)
+            tree = base_tree.expand_node(plane, node)
+            if tree:
+                trees_of_this_normal.append(tree)
+        if len(trees_of_this_normal) == 0:
+            continue
+        for evaluate_objective_func in objectives.values():
+            evaluate_objective_func(trees_of_this_normal, node.path)
+        trees += trees_of_this_normal
         print()
 
     result_set = []
-    for tree in sorted(trees, key=lambda x: x.objective):
+    for tree in sorted(trees, key=lambda x: x.get_objective()):
         if tree.sufficiently_different(node, result_set):
             result_set.append(tree)
     print(f"{len(result_set)} valid trees")
@@ -51,7 +58,7 @@ def beam_search(starter):
 
         n_leaves += 1
         current_trees += new_bsps
-        current_trees = sorted(current_trees, key=lambda x: x.objective)
+        current_trees = sorted(current_trees, key=lambda x: x.get_objective())
         if config.part_separation:
             extra_leaves_trees = [t for t in current_trees if len(t.get_leaves()) > n_leaves]
         current_trees = current_trees[:config.beam_width]
@@ -61,7 +68,7 @@ def beam_search(starter):
         if len(current_trees) == 0:
             raise Exception("Pychop3D failed")
 
-        print(f"Leaves: {n_leaves}, best objective: {current_trees[0].objective}, estimated number of parts: "
+        print(f"Leaves: {n_leaves}, best objective: {current_trees[0].get_objective()}, estimated number of parts: "
               f"{sum([p.n_parts for p in current_trees[0].get_leaves()])}")
 
         for i, tree in enumerate(current_trees[:config.beam_width]):

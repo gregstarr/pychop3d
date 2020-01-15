@@ -40,7 +40,8 @@ class ConnectorPlacer:
 
         print("determining connector-cut intersections")
         for i, connector in enumerate(self.connectors):
-            print('.', end='')
+            if (i % (len(self.connectors) // 10)) == 0:
+                print('.', end='')
             th = connector.primitive.extents[0] / 2
             intersections = 0
             for m in caps:

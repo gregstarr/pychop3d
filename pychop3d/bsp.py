@@ -39,6 +39,9 @@ class BSPNode:
         self.cross_section = cross_section
         try:
             for i, part in enumerate(parts):
+                if part.volume < .1:
+                    print('V', end='')
+                    return False
                 self.children.append(BSPNode(part, parent=self, num=i))
         except Exception as e:
             print(e)
@@ -65,7 +68,8 @@ class BSPNode:
         projection = self.part.vertices @ normal
         limits = [projection.min(), projection.max()]
         planes = [(d * normal, normal) for d in np.arange(limits[0], limits[1], config.plane_spacing)][1:]
-        planes += [(normal * (projection.min() + projection.max()) / 2, normal)]  # add a plane through the middle
+        if config.add_middle_plane:
+            planes += [(normal * (projection.min() + projection.max()) / 2, normal)]  # add a plane through the middle
         return planes
 
     def different_from(self, other_node):
@@ -88,23 +92,14 @@ class BSPTree:
         config = Configuration.config
         self.nodes = [BSPNode(part)]
         self._node_data = {}
-        self.a_part = config.objective_weights['part']
-        self.a_util = config.objective_weights['utilization']
-        self.a_connector = config.objective_weights['connector']
-        self.a_fragility = config.objective_weights['fragility']
-        self.a_seam = config.objective_weights['seam']
-        self.a_symmetry = config.objective_weights['symmetry']
-        self._objective = None
-
-    @property
-    def objective(self):
-        if self._objective is None:
-            self._objective = self.get_objective()
-        return self._objective
-
-    @objective.setter
-    def objective(self, value):
-        self._objective = value
+        self.objectives = {
+            'nparts': self.nparts_objective(),
+            'utilization': self.utilization_objective(),
+            'connector': 0,  # no connectors yet
+            'fragility': 0,
+            'seam': 0,
+            'symmetry': 0
+        }
 
     @classmethod
     def from_node_data(cls, part, node_data):
@@ -116,7 +111,6 @@ class BSPTree:
 
     def copy(self):
         new_tree = copy.deepcopy(self)
-        new_tree._objective = None
         return new_tree
 
     def expand_node(self, plane, node):
@@ -179,7 +173,10 @@ class BSPTree:
     def utilization_objective(self):
         config = Configuration.config
         V = np.prod(config.printer_extents)
-        return max([1 - leaf.part.volume / (leaf.n_parts * V) for leaf in self.get_leaves()])
+        if config.obb_utilization:
+            return max([1 - leaf.get_bounding_box_oriented().volume / (leaf.n_parts * V) for leaf in self.get_leaves()])
+        else:
+            return max([1 - leaf.part.volume / (leaf.n_parts * V) for leaf in self.get_leaves()])
 
     def connector_objective(self):
         return max([n.get_connection_objective() for n in self.nodes if n.cross_section is not None])
@@ -222,7 +219,7 @@ class BSPTree:
     def symmetry_objective(self):
         return 0
 
-    def get_objective(self):
+    def get_objective_old(self):
         part = self.a_part * self.nparts_objective()
         util = self.a_util * self.utilization_objective()
         connector = self.a_connector * self.connector_objective()
@@ -231,16 +228,15 @@ class BSPTree:
         symmetry = self.a_symmetry * self.symmetry_objective()
         return part + util + connector + fragility + seam + symmetry
 
-    def report_objectives(self):
-        objectives = {
-            'part': self.nparts_objective(),
-            'utilization': self.utilization_objective(),
-            'connector': self.connector_objective(),
-            'fragility': self.fragility_objective(),
-            'seam': self.seam_objective(),
-            'symmetry': self.symmetry_objective()
-        }
-        return objectives
+    def get_objective(self):
+        config = Configuration.config
+        part = config.objective_weights['part'] * self.objectives['nparts']
+        util = config.objective_weights['utilization'] * self.objectives['utilization']
+        connector = config.objective_weights['connector'] * self.objectives['connector']
+        fragility = config.objective_weights['fragility'] * self.objectives['fragility']
+        seam = config.objective_weights['seam'] * self.objectives['seam']
+        symmetry = config.objective_weights['symmetry'] * self.objectives['symmetry']
+        return part + util + connector + fragility + seam + symmetry
 
     def preview(self):
         scene = trimesh.scene.Scene()

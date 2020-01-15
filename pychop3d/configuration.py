@@ -17,6 +17,7 @@ class Configuration:
 
         # open config YAML
         if config_path is not None:
+            self.directory = os.path.dirname(config_path)
             with open(config_path) as f:
                 config_file = yaml.safe_load(f)
 
@@ -52,6 +53,7 @@ class Configuration:
         self._n_theta = 5
         self._n_phi = 5
         self.normals = self.uniform_normals()
+        self.add_middle_plane = True
         # plane uniqueness parameters
         self.different_origin_th = float(.1 * np.sqrt(np.sum(self.printer_extents ** 2)))
         self.different_angle_th = np.pi / 10
@@ -66,6 +68,7 @@ class Configuration:
         }
         self.fragility_objective_th = .95
         self.connector_objective_th = 10
+        self.obb_utilization = True
         # connector placement parameters
         self.connector_collision_penalty = 10 ** 10
         self.empty_cc_penalty = 10**-5
@@ -73,18 +76,19 @@ class Configuration:
         self.sa_initialization_iterations = 15_000
         self.sa_iterations = 300_000
         # connector settings
-        self.adaptive_connector_size = True
+        self.adaptive_connector_size = False
         self.connector_diameter_min = 5
         self.connector_diameter_max = 30
-        self.connector_diameter = 10
+        self.connector_diameter = 5
         self.connector_tolerance = 1
+        self.connector_spacing = 10
         # run settings
-        self.mesh = "C:\\Users\\Greg\\Downloads\\Low_Poly_Stanford_Bunny\\files\\Bunny-LowPoly.stl"
-        self._directory = "C:\\Users\\Greg\\code\\pychop3d\\debug"
-        self.save_path = os.path.join(self.directory, 'config.yml')
-        self.scale = False
+        self.mesh = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'test', 'test_meshes', 'Bunny-LowPoly.stl'))
+        self._directory = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'debug'))
+        self.save_path = os.path.abspath(os.path.join(self.directory, 'config.yml'))
+        self.scale_factor = -1
         self.beam_width = 5
-        self.subdivide = False
+        self.subdivision_resolution = -1
         self.part_separation = False
 
     @property
@@ -95,7 +99,7 @@ class Configuration:
     def directory(self, value):
         self._directory = value
         save_name = os.path.basename(self.save_path)
-        self.save_path = os.path.join(self.directory, save_name)
+        self.save_path = os.path.abspath(os.path.join(self.directory, save_name))
 
     def uniform_normals(self):
         """http://corysimon.github.io/articles/uniformdistn-on-sphere/
@@ -116,7 +120,7 @@ class Configuration:
         therefore the save data will convert any numpy array to list first
         """
         if filename is not None:
-            self.save_path = os.path.join(self.directory, filename)
+            self.save_path = os.path.abspath(os.path.join(self.directory, filename))
 
         save_data = {}
         for key, value in self.__dict__.items():

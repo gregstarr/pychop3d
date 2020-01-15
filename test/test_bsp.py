@@ -10,6 +10,9 @@ from pychop3d import section
 
 
 def test_get_planes():
+    """verify that for the default bunny mesh, which is a single part, all planes returned by `BSPNode.get_planes`
+        cut through the mesh (they have a good cross section)
+    """
     config = Configuration.config
     mesh = trimesh.load(config.mesh, validate=True)
 
@@ -25,6 +28,8 @@ def test_get_planes():
 
 
 def test_different_from():
+    """verify that `BSPNode.different_from` has the expected behavior
+    """
     config = Configuration.config
     print()
     mesh = trimesh.load(config.mesh, validate=True)
@@ -67,6 +72,9 @@ def test_different_from():
 
 
 def test_copy_tree():
+    """Now that objectives are calculated outside of the tree (using the objective function evaluators), verify
+    that copying a tree doesn't modify its objectives dict
+    """
     config = Configuration.config
     mesh = trimesh.load(config.mesh, validate=True)
 
@@ -77,13 +85,12 @@ def test_copy_tree():
     planes = node.get_planes(normal)
     plane = planes[len(planes) // 2]
     tree = tree.expand_node(plane, node)
-    print("tree objective: ", tree.objective)
-    assert tree._objective is not None
     new_tree = tree.copy()
-    assert new_tree._objective is None
+    assert new_tree.objectives == tree.objectives
 
 
 def test_expand_node():
+    """no errors when using expand_node, need to think of better tests here"""
     config = Configuration.config
     mesh = trimesh.load(config.mesh, validate=True)
 
@@ -95,22 +102,23 @@ def test_expand_node():
     planes = node.get_planes(normal)
     plane = planes[len(planes) // 2]
     tree1 = tree.expand_node(plane, node)
-    print("tree objective: ", tree1.objective)
+    print("tree objective: ", tree1.get_objective())
 
     node = tree1.largest_part()
     planes = node.get_planes(normal)
     plane = planes[len(planes) // 2]
     tree2 = tree1.expand_node(plane, node)
-    assert tree2._objective is None
 
 
 def test_grid_sample():
+    """verify that when the cross section is barely larger than the connector diameter, only 1 sample is
+    returned by `ConnectedComponent.grid_sample_polygon`"""
     config = Configuration.config
     origin, normal = (np.zeros(3), np.array([0, 0, 1]))
 
     # test
     cd = config.connector_diameter
-    mesh = trimesh.primitives.Box(extents=[cd / 1.9, cd / 1.9, 40])
+    mesh = trimesh.primitives.Box(extents=[1.1 * cd, 1.1 * cd, 40])
     cross_section = section.CrossSection(mesh, origin, normal)
     samples = cross_section.connected_components[0].grid_sample_polygon()
     assert samples.size > 0
@@ -129,12 +137,11 @@ def test_grid_sample():
 def test_basic_separation():
     config = Configuration.config
     config.part_separation = True
-    mesh = trimesh.load(os.path.join(os.path.dirname(__file__), 'separate_test.stl'))
+    mesh = trimesh.load(os.path.join(os.path.dirname(__file__), 'test_meshes', 'separate_test.stl'))
     tree = bsp.BSPTree(mesh)
     node = tree.largest_part()
     plane = (np.zeros(3), np.array([1, 0, 0]))
     tree = tree.expand_node(plane, node)
     # 1 root, three leaves come out of the split
     assert len(tree.nodes) == 4
-    tree.get_objective()
     config.restore_defaults()

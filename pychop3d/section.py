@@ -1,6 +1,8 @@
 import trimesh
 import numpy as np
 import shapely.geometry as sg
+from shapely import affinity
+import matplotlib.pyplot as plt
 
 from pychop3d.configuration import Configuration
 from pychop3d import utils
@@ -28,12 +30,15 @@ class ConnectedComponent:
         self.all_index = None
 
         if config.adaptive_connector_size:
-            self.connector_diameter = np.clip(np.sqrt(self.polygon.area) / 6, config.connector_diameter_min,
+            edges = np.diff(np.column_stack(polygon.minimum_rotated_rectangle.boundary.xy), axis=0)
+            lengths = np.sqrt(np.sum(edges**2, axis=1))
+            self.connector_diameter = np.clip(lengths.min() / 4, config.connector_diameter_min,
                                               config.connector_diameter_max)
         else:
             self.connector_diameter = config.connector_diameter
+            self.connector_spacing = config.connector_spacing
 
-        if self.area < self.connector_diameter ** 2:
+        if self.area < (self.connector_diameter / 2) ** 2:
             return
 
         verts, faces = trimesh.creation.triangulate_polygon(polygon, triangle_args='p', allow_boundary_steiner=False)
@@ -76,17 +81,23 @@ class ConnectedComponent:
         return True
 
     def grid_sample_polygon(self):
-        min_x, min_y, max_x, max_y = self.polygon.bounds
+        mrr_points = np.column_stack(self.polygon.minimum_rotated_rectangle.boundary.xy)
+        mrr_edges = np.diff(mrr_points, axis=0)
+        angle = -1 * np.arctan2(mrr_edges[0, 1], mrr_edges[0, 0])
+        rotated_polygon = affinity.rotate(self.polygon, angle, use_radians=True, origin=(0, 0))
+        min_x, min_y, max_x, max_y = rotated_polygon.bounds
         xp = np.arange(min_x + self.connector_diameter / 2, max_x - self.connector_diameter / 2, self.connector_diameter)
         if len(xp) == 0:
-            return []
+            return np.array([])
         xp += (min_x + max_x) / 2 - (xp.min() + xp.max()) / 2
         yp = np.arange(min_y + self.connector_diameter / 2, max_y - self.connector_diameter / 2, self.connector_diameter)
         if len(yp) == 0:
-            return []
+            return np.array([])
         yp += (min_y + max_y) / 2 - (yp.min() + yp.max()) / 2
         X, Y = np.meshgrid(xp, yp)
         xy = np.stack((X.ravel(), Y.ravel()), axis=1)
+        rotation = np.array([[np.cos(angle), -np.sin(angle)], [np.sin(angle), np.cos(angle)]])
+        xy = xy @ rotation
         mask = np.zeros(xy.shape[0], dtype=bool)
         for i in range(xy.shape[0]):
             point = sg.Point(xy[i])
@@ -112,6 +123,7 @@ class CrossSection:
 
     def __init__(self, mesh, origin, normal):
         self.valid = False
+        self.cc_valid = True
         self.origin = origin
         self.normal = normal
         self.connected_components = []
@@ -134,14 +146,13 @@ class CrossSection:
         for polygon in path2d.polygons_full:
             cc = ConnectedComponent(polygon, self.xform, self.normal, self.origin)
             if not cc.valid:
-                # 'Missed' the part basically
-                print('M', end='')
-                return
+                self.cc_valid = False
             self.connected_components.append(cc)
         self.valid = True
 
     def split(self, mesh):
         cap = np.array([cc.mesh for cc in self.connected_components]).sum()
+        utils.trimesh_repair(cap)
 
         positive = mesh.slice_plane(plane_origin=self.origin, plane_normal=self.normal)
         positive = positive + cap
@@ -168,28 +179,33 @@ def bidirectional_split(mesh, origin, normal):
     positive_parts, negative_parts = [], []
     multipliers = np.roll(np.arange(-.5, .5, .1), 5)
     while (len(positive_parts) == 0 or len(negative_parts) == 0) and tries < 5:
-        origin += multipliers[tries] * normal * .1
+        origin += multipliers[tries] * normal
         tries += 1
         # determine ConnectedComponents of the cross section
         cross_section = CrossSection(mesh, origin, normal)
         if not cross_section.valid:
             continue
+        if not cross_section.cc_valid:
+            # bad 'Connector', usually tiny area
+            print('C', end='')
+            return None, None
         try:
             positive, negative = cross_section.split(mesh)
         except Exception as e:
-            print("Unknown problem, skipping", e)
+            print("Problem splitting mesh", e)
             continue
         if config.part_separation:
             # split parts
-            positive_parts = positive.split()
-            negative_parts = negative.split()
+            positive_parts = positive.split(only_watertight=False)
+            negative_parts = negative.split(only_watertight=False)
         else:
             positive_parts = [positive]
             negative_parts = [negative]
         parts_list = list(np.concatenate((positive_parts, negative_parts)))
 
     if len(positive_parts) == 0 or len(negative_parts) == 0:
-        # bad 'Separation'
+        # TODO: figure this thing out
+        # bad 'Separation', mesh.split() not working, cross_section.split made non watertight meshes
         print('S', end='')
         return None, None
 

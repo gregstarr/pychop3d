@@ -38,6 +38,8 @@ from pychop3d import utils
 def run(starter=None):
     if starter is None:
         starter = utils.open_mesh()
+        starter = starter.subdivide()
+        starter = starter.subdivide()
 
     t0 = time.time()
     tree = beam_search(starter)
@@ -68,5 +70,7 @@ if __name__ == "__main__":
     config.mesh = "C:\\Users\\Greg\\Documents\\shoe rack v13.stl"
     config.directory = new_directory
     config.beam_width = 3
-    config.different_origin_th = 80
+    config.connector_diameter = 5
+    config.part_separation = True
+    config.obb_utilization = False
     run()
