@@ -4,6 +4,11 @@
 ### Paper:
 http://cfg.mit.edu/content/chopper-partitioning-models-3d-printable-parts
 
+### Shoerack:
+![](images/shoerack1.png)
+![](images/shoerack2.png)
+![](images/shoerack3.png)
+
 ### Gallery
 
 ![](images/process1.png)
