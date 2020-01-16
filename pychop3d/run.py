@@ -1,25 +1,22 @@
 """
 TODO:
-    1) TESTS!
-        - tests for all objectives
-    2) features:
-        - bugs:
-            - memory issue
-            - open scad error
-        - oriented bounding box alternate
-        - other connectors / connector class
-            - tabs for bolting
-            - shell / sheath type
-        - calculate objectives for many planes at once
-            - fragility speedup
-            - trimesh.intersections.mesh_multiplane
-        - proper logging
-        - instead of fixing the connector diameter based on some arbitrary function of the cc area,
-            why not consider several different sizes of connector and let the SA objective function decide?
-        - metadata
-            - time taken for the run
-            - number of faces, verts, edges
-    3) optional future ideas:
+    - bugs:
+        - memory issue
+        - open scad error
+    - oriented bounding box alternate
+    - other connectors / connector class
+        - tabs for bolting
+        - shell / sheath type
+    - calculate objectives for many planes at once
+        - fragility speedup
+        - trimesh.intersections.mesh_multiplane
+    - proper logging
+    - instead of fixing the connector diameter based on some arbitrary function of the cc area,
+        why not consider several different sizes of connector and let the SA objective function decide?
+    - metadata
+        - time taken for the run
+        - number of faces, verts, edges
+    - optional future ideas:
         - chopper class?
         - cross section area penalty?
         - website
