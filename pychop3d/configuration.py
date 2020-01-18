@@ -73,7 +73,7 @@ class Configuration:
         self.connector_collision_penalty = 10 ** 10
         self.empty_cc_penalty = 10**-5
         self.sa_initial_connector_ratio = .1
-        self.sa_initialization_iterations = 15_000
+        self.sa_initialization_iterations = 10_000
         self.sa_iterations = 300_000
         # connector settings
         self.adaptive_connector_size = False
