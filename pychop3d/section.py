@@ -86,11 +86,11 @@ class ConnectedComponent:
         angle = -1 * np.arctan2(mrr_edges[0, 1], mrr_edges[0, 0])
         rotated_polygon = affinity.rotate(self.polygon, angle, use_radians=True, origin=(0, 0))
         min_x, min_y, max_x, max_y = rotated_polygon.bounds
-        xp = np.arange(min_x + self.connector_diameter / 2, max_x - self.connector_diameter / 2, self.connector_diameter)
+        xp = np.arange(min_x + self.connector_diameter / 2, max_x - self.connector_diameter / 2, self.connector_spacing)
         if len(xp) == 0:
             return np.array([])
         xp += (min_x + max_x) / 2 - (xp.min() + xp.max()) / 2
-        yp = np.arange(min_y + self.connector_diameter / 2, max_y - self.connector_diameter / 2, self.connector_diameter)
+        yp = np.arange(min_y + self.connector_diameter / 2, max_y - self.connector_diameter / 2, self.connector_spacing)
         if len(yp) == 0:
             return np.array([])
         yp += (min_y + max_y) / 2 - (yp.min() + yp.max()) / 2

@@ -20,10 +20,7 @@ def open_mesh():
     if config.scale_factor > 0:
         mesh.apply_scale(config.scale_factor)
     # SUBDIVIDE MESH
-    if hasattr(config, 'subdivision_resolution'):
-        if config.subdivision_resolution > 0:
-            vertices, faces = trimesh.remesh.subdivide_to_size(mesh.vertices, mesh.faces, config.subdivision_resolution)
-            mesh = trimesh.Trimesh(vertices=vertices, faces=faces, process=True)
+    pass
 
     return mesh
 
@@ -77,9 +74,11 @@ def trimesh_repair(mesh):
     trimesh.repair.fix_normals(mesh)
 
 
-def preview_tree(tree):
+def preview_tree(tree, other_objects=None):
+    if other_objects is None:
+        other_objects = []
     scene = trimesh.scene.Scene()
-    for leaf in tree.leaves:
+    for leaf in tree.leaves + other_objects:
         leaf.part.visual.face_colors = np.random.rand(3)*255
         scene.add_geometry(leaf.part)
     scene.camera.z_far = 10_000
