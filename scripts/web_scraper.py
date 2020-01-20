@@ -16,8 +16,9 @@ import shutil
 import traceback
 import sys
 
-from pychop3d import run
+from scripts import run
 from pychop3d.configuration import Configuration
+from pychop3d import utils
 
 url_template = "https://www.thingiverse.com/download:{}"
 MAX_NUMBER = 7_400_000
@@ -91,8 +92,12 @@ if __name__ == "__main__":
             config.mesh = stl_file
             Configuration.config = config
             # run
+            starter = utils.open_mesh()
+            scale_factor = np.ceil(1.1 * config.printer_extents / starter.bounding_box_oriented.primitive.extents).max()
+            config.scale_factor = scale_factor
+            starter = utils.open_mesh()
             try:
-                run.run()
+                run.run(starter)
             # catch failure and move the timestamped directory to 'failed'
             except Exception as e:
                 dump_error(timestamped_dir)

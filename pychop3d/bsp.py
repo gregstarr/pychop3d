@@ -89,7 +89,6 @@ class BSPNode:
 class BSPTree:
 
     def __init__(self, part: trimesh.Trimesh):
-        config = Configuration.config
         self.nodes = [BSPNode(part)]
         self._node_data = {}
         self.objectives = {
@@ -238,9 +237,11 @@ class BSPTree:
         symmetry = config.objective_weights['symmetry'] * self.objectives['symmetry']
         return part + util + connector + fragility + seam + symmetry
 
-    def preview(self):
+    def preview(self, other_objects=None):
+        if other_objects is None:
+            other_objects = []
         scene = trimesh.scene.Scene()
-        for leaf in self.get_leaves():
+        for leaf in self.get_leaves() + other_objects:
             leaf.part.visual.face_colors = np.random.rand(3)*255
             scene.add_geometry(leaf.part)
         scene.camera.z_far = 10_000

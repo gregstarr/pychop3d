@@ -32,12 +32,7 @@ from pychop3d.configuration import Configuration
 from pychop3d import utils
 
 
-def run(starter=None):
-    if starter is None:
-        starter = utils.open_mesh()
-        starter = starter.subdivide()
-        starter = starter.subdivide()
-
+def run(starter):
     t0 = time.time()
     tree = beam_search(starter)
     print(f"Best BSP-tree found in {time.time() - t0} seconds")
@@ -49,11 +44,13 @@ def run(starter=None):
         state = connector_placer.simulated_annealing_connector_placement()
         tree = connector_placer.insert_connectors(tree, state)
         print(f"Best connector arrangement found in {time.time() - t0} seconds")
-    except:
-        print("Connector placement failed")
+        tree.save("final_tree_with_connectors.json", state)
+    except Exception as e:
+        print("\nConnector placement failed")
+        print(e)
 
     tree.export_stl()
-    tree.save("final_tree_with_connectors.json", state)
+
     config = Configuration.config
     config.save()
 
@@ -70,4 +67,5 @@ if __name__ == "__main__":
     config.connector_diameter = 5
     config.part_separation = True
     config.obb_utilization = False
-    run()
+    starter = utils.open_mesh()
+    run(starter)
