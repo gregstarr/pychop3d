@@ -80,7 +80,7 @@ def test_copy_tree():
 
     # make tree, get node, get random normal, pick a plane right through middle, make sure that the slice is good
     tree = bsp.BSPTree(mesh)
-    node = tree.largest_part()
+    node = tree.largest_part
     normal = np.array([0, 0, 1])
     planes = node.get_planes(normal)
     plane = planes[len(planes) // 2]
@@ -97,14 +97,14 @@ def test_expand_node():
     # make tree, get node, get random normal, pick a plane right through middle, make sure that the slice is good
     tree = bsp.BSPTree(mesh)
 
-    node = tree.largest_part()
+    node = tree.largest_part
     normal = np.array([0, 0, 1])
     planes = node.get_planes(normal)
     plane = planes[len(planes) // 2]
     tree1 = tree.expand_node(plane, node)
-    print("tree objective: ", tree1.get_objective())
+    print("tree objective: ", tree1.objective)
 
-    node = tree1.largest_part()
+    node = tree1.largest_part
     planes = node.get_planes(normal)
     plane = planes[len(planes) // 2]
     tree2 = tree1.expand_node(plane, node)
@@ -139,7 +139,7 @@ def test_basic_separation():
     config.part_separation = True
     mesh = trimesh.load(os.path.join(os.path.dirname(__file__), 'test_meshes', 'separate_test.stl'))
     tree = bsp.BSPTree(mesh)
-    node = tree.largest_part()
+    node = tree.largest_part
     plane = (np.zeros(3), np.array([1, 0, 0]))
     tree = tree.expand_node(plane, node)
     # 1 root, three leaves come out of the split

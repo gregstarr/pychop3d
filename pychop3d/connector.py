@@ -3,7 +3,7 @@ import itertools
 import trimesh
 
 from pychop3d.configuration import Configuration
-from pychop3d import bsp
+from pychop3d import bsp_tree
 from pychop3d import utils
 
 
@@ -127,13 +127,13 @@ class ConnectorPlacer:
 
     def insert_connectors(self, tree, state):
         config = Configuration.config
-        new_tree = bsp.BSPTree(tree.nodes[0].part)
+        new_tree = bsp_tree.BSPTree(tree.nodes[0].part)
         for node in tree.nodes:
             if node.plane is None:
                 continue
-            new_tree2 = new_tree.expand_node(node.plane, node)
+            new_tree2 = bsp_tree.expand_node(new_tree, node.path, node.plane)
             if new_tree is None:
-                new_tree.expand_node(node.plane, node)
+                bsp_tree.expand_node(new_tree, node.path, node.plane)
             else:
                 new_tree = new_tree2
             new_node = new_tree.get_node(node.path)

@@ -1,9 +1,8 @@
 import numpy as np
 import trimesh
-import os
 
 from pychop3d import utils
-from pychop3d import bsp
+from pychop3d import bsp_tree
 from pychop3d.objective_functions import objectives
 from pychop3d.configuration import Configuration
 
@@ -11,7 +10,7 @@ from pychop3d.configuration import Configuration
 def evaluate_cuts(base_tree, node):
     config = Configuration.config
     N = config.normals
-    Np = node.auxiliary_normals()
+    Np = node.auxiliary_normals
     N = utils.get_unique_normals(np.concatenate((N, Np), axis=0))
     trees = []
     for i in range(N.shape[0]):
@@ -19,7 +18,7 @@ def evaluate_cuts(base_tree, node):
         normal = N[i]
         print(i, normal, end='')
         for plane in node.get_planes(normal):
-            tree = base_tree.expand_node(plane, node)
+            tree = bsp_tree.expand_node(base_tree, node.path, plane)
             if tree:
                 trees_of_this_normal.append(tree)
         if len(trees_of_this_normal) == 0:
@@ -30,7 +29,7 @@ def evaluate_cuts(base_tree, node):
         print()
 
     result_set = []
-    for tree in sorted(trees, key=lambda x: x.get_objective()):
+    for tree in sorted(trees, key=lambda x: x.objective):
         if tree.sufficiently_different(node, result_set):
             result_set.append(tree)
     print(f"{len(result_set)} valid trees")
@@ -50,17 +49,17 @@ def beam_search(starter):
     while not utils.all_at_goal(current_trees):
         new_bsps = []
         for tree in utils.not_at_goal_set(current_trees):
-            if len(tree.get_leaves()) != n_leaves:
+            if len(tree.leaves) != n_leaves:
                 continue
             current_trees.remove(tree)
-            largest_node = tree.largest_part()
+            largest_node = tree.largest_part
             new_bsps += evaluate_cuts(tree, largest_node)
 
         n_leaves += 1
         current_trees += new_bsps
-        current_trees = sorted(current_trees, key=lambda x: x.get_objective())
+        current_trees = sorted(current_trees, key=lambda x: x.objective)
         if config.part_separation:
-            extra_leaves_trees = [t for t in current_trees if len(t.get_leaves()) > n_leaves]
+            extra_leaves_trees = [t for t in current_trees if len(t.leaves) > n_leaves]
         current_trees = current_trees[:config.beam_width]
         if config.part_separation:
             current_trees += [t for t in extra_leaves_trees if t not in current_trees]
@@ -68,8 +67,8 @@ def beam_search(starter):
         if len(current_trees) == 0:
             raise Exception("Pychop3D failed")
 
-        print(f"Leaves: {n_leaves}, best objective: {current_trees[0].get_objective()}, estimated number of parts: "
-              f"{sum([p.n_parts for p in current_trees[0].get_leaves()])}")
+        print(f"Leaves: {n_leaves}, best objective: {current_trees[0].objective}, estimated number of parts: "
+              f"{sum([p.n_parts for p in current_trees[0].leaves])}")
 
         for i, tree in enumerate(current_trees[:config.beam_width]):
             tree.save(f"{i}.json")
