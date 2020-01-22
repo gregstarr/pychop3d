@@ -17,7 +17,7 @@ def evaluate_cuts(base_tree, node):
         trees_of_this_normal = []
         normal = N[i]
         print(i, normal, end='')
-        for plane in node.get_planes(normal):
+        for plane in bsp_tree.get_planes(node.part, normal):
             tree = bsp_tree.expand_node(base_tree, node.path, plane)
             if tree:
                 trees_of_this_normal.append(tree)
@@ -39,8 +39,8 @@ def evaluate_cuts(base_tree, node):
 def beam_search(starter):
     config = Configuration.config
     if isinstance(starter, trimesh.Trimesh):
-        current_trees = [bsp.BSPTree(starter)]
-    elif isinstance(starter, bsp.BSPTree):
+        current_trees = [bsp_tree.BSPTree(starter)]
+    elif isinstance(starter, bsp_tree.BSPTree):
         current_trees = [starter]
     else:
         raise NotImplementedError

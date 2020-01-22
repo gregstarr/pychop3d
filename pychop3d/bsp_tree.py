@@ -102,3 +102,13 @@ def expand_node(tree, path, plane):
         return None
     new_tree.nodes += new_node.children
     return new_tree
+
+
+def get_planes(part, normal):
+    config = Configuration.config
+    projection = part.vertices @ normal
+    limits = [projection.min(), projection.max()]
+    planes = [(d * normal, normal) for d in np.arange(limits[0], limits[1], config.plane_spacing)][1:]
+    if config.add_middle_plane:
+        planes += [(normal * (projection.min() + projection.max()) / 2, normal)]  # add a plane through the middle
+    return planes

@@ -29,14 +29,8 @@ class ConnectedComponent:
         self.all_sites = None
         self.all_index = None
 
-        if config.adaptive_connector_size:
-            edges = np.diff(np.column_stack(polygon.minimum_rotated_rectangle.boundary.xy), axis=0)
-            lengths = np.sqrt(np.sum(edges**2, axis=1))
-            self.connector_diameter = np.clip(lengths.min() / 4, config.connector_diameter_min,
-                                              config.connector_diameter_max)
-        else:
-            self.connector_diameter = config.connector_diameter
-            self.connector_spacing = config.connector_spacing
+        self.connector_diameter = config.connector_diameter
+        self.connector_spacing = config.connector_spacing
 
         if self.area < (self.connector_diameter / 2) ** 2:
             return

@@ -1,7 +1,6 @@
 import trimesh
 import numpy as np
 
-from pychop3d import constants
 from pychop3d import section
 from pychop3d.configuration import Configuration
 
@@ -81,13 +80,3 @@ def split(node, plane):
         node.children.append(BSPNode(part, parent=node, num=i))
     print('.', end='')
     return node
-
-
-def get_planes(self, normal):
-    config = Configuration.config
-    projection = self.part.vertices @ normal
-    limits = [projection.min(), projection.max()]
-    planes = [(d * normal, normal) for d in np.arange(limits[0], limits[1], config.plane_spacing)][1:]
-    if config.add_middle_plane:
-        planes += [(normal * (projection.min() + projection.max()) / 2, normal)]  # add a plane through the middle
-    return planes

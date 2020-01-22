@@ -61,7 +61,7 @@ if __name__ == "__main__":
     new_directory = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'output', date_string))
     os.mkdir(new_directory)
     config = Configuration.config
-    config.mesh = "C:\\Users\\Greg\\Documents\\shoe rack v13.stl"
+    config.mesh = "C:\\Users\\Greg\\Documents\\things\\shoe rack v13.stl"
     config.directory = new_directory
     config.beam_width = 3
     config.connector_diameter = 5

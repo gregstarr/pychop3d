@@ -3,7 +3,6 @@ import trimesh
 import json
 import os
 
-from pychop3d import section
 from pychop3d import bsp_tree
 from pychop3d.configuration import Configuration
 

@@ -68,7 +68,7 @@ class Configuration:
         }
         self.fragility_objective_th = .95
         self.connector_objective_th = 10
-        self.obb_utilization = True
+        self.obb_utilization = False
         # connector placement parameters
         self.connector_collision_penalty = 10 ** 10
         self.empty_cc_penalty = 10**-5
@@ -76,7 +76,6 @@ class Configuration:
         self.sa_initialization_iterations = 10_000
         self.sa_iterations = 300_000
         # connector settings
-        self.adaptive_connector_size = False
         self.connector_diameter_min = 5
         self.connector_diameter_max = 30
         self.connector_diameter = 5
@@ -88,7 +87,6 @@ class Configuration:
         self.save_path = os.path.abspath(os.path.join(self.directory, 'config.yml'))
         self.scale_factor = -1
         self.beam_width = 5
-        self.subdivision_resolution = -1
         self.part_separation = False
 
     @property
