@@ -8,7 +8,6 @@ TODO:
         - tabs for bolting
         - shell / sheath type
     - calculate objectives for many planes at once
-        - fragility speedup
         - trimesh.intersections.mesh_multiplane
     - proper logging
     - instead of fixing the connector diameter based on some arbitrary function of the cc area,

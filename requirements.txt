@@ -1,0 +1,15 @@
+matplotlib
+numpy
+scipy
+pytest
+networkx
+pyyaml
+requests
+trimesh
+pyglet
+# Go to this website for the wheels:
+# https://www.lfd.uci.edu/~gohlke/pythonlibs
+#
+# meshpy
+# shapely
+# rtree

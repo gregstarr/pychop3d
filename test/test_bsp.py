@@ -1,4 +1,3 @@
-import pytest
 import trimesh
 import numpy as np
 import copy
@@ -8,6 +7,7 @@ from pychop3d import bsp_tree
 from pychop3d import bsp_node
 from pychop3d.configuration import Configuration
 from pychop3d import section
+from pychop3d import utils
 
 
 def test_get_planes():
@@ -28,10 +28,14 @@ def test_get_planes():
 
 def test_different_from():
     """verify that `BSPNode.different_from` has the expected behavior
+
+    Get a list of planes. Split the object using the first plane, then for each of the other planes, split the object,
+    check if the plane is far enough away given the config, then assert that `BSPNode.different_from` returns the
+    correct value. This skips any splits that fail.
     """
     config = Configuration.config
     print()
-    mesh = trimesh.load(config.mesh, validate=True)
+    mesh = trimesh.primitives.Sphere(radius=50)
 
     tree = bsp_tree.BSPTree(mesh)
     root = tree.nodes[0]

@@ -41,6 +41,7 @@ def test_sa_objective_2():
         - large faces prefer multiple connectors
     """
     config = Configuration.config
+    config.connector_spacing = 5
     mesh = trimesh.primitives.Box(extents=[30, 30, 80])
     tree = bsp_tree.BSPTree(mesh)
     normal = np.array([0, 0, 1])

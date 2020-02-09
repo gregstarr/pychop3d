@@ -49,6 +49,7 @@ def test_utilization():
     tree1 = bsp_tree.expand_node(tree1, tree1.nodes[0].path, (np.zeros(3), np.array([0., 0., 1.])))
     tree2 = bsp_tree.BSPTree(mesh)
     tree2 = bsp_tree.expand_node(tree2, tree2.nodes[0].path, (np.array([0., 0., 100.]), np.array([0., 0., 1.])))
+    objective_functions.evaluate_utilization_objective([tree1, tree2], ())
     print(f"\n{tree1.objectives['utilization']} < {tree2.objectives['utilization']}")
     assert tree1.objectives['utilization'] < tree2.objectives['utilization']
 

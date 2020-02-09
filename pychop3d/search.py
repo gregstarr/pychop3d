@@ -71,8 +71,8 @@ def beam_search(starter):
               f"{sum([p.n_parts for p in current_trees[0].leaves])}")
 
         for i, tree in enumerate(current_trees[:config.beam_width]):
-            tree.save(f"{i}.json")
+            utils.save_tree(tree, f"{i}.json")
 
-        current_trees[0].export_stl()
+        utils.export_tree_stls(current_trees[0])
 
     return current_trees[0]
