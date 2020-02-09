@@ -8,7 +8,6 @@ TODO:
         - tabs for bolting
         - shell / sheath type
     - calculate objectives for many planes at once
-        - fragility speedup
         - trimesh.intersections.mesh_multiplane
     - proper logging
     - instead of fixing the connector diameter based on some arbitrary function of the cc area,
@@ -61,7 +60,7 @@ if __name__ == "__main__":
     new_directory = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'output', date_string))
     os.mkdir(new_directory)
     config = Configuration.config
-    config.mesh = "C:\\Users\\Greg\\Documents\\shoe rack v13.stl"
+    config.mesh = "C:\\Users\\Greg\\Documents\\things\\shoe rack v13.stl"
     config.directory = new_directory
     config.beam_width = 3
     config.connector_diameter = 5

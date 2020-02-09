@@ -7,3 +7,4 @@ debug/*
 failed
 output
 !debug/debug.txt
+venv

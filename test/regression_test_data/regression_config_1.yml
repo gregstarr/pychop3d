@@ -1,7 +1,6 @@
 _directory: C:\Users\Greg\code\pychop3d\test\regression_test_data
 _n_phi: 5
 _n_theta: 5
-adaptive_connector_size: false
 add_middle_plane: true
 beam_width: 2
 connector_collision_penalty: 10000000000
@@ -36,4 +35,3 @@ sa_initialization_iterations: 15000
 sa_iterations: 300000
 save_path: C:\Users\Greg\code\pychop3d\test\regression_test_data\regression_config_2.yml
 scale_factor: 2
-subdivision_resolution: -1

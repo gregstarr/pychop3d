@@ -1,12 +1,9 @@
-import trimesh
 import os
 import numpy as np
 import pytest
 import glob
 
-from pychop3d import section
 from pychop3d import search
-from pychop3d import bsp
 from pychop3d import utils
 from pychop3d.configuration import Configuration
 

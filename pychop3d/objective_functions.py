@@ -27,7 +27,7 @@ def evaluate_utilization_objective(trees, path):
         for tree in trees:
             node = tree.get_node(path)
             tree.objectives['utilization'] = max(tree.objectives['utilization'],
-                                                 max([1 - c.get_bounding_box_oriented().volume / (c.n_parts * V) for c in node.children]))
+                                                 max([1 - c.obb.volume / (c.n_parts * V) for c in node.children]))
     else:
         for tree in trees:
             node = tree.get_node(path)
@@ -38,7 +38,7 @@ def evaluate_utilization_objective(trees, path):
 def evaluate_connector_objective(trees, path):
     for tree in trees:
         node = tree.get_node(path)
-        tree.objectives['connector'] = max(tree.objectives['connector'], node.get_connection_objective())
+        tree.objectives['connector'] = max(tree.objectives['connector'], node.connection_objective)
 
 
 def get_fragility_for_normal(part, normal, origins, normal_parallel_th, connector_sizes):
