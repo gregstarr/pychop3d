@@ -35,7 +35,7 @@ def run(starter):
     t0 = time.time()
     tree = beam_search(starter)
     print(f"Best BSP-tree found in {time.time() - t0} seconds")
-    tree.save("final_tree.json")
+    utils.save_tree(tree, "final_tree.json")
 
     try:
         t0 = time.time()
@@ -43,12 +43,12 @@ def run(starter):
         state = connector_placer.simulated_annealing_connector_placement()
         tree = connector_placer.insert_connectors(tree, state)
         print(f"Best connector arrangement found in {time.time() - t0} seconds")
-        tree.save("final_tree_with_connectors.json", state)
+        utils.save_tree(tree, "final_tree_with_connectors.json", state)
     except Exception as e:
         print("\nConnector placement failed")
         print(e)
 
-    tree.export_stl()
+    utils.export_tree_stls(tree)
 
     config = Configuration.config
     config.save()
@@ -64,7 +64,7 @@ if __name__ == "__main__":
     config.directory = new_directory
     config.beam_width = 3
     config.connector_diameter = 5
+    config.connector_spacing = 12
     config.part_separation = True
-    config.obb_utilization = False
     starter = utils.open_mesh()
     run(starter)

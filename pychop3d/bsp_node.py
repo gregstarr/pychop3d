@@ -5,6 +5,10 @@ from pychop3d import section
 from pychop3d.configuration import Configuration
 
 
+class ConvexHullError(Exception):
+    pass
+
+
 class BSPNode:
 
     def __init__(self, part, parent=None, num=None):
@@ -25,12 +29,8 @@ class BSPNode:
     def obb(self):
         try:
             return self.part.bounding_box_oriented
-        except Exception as e:
-            print(e)
-            print("REGULAR CONVEX HULL FAILED, USING APPROXIMATION")
-            samples, *_ = self.part.nearest.on_surface(trimesh.primitives.Sphere(radius=1000).vertices)
-            point_cloud = trimesh.PointCloud(samples)
-            return point_cloud.bounding_box_oriented
+        except Exception:
+            raise ConvexHullError("OBB failed")
 
     @property
     def auxiliary_normals(self):
@@ -77,6 +77,12 @@ def split(node, plane):
         if part.volume < .1:
             print('V', end='')
             return None
-        node.children.append(BSPNode(part, parent=node, num=i))
+        try:
+            child = BSPNode(part, parent=node, num=i)
+        except ConvexHullError:
+            print("H", end='')
+            return None
+
+        node.children.append(child)
     print('.', end='')
     return node
