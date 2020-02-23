@@ -64,25 +64,22 @@ def split(node, plane):
     node.plane = plane
     origin, normal = plane
     # split the part
-    parts, cross_section = section.bidirectional_split(node.part, origin, normal)
+    parts, cross_section, result = section.bidirectional_split(node.part, origin, normal)
 
     # check for splitting errors
     if None in [parts, cross_section]:
-        return None
+        return None, result
 
     # The parts become this node's children
     node.cross_section = cross_section
     for i, part in enumerate(parts):
         # make sure each part has some volume
         if part.volume < .1:
-            print('V', end='')
-            return None
+            return None, 'low_volume_error'
         try:
             child = BSPNode(part, parent=node, num=i)
         except ConvexHullError:
-            print("H", end='')
-            return None
+            return None, 'convex_hull_error'
 
         node.children.append(child)
-    print('.', end='')
-    return node
+    return node, 'success'

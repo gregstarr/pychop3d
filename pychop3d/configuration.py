@@ -45,6 +45,7 @@ class Configuration:
         self.normals = self.uniform_normals()
 
     def restore_defaults(self):
+        self.name = "chopped"
         self.do_not_save = ['normals']
         # printer parameters
         self.printer_extents = np.array([200, 200, 200], dtype=float)

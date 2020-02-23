@@ -1,10 +1,13 @@
 import numpy as np
-import itertools
+import logging
 import trimesh
 
 from pychop3d.configuration import Configuration
 from pychop3d import bsp_tree
 from pychop3d import utils
+
+
+logger = logging.getLogger(__name__)
 
 
 class ConnectorPlacer:
@@ -19,7 +22,7 @@ class ConnectorPlacer:
         if len(tree.nodes) < 2:
             raise Exception("input tree needs to have a chop")
 
-        print("\nCreating connectors...")
+        logger.info("\nCreating connectors...")
         for n, node in enumerate(tree.nodes):
             if node.cross_section is None:
                 continue
@@ -43,10 +46,10 @@ class ConnectorPlacer:
 
         self.connectors = np.array(self.connectors)
         self.n_connectors = self.connectors.shape[0]
-        print(f"Number of connectors: {self.n_connectors}")
+        logger.info(f"Number of connectors: {self.n_connectors}")
         self.collisions = np.zeros((self.n_connectors, self.n_connectors), dtype=bool)
 
-        print("determining connector-cut intersections")
+        logger.info("determining connector-cut intersections")
         mass_centers = np.array([c.center_mass for c in self.connectors])
         intersections = np.zeros(self.n_connectors, dtype=int)
         for cap in caps:
@@ -54,7 +57,7 @@ class ConnectorPlacer:
         self.collisions[intersections > 1, :] = True
         self.collisions[:, intersections > 1] = True
 
-        print("determining connector-connector intersections")
+        logger.info("determining connector-connector intersections")
         distances = np.sqrt(np.sum((mass_centers[:, None, :] - mass_centers[None, :, :]) ** 2, axis=2))
         mask = (distances > 0) * (distances < config.connector_diameter * 1.5)
         self.collisions = np.logical_or(self.collisions, mask)
@@ -91,21 +94,21 @@ class ConnectorPlacer:
         config = Configuration.config
         state = self.get_initial_state()
         objective = self.evaluate_connector_objective(state)
-        print(f"\ninitial objective: {objective}")
+        logger.info(f"\ninitial objective: {objective}")
         # initialization
         for i in range(config.sa_initialization_iterations):
             if not i % (config.sa_initialization_iterations // 10):
                 print('.', end='')
             state, objective = self.sa_iteration(state, objective, 0)
 
-        print(f"\npost initialization objective: {objective}")
+        logger.info(f"\npost initialization objective: {objective}")
         initial_temp = objective / 2
         for i, temp in enumerate(np.linspace(initial_temp, 0, config.sa_iterations)):
             if not i % (config.sa_iterations // 10):
                 print('.', end='')
             state, objective = self.sa_iteration(state, objective, temp)
 
-        print(f"\nfinal objective: {objective}")
+        logger.info(f"\nfinal objective: {objective}")
         return state
 
     def sa_iteration(self, state, objective, temp):
@@ -159,7 +162,7 @@ class ConnectorPlacer:
                         new_part = new_node.children[ni].part.union(self.connectors[idx], engine='scad')
                         new_node.children[ni].part = new_part
                     except Exception as e:
-                        print("ignoring connector")
+                        logger.info("ignoring connector")
                 for idx in neg_index:
                     xform = self.connectors[idx].primitive.transform
                     slot = trimesh.primitives.Box(
@@ -174,6 +177,6 @@ class ConnectorPlacer:
                         new_part = new_node.children[pi].part.union(self.connectors[idx], engine='scad')
                         new_node.children[pi].part = new_part
                     except Exception as e:
-                        print("ignoring connector")
+                        logger.info("ignoring connector")
 
         return new_tree

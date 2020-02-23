@@ -39,6 +39,13 @@ def open_tree(tree_file):
 
 
 def all_at_goal(trees):
+    """convenience / readability function which returns whether a list of trees are all terminated
+
+    :param trees: list of trees to check
+    :type trees: list
+    :return: bool indicating if the list of trees are all terminated
+    :rtype: bool
+    """
     for tree in trees:
         if not tree.terminated:
             return False
@@ -46,6 +53,13 @@ def all_at_goal(trees):
 
 
 def not_at_goal_set(trees):
+    """convenience / readability function which returns the not terminated trees from a list
+
+    :param trees: list of input trees
+    :type trees: list
+    :return: trees from the input list which are not terminated
+    :rtype: list
+    """
     not_at_goal = []
     for tree in trees:
         if not tree.terminated:
@@ -54,10 +68,18 @@ def not_at_goal_set(trees):
 
 
 def get_unique_normals(non_unique_normals):
+    """get unique normals from an (N x 3) array of normal vectors
+
+    :param non_unique_normals: (N x 3) array of normal vectors
+    :type non_unique_normals: `numpy.ndarray`
+    :return: unique normals from the input array
+    :rtype: `numpy.ndarray`
+    """
+    # round the vectors to avoid having any of the resulting vectors too close
     rounded = np.round(non_unique_normals, 3)
-    view = rounded.view(dtype=[('', float), ('', float), ('', float)])
-    unique = np.unique(view)
-    return unique.view(dtype=float).reshape((unique.shape[0], -1))
+    view = rounded.view(dtype=[('', float), ('', float), ('', float)])  # treat the array as a 1-D array of tuples
+    unique = np.unique(view)  # get the unique tuples
+    return unique.view(dtype=float).reshape((unique.shape[0], -1))  # reassemble the tuples into a numpy array
 
 
 def make_plane(origin, normal, w=100):
@@ -100,7 +122,14 @@ def save_tree(tree, filename, state=None):
         json.dump({'nodes': nodes, 'state': [bool(s) for s in state]}, f)
 
 
-def export_tree_stls(tree):
+def export_tree_stls(tree, fn_info="part"):
+    """Saves all of a tree's parts to the directory specified in the configuration
+
+    :param tree: tree to save the parts of
+    :type tree: `bsp_tree.BSPTree`
+    :param fn_info: string added to the STL filenames after the object name
+    :type fn_info: str
+    """
     config = Configuration.config
     for i, leaf in enumerate(tree.leaves):
-        leaf.part.export(os.path.join(config.directory, f"{i}.stl"))
+        leaf.part.export(os.path.join(config.directory, f"{config.name}_{fn_info}_{i}.stl"))

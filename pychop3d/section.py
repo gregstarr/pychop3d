@@ -48,8 +48,6 @@ class ConnectedComponent:
         plane_samples = self.grid_sample_polygon()
 
         if len(plane_samples) == 0:
-            # no 'Connector' locations
-            print('C', end='')
             return False
 
         mesh_samples = trimesh.transform_points(np.column_stack((plane_samples, np.zeros(plane_samples.shape[0]))),
@@ -63,8 +61,6 @@ class ConnectedComponent:
         ch_area_mask = np.logical_or(pos_valid_mask, neg_valid_mask)
 
         if ch_area_mask.sum() == 0:
-            # no 'Connector' locations
-            print('C', end='')
             return False
 
         convex_hull_area = sg.MultiPoint(plane_samples[ch_area_mask]).buffer(self.connector_diameter / 2).convex_hull.area
@@ -125,7 +121,6 @@ class CrossSection:
         path3d = mesh.section(plane_origin=origin, plane_normal=normal)
         if path3d is None:
             # 'Missed' the part basically
-            print('M', end='')
             return
 
         # triangulate the cross section
@@ -135,7 +130,6 @@ class CrossSection:
             path2d.polygons_full
         except Exception as e:
             # 'Missed' the part basically
-            print('M', end='')
             return
         for polygon in path2d.polygons_full:
             cc = ConnectedComponent(polygon, self.xform, self.normal, self.origin)
@@ -180,13 +174,10 @@ def bidirectional_split(mesh, origin, normal):
         if not cross_section.valid:
             continue
         if not cross_section.cc_valid:
-            # bad 'Connector', usually tiny area
-            print('C', end='')
-            return None, None
+            return None, None, 'invalid_connected_component_error'
         try:
             positive, negative = cross_section.split(mesh)
         except Exception as e:
-            print("Problem splitting mesh", e)
             continue
         if config.part_separation:
             # split parts
@@ -198,10 +189,7 @@ def bidirectional_split(mesh, origin, normal):
         parts_list = list(np.concatenate((positive_parts, negative_parts)))
 
     if len(positive_parts) == 0 or len(negative_parts) == 0:
-        # TODO: figure this thing out
-        # bad 'Separation', mesh.split() not working, cross_section.split made non watertight meshes
-        print('S', end='')
-        return None, None
+        return None, None, 'bad_separation_error'
 
     for part in parts_list:
         utils.trimesh_repair(part)
@@ -222,11 +210,9 @@ def bidirectional_split(mesh, origin, normal):
                 break
 
         if None in [cc.positive, cc.negative]:
-            # bad 'Separation'
-            print('S', end='')
-            return None, None
+            return None, None, 'bad_separation_error'
 
         if not cc.evaluate_interface(parts_list[cc.positive], parts_list[cc.negative]):
-            return None, None
+            return None, None, 'connector_location_error'
 
-    return parts_list, cross_section
+    return parts_list, cross_section, 'success'

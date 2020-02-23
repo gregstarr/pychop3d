@@ -95,20 +95,39 @@ class BSPTree:
 
 
 def expand_node(tree, path, plane):
+    """
+
+    :param tree:
+    :param path:
+    :param plane:
+    :return:
+    """
     new_tree = tree.copy()
     new_node = new_tree.get_node(path)
-    new_node = bsp_node.split(new_node, plane)
-    if new_node is None:
-        return None
+    new_node, result = bsp_node.split(new_node, plane)
+    if result != 'success':
+        return None, result
     new_tree.nodes += new_node.children
-    return new_tree
+    return new_tree, result
 
 
 def get_planes(part, normal):
-    config = Configuration.config
-    projection = part.vertices @ normal
+    """get all planes in the form of (origin, normal) pairs corresponding to valid cuts of the input part. Planes are
+    in the direction specified by `normal` and are spaced according to the `plane_spacing` configuration parameter.
+
+    :param part: object to determine valid cutting planes for
+    :type part: `trimesh.Trimesh`
+    :param normal: unit vector defining the normal vector for the planes
+    :type normal: (3, ) shape `numpy.ndarray`
+    :return: list of all valid cutting planes for the input object
+    :rtype: list
+    """
+    config = Configuration.config  # collect configuration
+    projection = part.vertices @ normal  # project all vertices of the input object onto the input normal vector
+    # determine the extent of the object in the direction defined by the normal vector
     limits = [projection.min(), projection.max()]
+    # create planes spaced out according to the configuration
     planes = [(d * normal, normal) for d in np.arange(limits[0], limits[1], config.plane_spacing)][1:]
-    if config.add_middle_plane:
+    if config.add_middle_plane:  # add the middle plane
         planes += [(normal * (projection.min() + projection.max()) / 2, normal)]  # add a plane through the middle
     return planes
