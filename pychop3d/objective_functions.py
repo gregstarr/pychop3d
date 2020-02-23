@@ -1,10 +1,3 @@
-"""
-TODO:
-    - reorder objective function calculation to calculate objectives for many planes all with same normal
-    - objectives should be stored for previous trees to minimize recalculation (most of the nodes are shared)
-    - implement symmetry objective
-    - add other objectives to make the shoe rack chop better
-"""
 import numpy as np
 import trimesh
 

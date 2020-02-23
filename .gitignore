@@ -8,3 +8,4 @@ failed
 output
 !debug/debug.txt
 venv
+*.log

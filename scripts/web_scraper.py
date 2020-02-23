@@ -3,9 +3,6 @@ I want this script to download and unzip a random thing from thingiverse, then f
 it using default settings. It should work out of a temporary directory, but if any STL fails to chop,
 it should move the STL and all of the logs, jsons and yamls to a timestamped folder in 'failed'. This
 script should make 100 attempts to chop STLs, then report the success rate.
-
-TODO:
-    - memory leak
 """
 import os
 import tempfile
@@ -15,6 +12,7 @@ import datetime
 import shutil
 import traceback
 import sys
+import logging
 
 from scripts import run
 from pychop3d.configuration import Configuration
@@ -22,18 +20,19 @@ from pychop3d import utils
 
 url_template = "https://www.thingiverse.com/download:{}"
 MAX_NUMBER = 7_400_000
+logger = logging.getLogger(__name__)
 
 
 def download_stl(directory):
     while True:
         thing_number = np.random.randint(1, MAX_NUMBER)
         url = url_template.format(thing_number)
-        print(url)
+        logging.info(url)
         req = requests.get(url)
-        print(req.status_code)
+        logging.info(req.status_code)
         if req.status_code != 200:
             continue
-        print(req.url.split('/')[-1])
+        logging.info(req.url.split('/')[-1])
         if req.url.split('.')[-1].lower() != 'stl':
             continue
         file_name = os.path.join(directory, f"{thing_number}.stl")
@@ -45,7 +44,7 @@ def download_stl(directory):
             with open(file_name, 'wb') as f:
                 f.write(req.content)
         except Exception as e:
-            print(e)
+            logging.error(e)
             raise e
         return file_name
 
@@ -55,8 +54,8 @@ def dump_error(timestamped_dir):
     traceback.print_tb(exc_traceback)
     traceback.print_exception(exc_type, exc_value, exc_traceback)
     traceback.print_exc()
-    print(repr(traceback.extract_tb(exc_traceback)))
-    print(repr(traceback.format_tb(exc_traceback)))
+    logging.error(repr(traceback.extract_tb(exc_traceback)))
+    logging.error(repr(traceback.format_tb(exc_traceback)))
     with open(os.path.join(timestamped_dir, 'error.txt'), 'w') as f:
         traceback.print_tb(exc_traceback, file=f)
         f.write('\n\n')
@@ -70,6 +69,14 @@ def dump_error(timestamped_dir):
 
 
 if __name__ == "__main__":
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s  %(name)s  [%(levelname)s]  %(message)s",
+        handlers=[
+            logging.FileHandler("web_scraper.log"),
+            logging.StreamHandler()
+        ]
+    )
     N_ITERATIONS = 20
     n_failed = 0
     for _ in range(N_ITERATIONS):
@@ -86,10 +93,14 @@ if __name__ == "__main__":
             stl_file = download_stl(timestamped_dir)
             # create config
             config = Configuration()
+            config.name = os.path.splitext(os.path.basename(stl_file))[0]
             config.beam_width = 2
             config.plane_spacing = 30
+            config.connector_diameter = 5
+            config.connector_spacing = 10
             config.directory = timestamped_dir
             config.mesh = stl_file
+            config.part_separation = True
             Configuration.config = config
             # run
             starter = utils.open_mesh()
@@ -106,4 +117,4 @@ if __name__ == "__main__":
                 shutil.move(timestamped_dir, failed_directory)
                 config.directory = failed_directory
                 config.save()
-    print(f"{N_ITERATIONS} attempts: {(N_ITERATIONS - n_failed) / N_ITERATIONS} success rate")
+    logging.info(f"{N_ITERATIONS} attempts: {(N_ITERATIONS - n_failed) / N_ITERATIONS} success rate")

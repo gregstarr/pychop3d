@@ -36,7 +36,7 @@ def evaluate_cuts(base_tree, node):
             tree, result = bsp_tree.expand_node(base_tree, node.path, plane)  # split the node using the plane
             if tree:  # only keep the tree if the split is successful
                 trees_of_this_normal.append(tree)
-            logger.info(f"normal index: {i}, origin: {plane[0]}, normal: {plane[1]}, result: {result}")
+            logger.debug(f"normal index: {i}, origin: {plane[0]}, normal: {plane[1]}, result: {result}")
         if len(trees_of_this_normal) == 0:  # avoid empty list errors during objective function evaluation
             logger.info(f"normal index: {i}, trees for normal: {len(trees_of_this_normal)}, total trees: {len(trees)}")
             continue
@@ -89,9 +89,8 @@ def beam_search(starter):
             new_bsps += evaluate_cuts(tree, largest_node)  # consider many different cutting planes for the node
 
         n_leaves += 1  # on the next iteration, look at trees with more leaves
-        # sort all of the trees including the new ones
         current_trees += new_bsps
-        current_trees = sorted(current_trees, key=lambda x: x.objective)
+        current_trees = sorted(current_trees, key=lambda x: x.objective) # sort all of the trees including the new ones
         # if we are considering part separation, some of the trees may have more leaves, put those away for later
         if config.part_separation:
             extra_leaves_trees = [t for t in current_trees if len(t.leaves) > n_leaves]
