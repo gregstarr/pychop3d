@@ -8,7 +8,6 @@ Configuration.config = Configuration("C:\\Users\\Greg\\code\\pychop3d\\output\\s
 Configuration.config.sa_initial_connector_ratio = .01
 Configuration.config.connector_spacing = 20
 Configuration.config.sa_iterations = 50_000
-mesh = utils.open_mesh()
 tree = utils.open_tree("C:\\Users\\Greg\\code\\pychop3d\\output\\success\\0.json")
 
 connector_placer = connector.ConnectorPlacer(tree)

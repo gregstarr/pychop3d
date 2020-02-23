@@ -76,7 +76,7 @@ def trimesh_repair(mesh):
 def preview_tree(tree, other_objects=None):
     if other_objects is None:
         other_objects = []
-    scene = trimesh.scene.Scene()
+    scene = trimesh.Scene()
     for leaf in tree.leaves + other_objects:
         leaf.part.visual.face_colors = np.random.rand(3)*255
         scene.add_geometry(leaf.part)

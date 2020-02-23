@@ -55,16 +55,15 @@ def run(starter):
 
 
 if __name__ == "__main__":
-    # name and save the config
-    date_string = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
-    new_directory = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'output', date_string))
+    output_folder = "poster_frame_" + datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
+    new_directory = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'output', output_folder))
     os.mkdir(new_directory)
     config = Configuration.config
-    config.mesh = "C:\\Users\\Greg\\Documents\\things\\shoe rack v13.stl"
+    config.mesh = "C:\\Users\\Greg\\Documents\\things\\poster frame\\frame.stl"
     config.directory = new_directory
     config.beam_width = 3
-    config.connector_diameter = 5
-    config.connector_spacing = 12
+    config.connector_diameter = 6
+    config.connector_spacing = 10
     config.part_separation = True
     starter = utils.open_mesh()
     run(starter)
