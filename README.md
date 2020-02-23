@@ -12,13 +12,14 @@ http://cfg.mit.edu/content/chopper-partitioning-models-3d-printable-parts
 * printer_extents: dimensions of your printer build volume, only supports cartesian
 
 
-### Shoerack:
+### Gallery:
+#### Shoerack
 ![](images/shoerack1.PNG)
 ![](images/shoerack2.PNG)
 ![](images/shoerack3.PNG)
-
-### Gallery
-
+![](images/shoerack4.JPG)
+![](images/shoerack5.JPG)
+#### Bunny
 ![](images/process1.png)
 ![](images/process2.png)
 ![](images/process3.png)
