@@ -36,16 +36,17 @@ def run(starter):
         t0 = time.time()
         # create connector placer object, this creates all potential connectors and determines their collisions
         connector_placer = connector.ConnectorPlacer(tree)
-        # use simulated annealing to determine the best combination of connectors
-        state = connector_placer.simulated_annealing_connector_placement()
-        # save the final tree including the state
-        utils.save_tree(tree, "final_tree_with_connectors.json", state)
-        # add the connectors / subtract the slots from the parts of the partitioned input object
-        tree = connector_placer.insert_connectors(tree, state)
+        if connector_placer.n_connectors > 0:
+            # use simulated annealing to determine the best combination of connectors
+            state = connector_placer.simulated_annealing_connector_placement()
+            # save the final tree including the state
+            utils.save_tree(tree, "final_tree_with_connectors.json", state)
+            # add the connectors / subtract the slots from the parts of the partitioned input object
+            tree = connector_placer.insert_connectors(tree, state)
         logger.info(f"Best connector arrangement found in {time.time() - t0} seconds")
     except Exception as e:
         # fail gently so that the STLs still get exported
-        logger.error("\nConnector placement failed")
+        logger.error("Connector placement failed")
         logger.error(e)
 
     # export the parts of the partitioned object
@@ -54,7 +55,7 @@ def run(starter):
 
 
 if __name__ == "__main__":
-    name = "poster_frame"
+    name = "box"
     # name the folder based on the name of the object and the current date / time
     output_folder = f"{name}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}"
     # create the new directory in the 'output' subdirectory of pychop3d
@@ -63,12 +64,13 @@ if __name__ == "__main__":
     # set configuration options
     config = Configuration.config
     config.name = name
-    config.mesh = "C:\\Users\\Greg\\Documents\\things\\poster frame\\frame.stl"
+    config.mesh = "C:\\Users\\Greg\\code\\pychop3d\\failed\\20200223_192642\\5113545.stl"
     config.directory = new_directory
     config.beam_width = 3
     config.connector_diameter = 6
     config.connector_spacing = 10
     config.part_separation = True
+    config.scale_factor = 5
     # save configuration
     config.save()
     # basic logging setup
@@ -82,5 +84,8 @@ if __name__ == "__main__":
     )
     # open the input mesh as the starter
     starter = utils.open_mesh()
+    # separate pieces
+    if config.part_separation and starter.body_count > 1:
+        starter = utils.separate_starter(starter)
     # run through the process
     run(starter)

@@ -2,9 +2,38 @@ import numpy as np
 import trimesh
 import json
 import os
+import logging
 
 from pychop3d import bsp_tree
+from pychop3d import bsp_node
+from pychop3d.objective_functions import evaluate_utilization_objective, evaluate_nparts_objective
 from pychop3d.configuration import Configuration
+
+
+logger = logging.getLogger(__name__)
+
+
+def separate_starter(mesh):
+    """this function takes in a mesh with more than one body and turns it into a tree who's root node is the original
+    mesh and the roots children are each of the bodies of the mesh
+
+    :param mesh: mesh with multiple bodies
+    :type mesh: `trimesh.Trimesh`
+    :return: tree with the bodies as the root node's children
+    :rtype: `bsp_tree.BSPTree`
+    """
+    logger.info("separating starter mesh")
+    parts = mesh.split(only_watertight=False)  # split into separate components
+    logger.info(f"starter mesh split into {len(parts)} children")
+    tree = bsp_tree.BSPTree(mesh)  # create starter tree
+    for i, part in enumerate(parts):
+        new_node = bsp_node.BSPNode(part, tree.nodes[0], i)  # make a new node for each separate part
+        tree.nodes[0].children.append(new_node)  # make the new node the root node's child
+        tree.nodes.append(new_node)
+    # update nparts and utilization objectives
+    evaluate_nparts_objective([tree], tuple())
+    evaluate_utilization_objective([tree], tuple())
+    return tree
 
 
 def open_mesh():
@@ -93,6 +122,7 @@ def trimesh_repair(mesh):
     trimesh.repair.fix_winding(mesh)
     trimesh.repair.fix_inversion(mesh)
     trimesh.repair.fix_normals(mesh)
+    mesh.process()
 
 
 def preview_tree(tree, other_objects=None):

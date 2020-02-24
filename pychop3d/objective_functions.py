@@ -10,7 +10,7 @@ def evaluate_nparts_objective(trees, path):
     theta_0 = trees[0].nodes[0].n_parts
     for tree in trees:
         node = tree.get_node(path)
-        tree.objectives['nparts'] += (sum([c.n_parts for c in node.children]) - node.n_parts)/ theta_0
+        tree.objectives['nparts'] += (sum([c.n_parts for c in node.children]) - node.n_parts) / theta_0
 
 
 def evaluate_utilization_objective(trees, path):

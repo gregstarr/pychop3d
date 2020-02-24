@@ -22,7 +22,7 @@ class ConnectorPlacer:
         if len(tree.nodes) < 2:
             raise Exception("input tree needs to have a chop")
 
-        logger.info("\nCreating connectors...")
+        logger.info("Creating connectors...")
         for n, node in enumerate(tree.nodes):
             if node.cross_section is None:
                 continue
@@ -46,6 +46,8 @@ class ConnectorPlacer:
 
         self.connectors = np.array(self.connectors)
         self.n_connectors = self.connectors.shape[0]
+        if self.n_connectors == 0:
+            return
         logger.info(f"Number of connectors: {self.n_connectors}")
         self.collisions = np.zeros((self.n_connectors, self.n_connectors), dtype=bool)
 
@@ -94,21 +96,17 @@ class ConnectorPlacer:
         config = Configuration.config
         state = self.get_initial_state()
         objective = self.evaluate_connector_objective(state)
-        logger.info(f"\ninitial objective: {objective}")
+        logger.info(f"initial objective: {objective}")
         # initialization
         for i in range(config.sa_initialization_iterations):
-            if not i % (config.sa_initialization_iterations // 10):
-                print('.', end='')
             state, objective = self.sa_iteration(state, objective, 0)
 
-        logger.info(f"\npost initialization objective: {objective}")
+        logger.info(f"post initialization objective: {objective}")
         initial_temp = objective / 2
         for i, temp in enumerate(np.linspace(initial_temp, 0, config.sa_iterations)):
-            if not i % (config.sa_iterations // 10):
-                print('.', end='')
             state, objective = self.sa_iteration(state, objective, temp)
 
-        logger.info(f"\nfinal objective: {objective}")
+        logger.info(f"final objective: {objective}")
         return state
 
     def sa_iteration(self, state, objective, temp):
@@ -136,8 +134,8 @@ class ConnectorPlacer:
         for node in tree.nodes:
             if node.plane is None:
                 continue
-            new_tree2 = bsp_tree.expand_node(new_tree, node.path, node.plane)
-            if new_tree2 is None:
+            new_tree2, result = bsp_tree.expand_node(new_tree, node.path, node.plane)
+            if result != 'success':
                 bsp_tree.expand_node(new_tree, node.path, node.plane)
             else:
                 new_tree = new_tree2

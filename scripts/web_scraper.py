@@ -29,7 +29,7 @@ def download_stl(directory):
         url = url_template.format(thing_number)
         logging.info(url)
         req = requests.get(url)
-        logging.info(req.status_code)
+        logging.info(f"request status code: {req.status_code}")
         if req.status_code != 200:
             continue
         logging.info(req.url.split('/')[-1])
@@ -80,9 +80,9 @@ if __name__ == "__main__":
     N_ITERATIONS = 20
     n_failed = 0
     for _ in range(N_ITERATIONS):
-        print(f"*********************************************************")
-        print(f"           ITERATION: {_}, FAILED: {n_failed}            ")
-        print(f"*********************************************************")
+        print(f"******************************************************************************************************************")
+        print(f"                                 ITERATION: {_}, FAILED: {n_failed}")
+        print(f"******************************************************************************************************************")
         # create temporary directory
         with tempfile.TemporaryDirectory() as tempdir:
             # create timestamped directory within temporary directory
@@ -91,9 +91,10 @@ if __name__ == "__main__":
             os.mkdir(timestamped_dir)
             # download STL
             stl_file = download_stl(timestamped_dir)
+            name = os.path.splitext(os.path.basename(stl_file))[0]
             # create config
             config = Configuration()
-            config.name = os.path.splitext(os.path.basename(stl_file))[0]
+            config.name = name
             config.beam_width = 2
             config.plane_spacing = 30
             config.connector_diameter = 5
@@ -101,13 +102,18 @@ if __name__ == "__main__":
             config.directory = timestamped_dir
             config.mesh = stl_file
             config.part_separation = True
+            config.save()
             Configuration.config = config
             # run
             starter = utils.open_mesh()
             scale_factor = np.ceil(1.1 * config.printer_extents / starter.bounding_box_oriented.primitive.extents).max()
             config.scale_factor = scale_factor
             starter = utils.open_mesh()
+            # split into separate components
+            if config.part_separation and starter.body_count > 1:
+                starter = utils.separate_starter(starter)
             try:
+                logger.info(f"running pychop on {name}, scale_factor: {scale_factor}")
                 run.run(starter)
             # catch failure and move the timestamped directory to 'failed'
             except Exception as e:
@@ -115,6 +121,4 @@ if __name__ == "__main__":
                 n_failed += 1
                 failed_directory = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'failed', date_string))
                 shutil.move(timestamped_dir, failed_directory)
-                config.directory = failed_directory
-                config.save()
     logging.info(f"{N_ITERATIONS} attempts: {(N_ITERATIONS - n_failed) / N_ITERATIONS} success rate")
