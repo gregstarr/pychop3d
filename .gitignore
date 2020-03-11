@@ -3,9 +3,14 @@ profile
 .idea
 .pytest_cache
 pychop3d/__pycache__
-debug/*
+
 failed
-output
+
+!output/debug.txt
+output/*
+
 !debug/debug.txt
+debug/*
+
 venv
 *.log

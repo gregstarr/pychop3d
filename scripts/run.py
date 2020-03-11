@@ -52,7 +52,7 @@ def run(starter):
 
 
 if __name__ == "__main__":
-    name = "picture_frame_back"
+    name = "shoe_rack"
     # name the folder based on the name of the object and the current date / time
     output_folder = f"{name}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}"
     # create the new directory in the 'output' subdirectory of pychop3d
@@ -61,12 +61,12 @@ if __name__ == "__main__":
     # set configuration options
     config = Configuration.config
     config.name = name
-    config.mesh = "C:\\Users\\Greg\\Documents\\things\\poster frame 2\\back.stl"
+    config.mesh = "C:\\Users\\Greg\\code\\pychop3d\\models\\shoe rack v13.stl"
     config.directory = new_directory
     config.beam_width = 3
-    config.connector_diameter = 6
-    config.connector_spacing = 10
-    config.part_separation = False
+    config.connector_diameter = 7
+    config.connector_spacing = 15
+    config.part_separation = True
     
     # save configuration
     config.save()
