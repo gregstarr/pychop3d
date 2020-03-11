@@ -5,11 +5,10 @@ profile
 pychop3d/__pycache__
 
 failed
+debug
 
 !output/output.txt
 output/*
-
-*debug
 
 venv
 *.log
