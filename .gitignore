@@ -7,8 +7,8 @@ pychop3d/__pycache__
 failed
 debug
 
-!output/output.txt
 output/*
+!output/output.txt
 
 venv
 *.log
