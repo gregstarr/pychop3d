@@ -9,8 +9,7 @@ failed
 !output/debug.txt
 output/*
 
-!debug/debug.txt
-debug/*
+*debug
 
 venv
 *.log
