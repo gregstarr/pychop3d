@@ -73,11 +73,11 @@ if __name__ == "__main__":
         level=logging.INFO,
         format="%(asctime)s  %(name)s  [%(levelname)s]  %(message)s",
         handlers=[
-            logging.FileHandler("web_scraper.log"),
+            logging.FileHandler("web_scraper.log", mode='w'),
             logging.StreamHandler()
         ]
     )
-    N_ITERATIONS = 20
+    N_ITERATIONS = 50
     n_failed = 0
     for _ in range(N_ITERATIONS):
         print(f"******************************************************************************************************************")
@@ -104,16 +104,18 @@ if __name__ == "__main__":
             config.part_separation = True
             config.save()
             Configuration.config = config
-            # run
-            starter = utils.open_mesh()
-            scale_factor = np.ceil(1.1 * config.printer_extents / starter.bounding_box_oriented.primitive.extents).max()
-            config.scale_factor = scale_factor
-            starter = utils.open_mesh()
-            # split into separate components
-            if config.part_separation and starter.body_count > 1:
-                starter = utils.separate_starter(starter)
             try:
+                # run
+                starter = utils.open_mesh()
+                scale_factor = np.ceil(
+                    1.1 * config.printer_extents / starter.bounding_box_oriented.primitive.extents).min()
+                config.scale_factor = scale_factor
+                starter = utils.open_mesh()
+                logger.info(f"starter extents: {starter.extents}, starter vertices: {starter.vertices.shape[0]}")
                 logger.info(f"running pychop on {name}, scale_factor: {scale_factor}")
+                # split into separate components
+                if config.part_separation and starter.body_count > 1:
+                    starter = utils.separate_starter(starter)
                 run.run(starter)
             # catch failure and move the timestamped directory to 'failed'
             except Exception as e:

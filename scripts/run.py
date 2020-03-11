@@ -31,23 +31,20 @@ def run(starter):
     # save the tree now in case the connector placement fails
     utils.save_tree(tree, "final_tree.json")
 
-    try:
-        # mark starting time
-        t0 = time.time()
-        # create connector placer object, this creates all potential connectors and determines their collisions
-        connector_placer = connector.ConnectorPlacer(tree)
-        if connector_placer.n_connectors > 0:
-            # use simulated annealing to determine the best combination of connectors
-            state = connector_placer.simulated_annealing_connector_placement()
-            # save the final tree including the state
-            utils.save_tree(tree, "final_tree_with_connectors.json", state)
-            # add the connectors / subtract the slots from the parts of the partitioned input object
-            tree = connector_placer.insert_connectors(tree, state)
+    # mark starting time
+    t0 = time.time()
+    logger.info("finding best connector arrangement")
+    # create connector placer object, this creates all potential connectors and determines their collisions
+    connector_placer = connector.ConnectorPlacer(tree)
+    if connector_placer.n_connectors > 0:
+        # use simulated annealing to determine the best combination of connectors
+        state = connector_placer.simulated_annealing_connector_placement()
         logger.info(f"Best connector arrangement found in {time.time() - t0} seconds")
-    except Exception as e:
-        # fail gently so that the STLs still get exported
-        logger.error("Connector placement failed")
-        logger.error(e)
+        # save the final tree including the state
+        utils.save_tree(tree, "final_tree_with_connectors.json", state)
+        # add the connectors / subtract the slots from the parts of the partitioned input object
+        logger.info(f"inserting {state.sum()} connectors...")
+        tree = connector_placer.insert_connectors(tree, state)
 
     # export the parts of the partitioned object
     utils.export_tree_stls(tree)
@@ -55,7 +52,7 @@ def run(starter):
 
 
 if __name__ == "__main__":
-    name = "box"
+    name = "picture_frame_back"
     # name the folder based on the name of the object and the current date / time
     output_folder = f"{name}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}"
     # create the new directory in the 'output' subdirectory of pychop3d
@@ -64,13 +61,13 @@ if __name__ == "__main__":
     # set configuration options
     config = Configuration.config
     config.name = name
-    config.mesh = "C:\\Users\\Greg\\code\\pychop3d\\failed\\20200223_192642\\5113545.stl"
+    config.mesh = "C:\\Users\\Greg\\Documents\\things\\poster frame 2\\back.stl"
     config.directory = new_directory
     config.beam_width = 3
     config.connector_diameter = 6
     config.connector_spacing = 10
-    config.part_separation = True
-    config.scale_factor = 5
+    config.part_separation = False
+    
     # save configuration
     config.save()
     # basic logging setup
