@@ -35,15 +35,21 @@ to take longer but will possibly make the output better
 See bunny_config.yml or shoerack_config.yml for examples
 
 ### Gallery:
+
 #### Shoerack
+
 Takes about 45 minutes
+
 ![](images/shoerack1.PNG)
 ![](images/shoerack2.PNG)
 ![](images/shoerack3.PNG)
 ![](images/shoerack4.jpg)
 ![](images/shoerack5.jpg)
+
 #### Bunny
+
 Takes about 2 minutes
+
 ![](images/process1.png)
 ![](images/process2.png)
 ![](images/process3.png)
