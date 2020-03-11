@@ -14,7 +14,7 @@ import traceback
 import sys
 import logging
 
-from scripts import run
+from main import run
 from pychop3d.configuration import Configuration
 from pychop3d import utils
 

@@ -34,6 +34,15 @@ def run(starter):
     :type starter: `trimesh.Trimesh`
     :type starter: `bsp_tree.BSPTree`
     """
+    # basic logging setup
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s  %(name)s  [%(levelname)s]  %(message)s",
+        handlers=[
+            logging.FileHandler(os.path.join(config.directory, "info.log")),
+            logging.StreamHandler()
+        ]
+    )
     # mark starting time
     t0 = time.time()
     # complete the beam search using the starter, no search will take place if the starter tree is already
@@ -85,22 +94,12 @@ if __name__ == "__main__":
     # name the folder based on the name of the object and the current date / time
     output_folder = f"{config.name}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}"
     # create the new directory in the 'output' subdirectory of pychop3d
-    new_directory = os.path.abspath(os.path.join(os.path.dirname(__file__), 'output', output_folder))
+    new_directory = os.path.abspath(os.path.join(config.directory, output_folder))
     os.mkdir(new_directory)
     config.directory = new_directory
     # save configuration
     config.save()
     Configuration.config = config
-
-    # basic logging setup
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s  %(name)s  [%(levelname)s]  %(message)s",
-        handlers=[
-            logging.FileHandler(os.path.join(config.directory, "info.log")),
-            logging.StreamHandler()
-        ]
-    )
 
     # open the input mesh as the starter
     starter = utils.open_mesh()
