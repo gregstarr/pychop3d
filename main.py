@@ -78,7 +78,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Pychop3D command line runner')
     parser.add_argument('-c', '--config', type=str,
                         help='path to a config yaml file, for an example, see "bunny_config.yml"',
-                        default="bunny_config.yml")
+                        default="examples/bunny_config.yml")
     parser.add_argument('-m', '--mesh', type=str, default=None,
                         help='Specify the mesh file path to chop. This will override the mesh file in the config yaml')
     args = parser.parse_args()
