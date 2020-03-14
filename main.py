@@ -84,7 +84,11 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # load specified or default config file
-    config = Configuration(args.config)
+    try:
+        config = Configuration(args.config)
+    except:
+        parser.print_help()
+        sys.exit(0)
 
     # override the mesh path in config if specified on command line
     if args.mesh:
