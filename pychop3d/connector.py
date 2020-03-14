@@ -151,30 +151,24 @@ class ConnectorPlacer:
                     slot = trimesh.primitives.Box(
                         extents=np.ones(3) * (cc.connector_diameter + config.connector_tolerance),
                         transform=xform)
-                    try:
-                        utils.trimesh_repair(new_node.children[pi].part)
-                        new_part = new_node.children[pi].part.difference(slot, engine='scad')
-                        new_node.children[pi].part = new_part
+                    utils.trimesh_repair(new_node.children[pi].part)
+                    new_part = new_node.children[pi].part.difference(slot, engine='scad')
+                    new_node.children[pi].part = new_part
 
-                        utils.trimesh_repair(new_node.children[ni].part)
-                        new_part = new_node.children[ni].part.union(self.connectors[idx], engine='scad')
-                        new_node.children[ni].part = new_part
-                    except Exception as e:
-                        logger.info("ignoring connector")
+                    utils.trimesh_repair(new_node.children[ni].part)
+                    new_part = new_node.children[ni].part.union(self.connectors[idx], engine='scad')
+                    new_node.children[ni].part = new_part
                 for idx in neg_index:
                     xform = self.connectors[idx].primitive.transform
                     slot = trimesh.primitives.Box(
                         extents=np.ones(3) * (cc.connector_diameter + config.connector_tolerance),
                         transform=xform)
-                    try:
-                        utils.trimesh_repair(new_node.children[ni].part)
-                        new_part = new_node.children[ni].part.difference(slot, engine='scad')
-                        new_node.children[ni].part = new_part
+                    utils.trimesh_repair(new_node.children[ni].part)
+                    new_part = new_node.children[ni].part.difference(slot, engine='scad')
+                    new_node.children[ni].part = new_part
 
-                        utils.trimesh_repair(new_node.children[pi].part)
-                        new_part = new_node.children[pi].part.union(self.connectors[idx], engine='scad')
-                        new_node.children[pi].part = new_part
-                    except Exception as e:
-                        logger.info("ignoring connector")
+                    utils.trimesh_repair(new_node.children[pi].part)
+                    new_part = new_node.children[pi].part.union(self.connectors[idx], engine='scad')
+                    new_node.children[pi].part = new_part
 
         return new_tree
