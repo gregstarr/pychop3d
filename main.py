@@ -83,7 +83,12 @@ if __name__ == "__main__":
                         help='Specify the mesh file path to chop. This will override the mesh file in the config yaml')
     args = parser.parse_args()
 
-    # load specified or default config file
+    # print help if no arguments specified
+    if len(sys.argv) < 1:
+        parser.print_help()
+        sys.exit(0)
+
+    # load specified or default config file   
     try:
         config = Configuration(args.config)
     except:
