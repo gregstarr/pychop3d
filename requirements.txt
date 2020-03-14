@@ -11,5 +11,8 @@ pyglet
 # https://www.lfd.uci.edu/~gohlke/pythonlibs
 #
 # meshpy
+https://github.com/JosephSamela/python-package-hosted/blob/master/MeshPy-2018.2.1-cp37-cp37m-win_amd64.whl?raw=true
 # shapely
+https://github.com/JosephSamela/python-package-hosted/blob/master/Shapely-1.7.0-cp37-cp37m-win_amd64.whl?raw=true
 # rtree
+https://github.com/JosephSamela/python-package-hosted/blob/master/Rtree-0.9.4-cp37-cp37m-win_amd64.whl?raw=true
