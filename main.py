@@ -84,7 +84,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # print help if no arguments specified
-    if len(sys.argv) < 1:
+    if len(sys.argv) < 2:
         parser.print_help()
         sys.exit(0)
 
