@@ -13,8 +13,9 @@ pychop3d - cli model chop utility
 import time
 import datetime
 import os
-import sys
 import logging
+import sys
+import traceback
 
 from pychop3d.search import beam_search
 from pychop3d import connector
@@ -34,6 +35,7 @@ def run(starter):
     :type starter: `trimesh.Trimesh`
     :type starter: `bsp_tree.BSPTree`
     """
+    config = Configuration.config
     # basic logging setup
     logging.basicConfig(
         level=logging.INFO,
@@ -84,7 +86,12 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # load specified or default config file
-    config = Configuration(args.config)
+    try:
+        config = Configuration(args.config)
+    except:
+        parser.print_help()
+        traceback.print_exc()
+        sys.exit(0)
 
     # override the mesh path in config if specified on command line
     if args.mesh:
@@ -107,4 +114,6 @@ if __name__ == "__main__":
     if config.part_separation and starter.body_count > 1:
         starter = utils.separate_starter(starter)
     # run through the process
+    print(f"Using config: {args.config}")
+    print(f"Using mesh: {config.mesh}")
     run(starter)

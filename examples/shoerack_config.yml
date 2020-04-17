@@ -11,5 +11,5 @@ printer_extents:  # volume of your cartesian printer (currently do not support d
 directory: "output"  # directory where the output stls, config file, and save progress will be stored
                      # a new directory will be created within this directory with the 'name' and the datetime string
 name: "shoerack"  # name of job, this will influence what the name of the output directory is
-plane_spacing: 20  # how many planes to consider for each normal, increasing this will cause the process to take
-                   # longer but will possibly make the output better
+plane_spacing: 20  # controls how many planes to consider for each normal, increasing this will cause the process
+                   # to go faster but will possibly make the output worse
