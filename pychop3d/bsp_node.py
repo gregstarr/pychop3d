@@ -1,5 +1,6 @@
 import trimesh
 import numpy as np
+import traceback
 
 from pychop3d import section
 from pychop3d.configuration import Configuration
@@ -98,7 +99,11 @@ def split(node, plane):
     node.plane = plane
     origin, normal = plane
 
-    parts, cross_section, result = section.bidirectional_split(node.part, origin, normal)  # split the part
+    try:
+        parts, cross_section, result = section.bidirectional_split(node.part, origin, normal)  # split the part
+    except:
+        traceback.print_exc()
+        return None, 'unknown_mesh_split_error'
     if None in [parts, cross_section]:  # check for splitting errors
         return None, result
     node.cross_section = cross_section

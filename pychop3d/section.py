@@ -175,10 +175,7 @@ def bidirectional_split(mesh, origin, normal):
             continue
         if not cross_section.cc_valid:
             return None, None, 'invalid_connected_component_error'
-        try:
-            positive, negative = cross_section.split(mesh)
-        except Exception as e:
-            continue
+        positive, negative = cross_section.split(mesh)
         if config.part_separation:
             # split parts
             positive_parts = positive.split(only_watertight=False)
