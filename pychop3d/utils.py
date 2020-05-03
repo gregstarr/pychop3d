@@ -63,8 +63,14 @@ def open_tree(tree_file):
     for n in node_data:
         plane = (np.array(n['origin']), np.array(n['normal']))
         node = tree.get_node(n['path'])
-        tree = bsp_tree.expand_node(tree, node.path, plane)
+        tree, result_code = bsp_tree.expand_node(tree, node.path, plane)
     return tree
+
+
+def load_connector_configuration(tree_file):
+    with open(tree_file) as f:
+        data = json.load(f)
+    return np.array(data['state'])
 
 
 def all_at_goal(trees):
@@ -129,9 +135,11 @@ def preview_tree(tree, other_objects=None):
     if other_objects is None:
         other_objects = []
     scene = trimesh.Scene()
-    for leaf in tree.leaves + other_objects:
+    for leaf in tree.leaves:
         leaf.part.visual.face_colors = np.random.rand(3)*255
         scene.add_geometry(leaf.part)
+    for ob in other_objects:
+        scene.add_geometry(ob)
     scene.camera.z_far = 10_000
     scene.show()
 

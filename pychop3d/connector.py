@@ -1,6 +1,7 @@
 import numpy as np
 import logging
 import trimesh
+import traceback
 
 from pychop3d.configuration import Configuration
 from pychop3d import bsp_tree
@@ -129,6 +130,7 @@ class ConnectorPlacer:
         return state, objective
 
     def insert_connectors(self, tree, state):
+        logger.info(f"inserting {state.sum()} connectors")
         config = Configuration.config
         new_tree = bsp_tree.BSPTree(tree.nodes[0].part)
         for node in tree.nodes:
@@ -136,6 +138,7 @@ class ConnectorPlacer:
                 continue
             new_tree2, result = bsp_tree.expand_node(new_tree, node.path, node.plane)
             if result != 'success':
+                # for debugging
                 bsp_tree.expand_node(new_tree, node.path, node.plane)
             else:
                 new_tree = new_tree2
@@ -151,24 +154,29 @@ class ConnectorPlacer:
                     slot = trimesh.primitives.Box(
                         extents=np.ones(3) * (cc.connector_diameter + config.connector_tolerance),
                         transform=xform)
-                    utils.trimesh_repair(new_node.children[pi].part)
-                    new_part = new_node.children[pi].part.difference(slot, engine='scad')
-                    new_node.children[pi].part = new_part
-
-                    utils.trimesh_repair(new_node.children[ni].part)
-                    new_part = new_node.children[ni].part.union(self.connectors[idx], engine='scad')
-                    new_node.children[ni].part = new_part
+                    try:
+                        utils.trimesh_repair(new_node.children[pi].part)
+                        utils.trimesh_repair(new_node.children[ni].part)
+                        new_part_slot = new_node.children[pi].part.difference(slot)
+                        new_part_box = new_node.children[ni].part.union(self.connectors[idx])
+                        new_node.children[pi].part = new_part_slot
+                        new_node.children[ni].part = new_part_box
+                    except:
+                        error_tb = traceback.format_exc()
+                        logger.warning(f"failed to add connector: {error_tb}")
                 for idx in neg_index:
                     xform = self.connectors[idx].primitive.transform
                     slot = trimesh.primitives.Box(
                         extents=np.ones(3) * (cc.connector_diameter + config.connector_tolerance),
                         transform=xform)
-                    utils.trimesh_repair(new_node.children[ni].part)
-                    new_part = new_node.children[ni].part.difference(slot, engine='scad')
-                    new_node.children[ni].part = new_part
-
-                    utils.trimesh_repair(new_node.children[pi].part)
-                    new_part = new_node.children[pi].part.union(self.connectors[idx], engine='scad')
-                    new_node.children[pi].part = new_part
-
+                    try:
+                        utils.trimesh_repair(new_node.children[ni].part)
+                        utils.trimesh_repair(new_node.children[pi].part)
+                        new_part_slot = new_node.children[ni].part.difference(slot)
+                        new_part_box = new_node.children[pi].part.union(self.connectors[idx])
+                        new_node.children[ni].part = new_part_slot
+                        new_node.children[pi].part = new_part_box
+                    except:
+                        error_tb = traceback.format_exc()
+                        logger.warning(f"failed to add connector: {error_tb}")
         return new_tree
