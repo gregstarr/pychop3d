@@ -61,11 +61,13 @@ See bunny_config.yml or shoerack_config.yml for examples
 
 Takes about 2 minutes
 
-<img src="images/process1.png" width="200" height="200"/>
-<img src="images/process2.png" width="200" height="200"/>
-<img src="images/process3.png" width="200" height="200"/>
-<img src="images/process4.png" width="200" height="200"/>
-<img src="images/process5.png" width="200" height="200"/>
+<p float="left">
+    <img src="images/process1.png" width="200" height="200"/>
+    <img src="images/process2.png" width="200" height="200"/>
+    <img src="images/process3.png" width="200" height="200"/>
+    <img src="images/process4.jpg" width="200" height="200"/>
+    <img src="images/process5.jpg" width="200" height="200"/>
+</p>
 
 #### Table:
 
