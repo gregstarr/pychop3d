@@ -12,7 +12,6 @@ output/*
 
 venv
 *.log
-Dockerfile
 
 # General
 .DS_Store

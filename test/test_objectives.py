@@ -21,7 +21,7 @@ def test_number_of_parts():
     assert tree.objectives['nparts'] == 1
     assert tree.nodes[0].n_parts == 2
     # test splitting the box into 2 through the middle
-    tree = bsp_tree.expand_node(tree, tree.nodes[0].path, (np.zeros(3), np.array([0, 0, 1])))
+    tree, result = bsp_tree.expand_node(tree, tree.nodes[0].path, (np.zeros(3), np.array([0, 0, 1])))
     assert tree.objectives['nparts'] == 1
     assert tree.get_node((0,)).n_parts == 1
     assert tree.get_node((1,)).n_parts == 1
@@ -46,9 +46,9 @@ def test_utilization():
     # check that a slice in the middle has a better utilization than a slice not down middle
     mesh = trimesh.primitives.Box(extents=(100., 100., 220.))
     tree1 = bsp_tree.BSPTree(mesh)
-    tree1 = bsp_tree.expand_node(tree1, tree1.nodes[0].path, (np.zeros(3), np.array([0., 0., 1.])))
+    tree1, result = bsp_tree.expand_node(tree1, tree1.nodes[0].path, (np.zeros(3), np.array([0., 0., 1.])))
     tree2 = bsp_tree.BSPTree(mesh)
-    tree2 = bsp_tree.expand_node(tree2, tree2.nodes[0].path, (np.array([0., 0., 100.]), np.array([0., 0., 1.])))
+    tree2, result = bsp_tree.expand_node(tree2, tree2.nodes[0].path, (np.array([0., 0., 100.]), np.array([0., 0., 1.])))
     objective_functions.evaluate_utilization_objective([tree1, tree2], ())
     print(f"\n{tree1.objectives['utilization']} < {tree2.objectives['utilization']}")
     assert tree1.objectives['utilization'] < tree2.objectives['utilization']
@@ -64,7 +64,7 @@ def test_fragility_function_already_fragile():
     origin = np.zeros(3)
     normal = np.array([0., 0., 1.])
     plane = (origin, normal)
-    trees = [bsp_tree.expand_node(tree, tree.nodes[0].path, plane)]
+    trees = [bsp_tree.expand_node(tree, tree.nodes[0].path, plane)[0]]
     objective_functions.evaluate_fragility_objective(trees, tree.nodes[0].path)
     assert trees[0].objectives['fragility'] == 0
 
@@ -83,7 +83,7 @@ def test_fragility_function_multiple_trees():
     planes = bsp_tree.get_planes(mesh, normal)
     trees = []
     for plane in planes:
-        candidate = bsp_tree.expand_node(tree, tree.nodes[0].path, plane)
+        candidate, result = bsp_tree.expand_node(tree, tree.nodes[0].path, plane)
         trees.append(candidate)
     objective_functions.evaluate_fragility_objective(trees, tree.nodes[0].path)
     assert trees[0].objectives['fragility'] == np.inf
@@ -104,7 +104,7 @@ def test_edge_fragility():
     origin = np.zeros(3)
     normal = np.array([0., 0., 1.])
     plane = (origin, normal)
-    fragile_cut_tree = bsp_tree.expand_node(tree, tree.nodes[0].path, plane)
+    fragile_cut_tree, result = bsp_tree.expand_node(tree, tree.nodes[0].path, plane)
     objective_functions.evaluate_fragility_objective([fragile_cut_tree], tree.nodes[0].path)
     assert fragile_cut_tree.objectives['fragility'] == np.inf
     config.restore_defaults()
