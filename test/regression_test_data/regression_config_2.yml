@@ -1,4 +1,4 @@
-_directory: C:\Users\Greg\code\pychop3d\test\regression_test_data
+_directory: test\regression_test_data
 _n_phi: 5
 _n_theta: 5
 add_middle_plane: true
@@ -15,7 +15,7 @@ do_not_save:
 - normals
 empty_cc_penalty: 1.0e-05
 fragility_objective_th: 0.95
-mesh: C:\Users\Greg\code\pychop3d\test\test_meshes\Bunny-LowPoly.stl
+mesh: test\test_meshes\Bunny-LowPoly.stl
 obb_utilization: true
 objective_weights:
   connector: 1
@@ -33,5 +33,5 @@ printer_extents:
 sa_initial_connector_ratio: 0.1
 sa_initialization_iterations: 15000
 sa_iterations: 300000
-save_path: C:\Users\Greg\code\pychop3d\test\regression_test_data\regression_config_2.yml
+save_path: test\regression_test_data\regression_config_2.yml
 scale_factor: 2.5

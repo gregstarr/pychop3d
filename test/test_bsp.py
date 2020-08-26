@@ -42,12 +42,12 @@ def test_different_from():
     normal = trimesh.unitize(np.random.rand(3))
     planes = bsp_tree.get_planes(mesh, normal)
     base_node = copy.deepcopy(root)
-    base_node = bsp_node.split(base_node, planes[0])
+    base_node, result = bsp_node.split(base_node, planes[0])
 
     for plane in planes[1:]:
         # smaller origin offset, should not be different
         test_node = copy.deepcopy(root)
-        test_node = bsp_node.split(test_node, plane)
+        test_node, result = bsp_node.split(test_node, plane)
         if abs((plane[0] - planes[0][0]) @ planes[0][1]) > config.different_origin_th:
             assert base_node.different_from(test_node)
         else:
@@ -60,7 +60,7 @@ def test_different_from():
     rotation = trimesh.transformations.rotation_matrix(np.pi / 11, axis)
     normal = trimesh.transform_points(planes[0][1][None, :], rotation)[0]
     test_plane = (planes[0][0], normal)
-    test_node = bsp_node.split(test_node, test_plane)
+    test_node, result = bsp_node.split(test_node, test_plane)
     assert not base_node.different_from(test_node)
 
     # larger angle difference, should be different
@@ -70,7 +70,7 @@ def test_different_from():
     rotation = trimesh.transformations.rotation_matrix(np.pi / 9, axis)
     normal = trimesh.transform_points(planes[0][1][None, :], rotation)[0]
     test_plane = (planes[0][0], normal)
-    test_node = bsp_node.split(test_node, test_plane)
+    test_node, result = bsp_node.split(test_node, test_plane)
     assert base_node.different_from(test_node)
 
 
@@ -87,7 +87,7 @@ def test_copy_tree():
     normal = np.array([0, 0, 1])
     planes = bsp_tree.get_planes(node.part, normal)
     plane = planes[len(planes) // 2]
-    tree = bsp_tree.expand_node(tree, node.path, plane)
+    tree, result = bsp_tree.expand_node(tree, node.path, plane)
     new_tree = tree.copy()
     assert new_tree.objectives == tree.objectives
 
@@ -104,13 +104,13 @@ def test_expand_node():
     normal = np.array([0, 0, 1])
     planes = bsp_tree.get_planes(node.part, normal)
     plane = planes[len(planes) // 2]
-    tree1 = bsp_tree.expand_node(tree, node.path, plane)
+    tree1, result = bsp_tree.expand_node(tree, node.path, plane)
     print("tree objective: ", tree1.objective)
 
     node = tree1.largest_part
     planes = bsp_tree.get_planes(node.part, normal)
     plane = planes[len(planes) // 2]
-    tree2 = bsp_tree.expand_node(tree1, node.path, plane)
+    tree2, result = bsp_tree.expand_node(tree1, node.path, plane)
 
 
 def test_grid_sample():
@@ -144,7 +144,7 @@ def test_basic_separation():
     tree = bsp_tree.BSPTree(mesh)
     node = tree.largest_part
     plane = (np.zeros(3), np.array([1, 0, 0]))
-    tree = bsp_tree.expand_node(tree, node.path, plane)
+    tree, result = bsp_tree.expand_node(tree, node.path, plane)
     # 1 root, three leaves come out of the split
     assert len(tree.nodes) == 4
     config.restore_defaults()

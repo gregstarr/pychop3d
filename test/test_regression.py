@@ -42,7 +42,7 @@ def test_regression(file_number):
 
     config = Configuration.config
     for i in range(config.beam_width):
-        os.remove(os.path.join(os.path.dirname(__file__), 'regression_test_data', f'{i}.json'))
+        os.remove(os.path.join(os.path.dirname(__file__), 'regression_test_data', f'chopped_{i}.json'))
     for stl in glob.glob(os.path.join(os.path.dirname(__file__), 'regression_test_data', '*.stl')):
         os.remove(stl)
     config.restore_defaults()

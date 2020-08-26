@@ -26,7 +26,7 @@ def test_sa_objective_1():
     tree = bsp_tree.BSPTree(mesh)
     normal = np.array([0, 0, 1])
     origin = np.zeros(3)
-    tree = bsp_tree.expand_node(tree, tree.nodes[0].path, (origin, normal))
+    tree, result = bsp_tree.expand_node(tree, tree.nodes[0].path, (origin, normal))
     connector_placer = connector.ConnectorPlacer(tree)
     assert connector_placer.evaluate_connector_objective(np.array([False, False])) >= 1 / config.empty_cc_penalty
     ob2 = connector_placer.evaluate_connector_objective(np.array([False, True]))
@@ -46,7 +46,7 @@ def test_sa_objective_2():
     tree = bsp_tree.BSPTree(mesh)
     normal = np.array([0, 0, 1])
     origin = np.zeros(3)
-    tree = bsp_tree.expand_node(tree, tree.nodes[0].path, (origin, normal))
+    tree, result = bsp_tree.expand_node(tree, tree.nodes[0].path, (origin, normal))
     connector_placer = connector.ConnectorPlacer(tree)
 
     # single connector
