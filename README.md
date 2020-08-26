@@ -65,20 +65,22 @@ Takes about 2 minutes
     <img src="images/process1.png" width="200"/>
     <img src="images/process2.png" width="200"/>
     <img src="images/process3.png" width="200"/>
-    <img src="images/process4.jpg" width="200"/>
-    <img src="images/process5.jpg" width="200"/>
+    <img src="images/process4.jpg" width="400"/>
+    <img src="images/process5.jpg" width="250"/>
 </p>
 
 #### Table:
 
-![](images/table.jpg)
+<img src="images/table.jpg" width="300"/>
 
 #### Shoerack
 
 Takes about 45 minutes
 
-![](images/shoerack1.PNG)
-![](images/shoerack2.PNG)
-![](images/shoerack3.PNG)
-![](images/shoerack4.jpg)
-![](images/shoerack5.jpg)
+<p float="left">
+    <img src="images/shoerack1.PNG" width="200"/>
+    <img src="images/shoerack2.PNG" width="200"/>
+    <img src="images/shoerack3.PNG" width="200"/>
+    <img src="images/shoerack4.jpg" width="200"/>
+    <img src="images/shoerack5.jpg" width="200"/>
+</p>
