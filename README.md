@@ -11,6 +11,9 @@ http://cfg.mit.edu/content/chopper-partitioning-models-3d-printable-parts
 
 ##### download and install Blender 2.79b
 https://download.blender.org/release/Blender2.79/blender-2.79-windows64.msi
+
+I think you can download any version 2.79 or higher, but I know it works
+with 2.79b
 ##### clone repo 
 `git clone https://github.com/gregstarr/pychop3d.git`
 ##### enter directory 

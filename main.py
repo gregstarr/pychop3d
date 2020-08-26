@@ -6,7 +6,7 @@ pychop3d - cli model chop utility
 1. Install dependencies from `requirements.txt`.
 2. Run this script from the root of the pychop3d repository in the form.
 ```
-   $ python main.py ./path/to/model.stl
+   $ python main.py -c config_file or -m mesh_file
 ```
 3. Wait for chopping to finish. Chopped models will appear in the current working directory.
 """

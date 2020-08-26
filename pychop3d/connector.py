@@ -154,29 +154,57 @@ class ConnectorPlacer:
                     slot = trimesh.primitives.Box(
                         extents=np.ones(3) * (cc.connector_diameter + config.connector_tolerance),
                         transform=xform)
-                    try:
-                        utils.trimesh_repair(new_node.children[pi].part)
-                        utils.trimesh_repair(new_node.children[ni].part)
-                        new_part_slot = new_node.children[pi].part.difference(slot)
-                        new_part_box = new_node.children[ni].part.union(self.connectors[idx])
-                        new_node.children[pi].part = new_part_slot
-                        new_node.children[ni].part = new_part_box
-                    except:
-                        error_tb = traceback.format_exc()
-                        logger.warning(f"failed to add connector: {error_tb}")
+                    new_node.children[pi].part = insert_slot(new_node.children[pi].part, slot)
+                    new_node.children[ni].part = insert_box(new_node.children[ni].part, self.connectors[idx])
                 for idx in neg_index:
                     xform = self.connectors[idx].primitive.transform
                     slot = trimesh.primitives.Box(
                         extents=np.ones(3) * (cc.connector_diameter + config.connector_tolerance),
                         transform=xform)
-                    try:
-                        utils.trimesh_repair(new_node.children[ni].part)
-                        utils.trimesh_repair(new_node.children[pi].part)
-                        new_part_slot = new_node.children[ni].part.difference(slot)
-                        new_part_box = new_node.children[pi].part.union(self.connectors[idx])
-                        new_node.children[ni].part = new_part_slot
-                        new_node.children[pi].part = new_part_box
-                    except:
-                        error_tb = traceback.format_exc()
-                        logger.warning(f"failed to add connector: {error_tb}")
+                    new_node.children[ni].part = insert_slot(new_node.children[ni].part, slot)
+                    new_node.children[pi].part = insert_box(new_node.children[pi].part, self.connectors[idx])
         return new_tree
+
+
+def insert_slot(part, slot, retries=10):
+    """Inserts a slot into a part using boolean difference. Operating under the assumption
+    that inserting a slot MUST INCREASE the number of vertices of the resulting part.
+
+    :param part: part to insert slot into
+    :type part: trimesh.Trimesh
+    :param slot: slot (connector expanded with tolerance) to remove from part
+    :type slot: trimesh.Trimesh (usually a primitive like Box)
+    :param retries: number of times to retry before raising an error, checking to see if number of
+                    vertices increases. Default = 10
+    :type retries: int
+    :return: The part with the slot inserted
+    :rtype: trimesh.Trimesh
+    """
+    utils.trimesh_repair(part)
+    for t in range(retries):
+        new_part_slot = part.difference(slot)
+        if len(new_part_slot.vertices) > len(part.vertices):
+            return new_part_slot
+    raise Exception("Couldn't insert slot")
+
+
+def insert_box(part, box, retries=10):
+    """Adds a box / connector to a part using boolean union. Operating under the assumption
+    that adding a connector MUST INCREASE the number of vertices of the resulting part.
+
+    :param part: part to add connector to
+    :type part: trimesh.Trimesh
+    :param box: connector to add to part
+    :type box: trimesh.Trimesh (usually a primitive like Box)
+    :param retries: number of times to retry before raising an error, checking to see if number of
+                    vertices increases. Default = 10
+    :type retries: int
+    :return: The part with the connector added
+    :rtype: trimesh.Trimesh
+    """
+    utils.trimesh_repair(part)
+    for t in range(retries):
+        new_part_slot = part.union(box)
+        if len(new_part_slot.vertices) > len(part.vertices):
+            return new_part_slot
+    raise Exception("Couldn't insert slot")
