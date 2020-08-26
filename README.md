@@ -61,11 +61,11 @@ See bunny_config.yml or shoerack_config.yml for examples
 
 Takes about 2 minutes
 
-![](images/process1.png)
-![](images/process2.png)
-![](images/process3.png)
-![](images/process4.jpg)
-![](images/process5.jpg)
+<img src="images/process1.png" width="200" height="200"/>
+<img src="images/process2.png" width="200" height="200"/>
+<img src="images/process3.png" width="200" height="200"/>
+<img src="images/process4.png" width="200" height="200"/>
+<img src="images/process5.png" width="200" height="200"/>
 
 #### Table:
 
