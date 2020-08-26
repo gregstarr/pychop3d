@@ -5,13 +5,31 @@
 http://cfg.mit.edu/content/chopper-partitioning-models-3d-printable-parts
 
 ### Usage:
+*NOTE: this has only been tested on windows*
+
+*NOTE: Must use python 3.7*
+
+##### download and install Blender 2.79b
+https://download.blender.org/release/Blender2.79/blender-2.79-windows64.msi
+##### clone repo 
+`git clone https://github.com/gregstarr/pychop3d.git`
+##### enter directory 
+`cd pychop3d`
 ##### create virtual environment 
 `python -m venv venv`
+##### activate virtual environment 
+`venv/Scripts/activate`
+##### update pip
+`python -m pip install --upgrade pip`
 ##### install packages 
 `pip install -r requirements.txt`
 ##### install more packages
 go to <https://www.lfd.uci.edu/~gohlke/pythonlibs> and download the 
-commented out packages from requirements.txt
+commented out packages from requirements.txt. These packages can be installed
+with the command:
+`pip install {package_wheel_file}`
+where `{package_wheel_file}` is the path to the downloaded wheel file for that 
+particular package.
 ##### Try the example (this uses bunny_config.yml) 
 `python main.py`
 ##### Try out your own STLs by creating a configuration YAML and passing it to main

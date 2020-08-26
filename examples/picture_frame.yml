@@ -2,7 +2,7 @@ beam_width: 3  # increasing this will cause the process to take longer but will 
 connector_diameter: 5  # side length of the connector pegs (cubes)
 connector_spacing: 10  # minimum distance between adjacent connectors
 connector_tolerance: 1  # extra side length for the 'slots'
-mesh: "debug/poster_frame_back.stl"  # file path to stl, can also override this on command line in main.py
+mesh: "examples/poster_frame_back.stl"  # file path to stl, can also override this on command line in main.py
 part_separation: true  # experimental feature, sometimes helps, sometimes hurts
 printer_extents:  # volume of your cartesian printer (currently do not support delta-style printers)
 - 200.0

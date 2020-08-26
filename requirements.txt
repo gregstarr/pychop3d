@@ -6,6 +6,7 @@ networkx
 pyyaml
 requests
 trimesh
+triangle
 pyglet
 # Go to this website for the wheels:
 # https://www.lfd.uci.edu/~gohlke/pythonlibs
