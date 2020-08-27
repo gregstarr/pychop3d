@@ -76,6 +76,13 @@ def beam_search(starter):
         raise NotImplementedError
 
     logger.info(f"Starting beam search with an instance of {type(starter)}")
+    if isinstance(starter, trimesh.Trimesh):
+        logger.info("Trimesh stats:")
+        logger.info(f"verts: {starter.vertices.shape[0]} extents: {starter.extents}")
+
+    if utils.all_at_goal(current_trees):
+        raise Exception("Input mesh already small enough to fit in printer")
+
     # keep track of n_leaves, in each iteration we will only consider trees with the same number of leaves
     # I think the trees become less comparable when they don't have the same number of leaves
     n_leaves = 1
@@ -99,7 +106,7 @@ def beam_search(starter):
             current_trees += [t for t in extra_leaves_trees if t not in current_trees]
 
         if len(current_trees) == 0:  # all of the trees failed
-            raise Exception("Pychop3D failed")
+            raise Exception("No valid chops found")
 
         logger.info(f"Leaves: {n_leaves}, best objective: {current_trees[0].objective}, estimated number of parts: "
                     f"{sum([p.n_parts for p in current_trees[0].leaves])}")
