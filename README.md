@@ -1,14 +1,13 @@
 # Chopper: Partitioning Models into 3D-Printable Parts
 (not my paper)
 
-### Paper:
-http://cfg.mit.edu/content/chopper-partitioning-models-3d-printable-parts
+### [Paper Link](Matusik_Chopper.pdf)
 
-### Docker Setup
+## Docker Setup
 
 For seamless Docker setup Dockerfile is provided as well as [Vscode Devcontainer Support](https://code.visualstudio.com/docs/remote/containers) 
 
-### Windows Setup:
+## Windows Setup:
 *NOTE: this has only been tested on windows*
 
 *NOTE: Must use python 3.7*
