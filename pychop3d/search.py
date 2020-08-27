@@ -9,9 +9,14 @@ from pychop3d.configuration import Configuration
 
 def evaluate_cuts(base_tree, node):
     config = Configuration.config
-    N = config.normals
-    Np = node.auxiliary_normals()
-    N = utils.get_unique_normals(np.concatenate((N, Np), axis=0))
+    # N = config.normals
+    # Np = node.auxiliary_normals()
+    # N = utils.get_unique_normals(np.concatenate((N, Np), axis=0))
+
+    N = config.normals                           # Collect predefined set of normal vectors
+    np.append(N, node.auxiliary_normals, axis=0) # Append partition's bouning-box-aligned vectors as normals
+    N = np.unique(N, axis=0)                     # Return sorted unique elements of input array_like
+
     trees = []
     for i in range(N.shape[0]):
         normal = N[i]
