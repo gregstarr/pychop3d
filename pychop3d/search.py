@@ -22,13 +22,17 @@ def evaluate_cuts(base_tree, node):
     :return: list of 'unique' trees resulting from splitting the input tree at the specified node
     :rtype: list of `bsp_tree.BSPTree`
     """
-    config = Configuration.config  # collect configuration
+  
+    config = Configuration.config                # Collect configuration
+    # N = config.normals
+    # Np = node.auxiliary_normals()
+    # N = utils.get_unique_normals(np.concatenate((N, Np), axis=0))
 
-    N = config.normals  # collect predefined set of normal vectors
-    Np = node.auxiliary_normals  # add in the part's bounding-box-aligned vectors as normals
-    N = utils.get_unique_normals(np.concatenate((N, Np), axis=0))  # make sure we only have unique normals
+    N = config.normals                           # Collect predefined set of normal vectors
+    np.append(N, node.auxiliary_normals, axis=0) # Append partition's bouning-box-aligned vectors as normals
+    N = np.unique(N, axis=0)                     # Return sorted unique elements of input array_like
 
-    trees = []  # initial list of all trees resulting from splitting the node
+    trees = []
     for i in range(N.shape[0]):
         trees_of_this_normal = []  # start a list of trees for splits along this normal
         normal = N[i]  # current normal
