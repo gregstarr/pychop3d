@@ -8,9 +8,6 @@ requests
 trimesh
 triangle
 pyglet
-# Go to this website for the wheels:
-# https://www.lfd.uci.edu/~gohlke/pythonlibs
-#
-# meshpy
-# shapely
-# rtree
+https://github.com/gregstarr/pychop3d/raw/develop/whl/MeshPy-2018.2.1-cp37-cp37m-win_amd64.whl
+https://github.com/gregstarr/pychop3d/raw/develop/whl/Rtree-0.9.4-cp37-cp37m-win_amd64.whl
+https://github.com/gregstarr/pychop3d/raw/develop/whl/Shapely-1.7.1-cp37-cp37m-win_amd64.whl
