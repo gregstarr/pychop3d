@@ -7,7 +7,7 @@
 
 For seamless Docker setup Dockerfile is provided as well as [Vscode Devcontainer Support](https://code.visualstudio.com/docs/remote/containers) 
 
-## Windows Setup:
+## Windows Setup
 *NOTE: this has only been tested on windows*
 
 *NOTE: Must use python 3.7*
@@ -60,7 +60,7 @@ to take longer but will possibly make the output better
 
 See bunny_config.yml or shoerack_config.yml for examples
 
-## Gallery:
+## Gallery
 
 #### Bunny
 
