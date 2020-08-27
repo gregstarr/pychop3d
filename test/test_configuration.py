@@ -20,8 +20,8 @@ import yaml
 import os
 
 from pychop3d.configuration import Configuration
-from pychop3d import bsp
-from pychop3d import section
+from pychop3d import bsp_tree
+from pychop3d import bsp_node
 
 
 def test_modify_configuration():
@@ -34,14 +34,14 @@ def test_modify_configuration():
     mesh = trimesh.load(config.mesh, validate=True)
 
     # create bsp tree
-    tree = bsp.BSPTree(mesh)
+    tree = bsp_tree.BSPTree(mesh)
     print(f"n parts: {tree.nodes[0].n_parts}")
     assert tree.nodes[0].n_parts == 1
     config.printer_extents = config.printer_extents / 2
     print("modified config")
     print(f"original tree n parts: {tree.nodes[0].n_parts}")
     assert tree.nodes[0].n_parts == 1
-    new_tree = bsp.BSPTree(mesh)
+    new_tree = bsp_tree.BSPTree(mesh)
     print(f"new tree n parts: {new_tree.nodes[0].n_parts}")
     assert new_tree.nodes[0].n_parts == 2
     config.restore_defaults()
@@ -99,17 +99,17 @@ def test_functions():
     mesh = trimesh.load(config.mesh, validate=True)
     print()
     # BSPNode instantiation (n_parts)
-    n_parts_1 = bsp.BSPNode(mesh).n_parts
+    n_parts_1 = bsp_node.BSPNode(mesh).n_parts
     config.printer_extents = np.array([20, 20, 20])
-    n_parts_2 = bsp.BSPNode(mesh).n_parts
+    n_parts_2 = bsp_node.BSPNode(mesh).n_parts
     assert n_parts_1 != n_parts_2
     config.restore_defaults()
 
     # get_planes (plane_spacing, default is )
-    node = bsp.BSPNode(mesh)
-    planes_1 = node.get_planes(np.array([0, 1, 0]))
+    node = bsp_node.BSPNode(mesh)
+    planes_1 = bsp_tree.get_planes(node.part, np.array([0, 1, 0]))
     config.plane_spacing /= 2
-    planes_2 = node.get_planes(np.array([0, 1, 0]))
+    planes_2 = bsp_tree.get_planes(node.part, np.array([0, 1, 0]))
     assert len(planes_2) > len(planes_1)
     config.restore_defaults()
 
