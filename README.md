@@ -36,6 +36,8 @@ with the command:
 `pip install {package_wheel_file}`
 where `{package_wheel_file}` is the path to the downloaded wheel file for that 
 particular package.
+
+## Usage
 ##### Try the example (this uses bunny_config.yml) 
 `python main.py`
 ##### Try out your own STLs by creating a configuration YAML and passing it to main
@@ -58,7 +60,7 @@ to take longer but will possibly make the output better
 
 See bunny_config.yml or shoerack_config.yml for examples
 
-### Gallery:
+## Gallery:
 
 #### Bunny
 
