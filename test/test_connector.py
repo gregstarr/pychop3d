@@ -22,7 +22,7 @@ def test_sa_objective_1():
         - connected components with a connector collision are penalized
     """
     config = Configuration.config
-    mesh = trimesh.primitives.Box(extents=[10, 10, 40])
+    mesh = trimesh.primitives.Box(extents=[11, 11, 40])
     tree = bsp_tree.BSPTree(mesh)
     normal = np.array([0, 0, 1])
     origin = np.zeros(3)
@@ -39,6 +39,8 @@ def test_sa_objective_1():
 def test_sa_objective_2():
     """Verifies:
         - large faces prefer multiple connectors
+
+        NOTE: every time grid_sample code changes, this will need to be changed which obviously isnt ideal
     """
     config = Configuration.config
     config.connector_spacing = 5
@@ -51,30 +53,28 @@ def test_sa_objective_2():
 
     # single connector
     state = np.zeros(connector_placer.n_connectors, dtype=bool)
-    state[12] = True
+    state[5] = True
     ob1 = connector_placer.evaluate_connector_objective(state)
 
     # double connector in opposite corners
     state = np.zeros(connector_placer.n_connectors, dtype=bool)
     state[0] = True
-    state[24] = True
+    state[15] = True
     ob2 = connector_placer.evaluate_connector_objective(state)
 
-    # connector in each corner
+    # 3 connectors spread out
     state = np.zeros(connector_placer.n_connectors, dtype=bool)
     state[0] = True
-    state[4] = True
-    state[20] = True
-    state[24] = True
+    state[3] = True
+    state[12] = True
     ob3 = connector_placer.evaluate_connector_objective(state)
 
     # connector in each corner and in middle (too many connectors)
     state = np.zeros(connector_placer.n_connectors, dtype=bool)
     state[0] = True
-    state[4] = True
+    state[3] = True
     state[12] = True
-    state[20] = True
-    state[24] = True
+    state[15] = True
     ob4 = connector_placer.evaluate_connector_objective(state)
 
     assert ob1 > ob2 > ob3

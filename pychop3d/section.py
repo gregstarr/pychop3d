@@ -71,6 +71,13 @@ class ConnectedComponent:
         return True
 
     def grid_sample_polygon(self):
+        """Returns a grid of connector cantidate locations. The connected component (chop cross section)
+        is rotated to align with the minimum rotated bounding box, then the resulting polygon is grid sampled
+        with spacing = self.connector_spacing (specified in config)
+
+        :return: grid samples
+        :rtype: `numpy.ndarray`
+        """
         mrr_points = np.column_stack(self.polygon.minimum_rotated_rectangle.boundary.xy)
         mrr_edges = np.diff(mrr_points, axis=0)
         angle = -1 * np.arctan2(mrr_edges[0, 1], mrr_edges[0, 0])
