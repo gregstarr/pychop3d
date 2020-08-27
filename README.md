@@ -4,7 +4,11 @@
 ### Paper:
 http://cfg.mit.edu/content/chopper-partitioning-models-3d-printable-parts
 
-### Usage:
+### Docker Setup
+
+For seamless Docker setup Dockerfile is provided as well as [Vscode Devcontainer Support](https://code.visualstudio.com/docs/remote/containers) 
+
+### Windows Setup:
 *NOTE: this has only been tested on windows*
 
 *NOTE: Must use python 3.7*
