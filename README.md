@@ -28,10 +28,10 @@ with 2.79b
 ##### update pip
 `python -m pip install --upgrade pip`
 ##### install packages 
-`pip install -r requirements.txt`
+`pip install -r windows_requirements.txt`
 ##### install more packages
 go to <https://www.lfd.uci.edu/~gohlke/pythonlibs> and download the 
-commented out packages from requirements.txt. These packages can be installed
+commented out packages from `windows_requirements.txt`. These packages can be installed
 with the command:
 `pip install {package_wheel_file}`
 where `{package_wheel_file}` is the path to the downloaded wheel file for that 
