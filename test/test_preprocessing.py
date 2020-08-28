@@ -9,6 +9,7 @@ import math
 def test_preprocessing_decimate():
     """verify that for preprocessing works with sample Decimate Blender modifier
     """
+    oldConfig = Configuration.config
 
     Configuration.config = Configuration(os.path.join(os.path.dirname(
         __file__), 'test_data', "preprocessor_config_1.yml"))
@@ -23,6 +24,6 @@ def test_preprocessing_decimate():
     newFacesActual = math.floor(newFaces) # decimation -> 802
 
     assert abs(newFacesExpected - newFacesActual) < 10
-
+    Configuration.config = oldConfig
 
 test_preprocessing_decimate()
