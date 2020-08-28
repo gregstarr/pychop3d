@@ -1,10 +1,10 @@
-_directory: test\regression_test_data
+_directory: test/test_data
 _n_phi: 5
 _n_theta: 5
 add_middle_plane: true
-beam_width: 2
+beam_width: 3
 connector_collision_penalty: 10000000000
-connector_diameter: 5
+connector_diameter: 10
 connector_diameter_max: 30
 connector_diameter_min: 5
 connector_objective_th: 10
@@ -15,7 +15,7 @@ do_not_save:
 - normals
 empty_cc_penalty: 1.0e-05
 fragility_objective_th: 0.95
-mesh: test\test_meshes\Bunny-LowPoly.stl
+mesh: test/test_meshes/Bunny-LowPoly.stl
 obb_utilization: true
 objective_weights:
   connector: 1
@@ -25,7 +25,7 @@ objective_weights:
   symmetry: 0
   utilization: 0.25
 part_separation: false
-plane_spacing: 30
+plane_spacing: 20
 printer_extents:
 - 200.0
 - 200.0
@@ -33,5 +33,5 @@ printer_extents:
 sa_initial_connector_ratio: 0.1
 sa_initialization_iterations: 15000
 sa_iterations: 300000
-save_path: test\regression_test_data\regression_config_2.yml
-scale_factor: 2
+save_path: test/test_data/regression_config_3.yml
+scale_factor: 3

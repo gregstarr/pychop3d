@@ -8,9 +8,42 @@ from pychop3d import bsp_tree
 from pychop3d import bsp_node
 from pychop3d.objective_functions import evaluate_utilization_objective, evaluate_nparts_objective
 from pychop3d.configuration import Configuration
+from trimesh.interfaces.blender import _blender_executable, exists
+from trimesh.interfaces.generic import MeshScript
+from trimesh import resources
+from trimesh import util
 
 
 logger = logging.getLogger(__name__)
+
+
+def preprocess(mesh, debug=True):
+    """
+    Run a preprocess operation with mesh using Blender.
+    """
+    config = Configuration.config
+
+    logger.info("starting preprocessing")
+    if not exists:
+        raise ValueError('No blender available!')
+    curr_dir = os.path.dirname(__file__)
+    with open(os.path.join(curr_dir + "/blender_script_templates/preprocessor.py.template"), 'rb') as preprocessor:
+        with open(os.path.join(curr_dir + "/../" + config.preprocessor), 'rb') as preprocessor_func:
+            preprocessor_func = preprocessor_func.read().decode('utf-8')
+            script = preprocessor.read().decode(
+                'utf-8').replace("$PREPROCESSOR_FUNC", preprocessor_func)
+
+            with MeshScript(meshes=[mesh],
+                            script=script,
+                            debug=debug) as blend:
+                result = blend.run(_blender_executable +
+                                   ' --background --python $SCRIPT')
+                logger.info("finished preprocessing")
+
+            for m in util.make_sequence(result):
+                m.face_normals = None
+            result.export("./wing2.stl")
+            return result
 
 
 def separate_starter(mesh):
@@ -27,8 +60,10 @@ def separate_starter(mesh):
     logger.info(f"starter mesh split into {len(parts)} children")
     tree = bsp_tree.BSPTree(mesh)  # create starter tree
     for i, part in enumerate(parts):
-        new_node = bsp_node.BSPNode(part, tree.nodes[0], i)  # make a new node for each separate part
-        tree.nodes[0].children.append(new_node)  # make the new node the root node's child
+        # make a new node for each separate part
+        new_node = bsp_node.BSPNode(part, tree.nodes[0], i)
+        # make the new node the root node's child
+        tree.nodes[0].children.append(new_node)
         tree.nodes.append(new_node)
     # update nparts and utilization objectives
     evaluate_nparts_objective([tree], tuple())
@@ -39,6 +74,8 @@ def separate_starter(mesh):
 def open_mesh():
     """open the mesh according to the configuration and apply any scaling or subdivision
     """
+    logger.info("opening")
+
     config = Configuration.config
     # OPEN MESH
     mesh_fn = config.mesh
@@ -48,12 +85,20 @@ def open_mesh():
         raise Exception(f"Can't find mesh: {config.mesh}")
 
     mesh = trimesh.load(mesh_fn)
+    
+    try:
+        if (config.preprocessor):
+            mesh = preprocess(mesh)
+    except:
+        pass
+
     # REPAIR MESH
     trimesh_repair(mesh)
     # SCALE MESH
     if config.scale_factor > 0:
         mesh.apply_scale(config.scale_factor)
     # SUBDIVIDE MESH
+
 
     return mesh
 
@@ -117,9 +162,11 @@ def get_unique_normals(non_unique_normals):
     """
     # round the vectors to avoid having any of the resulting vectors too close
     rounded = np.round(non_unique_normals, 3)
-    view = rounded.view(dtype=[('', float), ('', float), ('', float)])  # treat the array as a 1-D array of tuples
+    # treat the array as a 1-D array of tuples
+    view = rounded.view(dtype=[('', float), ('', float), ('', float)])
     unique = np.unique(view)  # get the unique tuples
-    return unique.view(dtype=float).reshape((unique.shape[0], -1))  # reassemble the tuples into a numpy array
+    # reassemble the tuples into a numpy array
+    return unique.view(dtype=float).reshape((unique.shape[0], -1))
 
 
 def make_plane(origin, normal, w=100):
@@ -158,7 +205,8 @@ def save_tree(tree, filename, state=None):
     nodes = []
     for node in tree.nodes:
         if node.plane is not None:
-            this_node = {'path': node.path, 'origin': list(node.plane[0]), 'normal': list(node.plane[1])}
+            this_node = {'path': node.path, 'origin': list(
+                node.plane[0]), 'normal': list(node.plane[1])}
             nodes.append(this_node)
 
     with open(os.path.join(config.directory, filename), 'w') as f:
@@ -175,4 +223,5 @@ def export_tree_stls(tree, fn_info="part"):
     """
     config = Configuration.config
     for i, leaf in enumerate(tree.leaves):
-        leaf.part.export(os.path.join(config.directory, f"{config.name}_{fn_info}_{i}.stl"))
+        leaf.part.export(os.path.join(config.directory,
+                                      f"{config.name}_{fn_info}_{i}.stl"))

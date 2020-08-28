@@ -29,8 +29,11 @@ def test_modify_configuration():
     default part and the default configuration, verify that it will fit in the printer volume, then modify the
     printer volume in the config and verify that a newly created tree will have a different n_parts objective
     """
+
+    # Configuration.config = Configuration(os.path.join(os.path.dirname(
+    #     __file__), 'test_data', "regression_config_1.yml"))
+
     config = Configuration.config
-    print()
     mesh = trimesh.load(config.mesh, validate=True)
 
     # create bsp tree
