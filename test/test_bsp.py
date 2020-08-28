@@ -121,20 +121,21 @@ def test_grid_sample():
 
     # test
     cd = config.connector_diameter
-    mesh = trimesh.primitives.Box(extents=[1.1 * cd, 1.1 * cd, 40])
+    spacing = config.connector_spacing
+    mesh = trimesh.primitives.Box(extents=[2 * cd + .1, 2 * cd + .1, 40])
     cross_section = section.CrossSection(mesh, origin, normal)
     samples = cross_section.connected_components[0].grid_sample_polygon()
-    assert samples.size > 0
+    assert samples.shape[0] == 1
 
     mesh.apply_translation([3, 0, 0])
     cross_section = section.CrossSection(mesh, origin, normal)
     samples = cross_section.connected_components[0].grid_sample_polygon()
-    assert samples.size > 0
+    assert samples.shape[0] == 1
 
     mesh.apply_transform(trimesh.transformations.rotation_matrix(np.pi/4, np.array([0, 0, 1])))
     cross_section = section.CrossSection(mesh, origin, normal)
     samples = cross_section.connected_components[0].grid_sample_polygon()
-    assert samples.size > 0
+    assert samples.shape[0] == 1
 
 
 def test_basic_separation():

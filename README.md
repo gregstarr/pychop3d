@@ -8,8 +8,6 @@
 For seamless Docker setup Dockerfile is provided as well as [Vscode Devcontainer Support](https://code.visualstudio.com/docs/remote/containers) 
 
 ## Windows Setup
-*NOTE: this has only been tested on windows*
-
 *NOTE: Must use python 3.7*
 
 ##### download and install Blender 2.79b
@@ -28,14 +26,7 @@ with 2.79b
 ##### update pip
 `python -m pip install --upgrade pip`
 ##### install packages 
-`pip install -r requirements.txt`
-##### install more packages
-go to <https://www.lfd.uci.edu/~gohlke/pythonlibs> and download the 
-commented out packages from requirements.txt. These packages can be installed
-with the command:
-`pip install {package_wheel_file}`
-where `{package_wheel_file}` is the path to the downloaded wheel file for that 
-particular package.
+`pip install -r windows_requirements.txt`
 
 ## Usage
 ##### Try the example (this uses bunny_config.yml) 

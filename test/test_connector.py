@@ -22,7 +22,7 @@ def test_sa_objective_1():
         - connected components with a connector collision are penalized
     """
     config = Configuration.config
-    mesh = trimesh.primitives.Box(extents=[10, 10, 40])
+    mesh = trimesh.primitives.Box(extents=[11, 11, 40])
     tree = bsp_tree.BSPTree(mesh)
     normal = np.array([0, 0, 1])
     origin = np.zeros(3)
@@ -39,6 +39,8 @@ def test_sa_objective_1():
 def test_sa_objective_2():
     """Verifies:
         - large faces prefer multiple connectors
+
+        NOTE: every time grid_sample code changes, this will need to be changed which obviously isnt ideal
     """
     config = Configuration.config
     config.connector_spacing = 5
