@@ -17,7 +17,7 @@ from trimesh import util
 logger = logging.getLogger(__name__)
 
 
-def preprocess(mesh, debug=False):
+def preprocess(mesh, debug=True):
     """
     Run a preprocess operation with mesh using Blender.
     """
@@ -28,7 +28,6 @@ def preprocess(mesh, debug=False):
         raise ValueError('No blender available!')
     curr_dir = os.path.dirname(__file__)
     with open(os.path.join(curr_dir + "/blender_script_templates/preprocessor.py.template"), 'rb') as preprocessor:
-        # PREPROCESSING_FUNC
         with open(os.path.join(curr_dir + "/../" + config.preprocessor), 'rb') as preprocessor_func:
             preprocessor_func = preprocessor_func.read().decode('utf-8')
             script = preprocessor.read().decode(
@@ -43,6 +42,7 @@ def preprocess(mesh, debug=False):
 
             for m in util.make_sequence(result):
                 m.face_normals = None
+            result.export("./wing2.stl")
             return result
 
 
@@ -79,6 +79,13 @@ def open_mesh():
     config = Configuration.config
     # OPEN MESH
     mesh = trimesh.load(config.mesh)
+
+    try:
+        if (config.preprocessor):
+            mesh = preprocess(mesh)
+    except:
+        pass
+
     # REPAIR MESH
     trimesh_repair(mesh)
     # SCALE MESH
@@ -87,11 +94,6 @@ def open_mesh():
     # SUBDIVIDE MESH
     pass
 
-    try:
-        if (config.preprocessor):
-            mesh = preprocess(mesh)
-    except:
-        pass
 
     return mesh
 
