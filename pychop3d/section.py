@@ -31,6 +31,7 @@ class ConnectedComponent:
 
         self.connector_diameter = config.connector_diameter
         self.connector_spacing = config.connector_spacing
+        self.connector_tolerance = config.connector_tolerance
 
         if self.area < (self.connector_diameter / 2) ** 2:
             return
@@ -54,10 +55,9 @@ class ConnectedComponent:
                                                 self.xform)
         pos_dists = positive.nearest.signed_distance(mesh_samples + (1 + self.connector_diameter) * self.normal)
         neg_dists = negative.nearest.signed_distance(mesh_samples + (1 + self.connector_diameter) * -1 * self.normal)
-        # overestimate sqrt(2) to make the radius larger than
-        # half the diagonal of a square connector
-        pos_valid_mask = pos_dists > self.connector_diameter
-        neg_valid_mask = neg_dists > self.connector_diameter
+        # overestimate sqrt(2) to make the radius larger than half the diagonal of a square connector
+        pos_valid_mask = pos_dists > 1.5 * self.connector_diameter / 2
+        neg_valid_mask = neg_dists > 1.5 * self.connector_diameter / 2
         ch_area_mask = np.logical_or(pos_valid_mask, neg_valid_mask)
 
         if ch_area_mask.sum() == 0:
@@ -83,11 +83,15 @@ class ConnectedComponent:
         angle = -1 * np.arctan2(mrr_edges[0, 1], mrr_edges[0, 0])
         rotated_polygon = affinity.rotate(self.polygon, angle, use_radians=True, origin=(0, 0))
         min_x, min_y, max_x, max_y = rotated_polygon.bounds
-        xp = np.arange(min_x + self.connector_diameter, max_x - self.connector_diameter, self.connector_spacing)
+        xp = np.arange(min_x + (self.connector_tolerance + self.connector_diameter) / 2,
+                       max_x - (self.connector_tolerance + self.connector_diameter) / 2,
+                       self.connector_spacing)
         if len(xp) == 0:
             return np.array([])
         xp += (min_x + max_x) / 2 - (xp.min() + xp.max()) / 2
-        yp = np.arange(min_y + self.connector_diameter, max_y - self.connector_diameter, self.connector_spacing)
+        yp = np.arange(min_y + (self.connector_tolerance + self.connector_diameter) / 2,
+                       max_y - (self.connector_tolerance + self.connector_diameter) / 2,
+                       self.connector_spacing)
         if len(yp) == 0:
             return np.array([])
         yp += (min_y + max_y) / 2 - (yp.min() + yp.max()) / 2

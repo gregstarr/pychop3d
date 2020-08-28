@@ -53,28 +53,30 @@ def test_sa_objective_2():
 
     # single connector
     state = np.zeros(connector_placer.n_connectors, dtype=bool)
-    state[5] = True
+    state[12] = True
     ob1 = connector_placer.evaluate_connector_objective(state)
 
     # double connector in opposite corners
     state = np.zeros(connector_placer.n_connectors, dtype=bool)
     state[0] = True
-    state[15] = True
+    state[24] = True
     ob2 = connector_placer.evaluate_connector_objective(state)
 
-    # 3 connectors spread out
+    # connector in each corner
     state = np.zeros(connector_placer.n_connectors, dtype=bool)
     state[0] = True
-    state[3] = True
-    state[12] = True
+    state[4] = True
+    state[20] = True
+    state[24] = True
     ob3 = connector_placer.evaluate_connector_objective(state)
 
     # connector in each corner and in middle (too many connectors)
     state = np.zeros(connector_placer.n_connectors, dtype=bool)
     state[0] = True
-    state[3] = True
+    state[4] = True
     state[12] = True
-    state[15] = True
+    state[20] = True
+    state[24] = True
     ob4 = connector_placer.evaluate_connector_objective(state)
 
     assert ob1 > ob2 > ob3

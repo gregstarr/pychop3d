@@ -41,14 +41,19 @@ def open_mesh():
     """
     config = Configuration.config
     # OPEN MESH
-    mesh = trimesh.load(config.mesh)
+    mesh_fn = config.mesh
+    if not os.path.isfile(mesh_fn):
+        mesh_fn = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', config.mesh))
+    if not os.path.isfile(mesh_fn):
+        raise Exception(f"Can't find mesh: {config.mesh}")
+
+    mesh = trimesh.load(mesh_fn)
     # REPAIR MESH
     trimesh_repair(mesh)
     # SCALE MESH
     if config.scale_factor > 0:
         mesh.apply_scale(config.scale_factor)
     # SUBDIVIDE MESH
-    pass
 
     return mesh
 
