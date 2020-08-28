@@ -14,4 +14,3 @@ directory: "output"
 name: "wing"
 plane_spacing: 20
 scale_factor: 50.8
-preprocessor: "test/test_data/decimate_preprocessor.py.template"

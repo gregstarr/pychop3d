@@ -4,7 +4,6 @@ import os
 
 from pychop3d import bsp_tree
 from pychop3d import objective_functions
-from pychop3d.configuration import Configuration
 
 
 def test_number_of_parts():
@@ -69,8 +68,7 @@ def test_fragility_function_already_fragile():
     assert trees[0].objectives['fragility'] == 0
 
 
-def test_fragility_function_multiple_trees():
-    config = Configuration.config
+def test_fragility_function_multiple_trees(config):
     config.plane_spacing = 5
     config.connector_diameter = 5
     mesh_fn = os.path.join(os.path.dirname(__file__), 'test_meshes', 'fragility_test_1.stl')
@@ -90,11 +88,9 @@ def test_fragility_function_multiple_trees():
     assert trees[6].objectives['fragility'] == np.inf
     assert trees[7].objectives['fragility'] == np.inf
     assert trees[11].objectives['fragility'] == np.inf
-    config.restore_defaults()
 
 
-def test_edge_fragility():
-    config = Configuration.config
+def test_edge_fragility(config):
     config.connector_diameter = 3
     mesh_fn = os.path.join(os.path.dirname(__file__), 'test_meshes', 'fragility_test_2.stl')
     mesh = trimesh.load(mesh_fn)
@@ -107,4 +103,3 @@ def test_edge_fragility():
     fragile_cut_tree, result = bsp_tree.expand_node(tree, tree.nodes[0].path, plane)
     objective_functions.evaluate_fragility_objective([fragile_cut_tree], tree.nodes[0].path)
     assert fragile_cut_tree.objectives['fragility'] == np.inf
-    config.restore_defaults()

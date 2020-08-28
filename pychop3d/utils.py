@@ -10,7 +10,7 @@ from pychop3d.objective_functions import evaluate_utilization_objective, evaluat
 from pychop3d.configuration import Configuration
 from trimesh.interfaces.blender import _blender_executable, exists
 from trimesh.interfaces.generic import MeshScript
-from trimesh import resources
+from trimesh import repair
 from trimesh import util
 
 
@@ -27,22 +27,19 @@ def preprocess(mesh, debug=True):
     if not exists:
         raise ValueError('No blender available!')
     curr_dir = os.path.dirname(__file__)
+    preprocessor_func_fn = find_file(config.preprocessor)
     with open(os.path.join(curr_dir + "/blender_script_templates/preprocessor.py.template"), 'rb') as preprocessor:
-        with open(os.path.join(curr_dir + "/../" + config.preprocessor), 'rb') as preprocessor_func:
-            preprocessor_func = preprocessor_func.read().decode('utf-8')
+        with open(preprocessor_func_fn, 'rb') as preprocessor_func_file:
+            preprocessor_func = preprocessor_func_file.read().decode('utf-8')
             script = preprocessor.read().decode(
                 'utf-8').replace("$PREPROCESSOR_FUNC", preprocessor_func)
 
-            with MeshScript(meshes=[mesh],
-                            script=script,
-                            debug=debug) as blend:
-                result = blend.run(_blender_executable +
-                                   ' --background --python $SCRIPT')
+            with MeshScript(meshes=[mesh], script=script, debug=debug) as blend:
+                result = blend.run(_blender_executable + ' --background --python $SCRIPT')
                 logger.info("finished preprocessing")
 
             for m in util.make_sequence(result):
                 m.face_normals = None
-            result.export("./wing2.stl")
             return result
 
 
@@ -71,6 +68,22 @@ def separate_starter(mesh):
     return tree
 
 
+def find_file(fn):
+    """Looks for a file either as a relative path off of the pytest directory or as an absolute path
+
+    :param fn: input path, either relative or absolute
+    :return: path to file
+    :raises: FileNotFoundError
+    """
+    abs_fn = fn
+    rel_fn = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', fn))
+    if os.path.isfile(abs_fn):
+        return abs_fn
+    if os.path.isfile(rel_fn):
+        return rel_fn
+    raise FileNotFoundError(f"Can't find file: {abs_fn}")
+
+
 def open_mesh():
     """open the mesh according to the configuration and apply any scaling or subdivision
     """
@@ -78,19 +91,11 @@ def open_mesh():
 
     config = Configuration.config
     # OPEN MESH
-    mesh_fn = config.mesh
-    if not os.path.isfile(mesh_fn):
-        mesh_fn = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', config.mesh))
-    if not os.path.isfile(mesh_fn):
-        raise Exception(f"Can't find mesh: {config.mesh}")
-
+    mesh_fn = find_file(config.mesh)
     mesh = trimesh.load(mesh_fn)
-    
-    try:
-        if (config.preprocessor):
-            mesh = preprocess(mesh)
-    except:
-        pass
+
+    if hasattr(config, 'preprocessor') and config.preprocessor:
+        mesh = preprocess(mesh)
 
     # REPAIR MESH
     trimesh_repair(mesh)
@@ -98,7 +103,6 @@ def open_mesh():
     if config.scale_factor > 0:
         mesh.apply_scale(config.scale_factor)
     # SUBDIVIDE MESH
-
 
     return mesh
 
@@ -176,10 +180,10 @@ def make_plane(origin, normal, w=100):
 
 
 def trimesh_repair(mesh):
-    trimesh.repair.fill_holes(mesh)
-    trimesh.repair.fix_winding(mesh)
-    trimesh.repair.fix_inversion(mesh)
-    trimesh.repair.fix_normals(mesh)
+    repair.fill_holes(mesh)
+    repair.fix_winding(mesh)
+    repair.fix_inversion(mesh)
+    repair.fix_normals(mesh)
     mesh.process()
 
 
