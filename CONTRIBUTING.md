@@ -7,4 +7,4 @@ feature, add a test which shows the feature works. If the feature requires expla
 please run the test suite to make sure nothing broke. The last regression test takes a long time (~24 minutes) so don't run it while developing, 
 just once at the end.
 
-Thanks for contributing!
+### Thanks for contributing!
