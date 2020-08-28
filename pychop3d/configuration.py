@@ -17,13 +17,14 @@ class Configuration:
 
         # open config YAML
         if config_path is not None:
-            self.directory = os.path.dirname(config_path)
-            with open(config_path) as f:
-                config_file = yaml.safe_load(f)
+            self.load(config_path)
 
-            for key, value in config_file.items():
-                setattr(self, key, value)
-
+    def load(self, path):
+        self.directory = os.path.dirname(path)
+        with open(path) as f:
+            config_file = yaml.safe_load(f)
+        for key, value in config_file.items():
+            setattr(self, key, value)
         self.printer_extents = np.array(self.printer_extents, dtype=float)
 
     @property
