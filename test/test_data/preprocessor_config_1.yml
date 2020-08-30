@@ -2,8 +2,10 @@ beam_width: 3
 connector_diameter: 2
 connector_spacing: 10
 connector_tolerance: 1
-mesh: "examples/wing.stl"
+mesh: "test/test_meshes/wing.stl"
 part_separation: false
+do_not_save:
+    - normals
 printer_extents:
 - 200.0
 - 200.0
@@ -12,4 +14,3 @@ directory: "output"
 name: "wing"
 plane_spacing: 20
 scale_factor: 50.8
-preprocessor: "examples/wing_preprocessor.py.template"

@@ -12,17 +12,15 @@ import numpy as np
 
 from pychop3d import bsp_tree
 from pychop3d import connector
-from pychop3d.configuration import Configuration
 
 
-def test_sa_objective_1():
+def test_sa_objective_1(config):
     """Verifies:
         - connected components without a connector are penalized
         - small connected components with a single connector have a reasonably low objective
         - connected components with a connector collision are penalized
     """
-    config = Configuration.config
-    mesh = trimesh.primitives.Box(extents=[10, 10, 40])
+    mesh = trimesh.primitives.Box(extents=[11, 11, 40])
     tree = bsp_tree.BSPTree(mesh)
     normal = np.array([0, 0, 1])
     origin = np.zeros(3)
@@ -36,11 +34,12 @@ def test_sa_objective_1():
     assert connector_placer.evaluate_connector_objective(np.array([True, True])) >= config.connector_collision_penalty
 
 
-def test_sa_objective_2():
+def test_sa_objective_2(config):
     """Verifies:
         - large faces prefer multiple connectors
+
+        NOTE: every time grid_sample code changes, this will need to be changed which obviously isnt ideal
     """
-    config = Configuration.config
     config.connector_spacing = 5
     mesh = trimesh.primitives.Box(extents=[30, 30, 80])
     tree = bsp_tree.BSPTree(mesh)
@@ -79,5 +78,3 @@ def test_sa_objective_2():
 
     assert ob1 > ob2 > ob3
     assert ob4 > ob3
-
-    config.restore_defaults()
