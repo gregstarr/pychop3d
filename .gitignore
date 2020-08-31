@@ -4,7 +4,7 @@ profile
 .pytest_cache
 pychop3d/__pycache__
 
-failed
+web_scraper
 debug
 
 output/*
