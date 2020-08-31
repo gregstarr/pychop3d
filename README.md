@@ -16,23 +16,35 @@ https://download.blender.org/release/Blender2.79/blender-2.79-windows64.msi
 I think you can download any version 2.79 or higher, but I know it works
 with 2.79b
 ##### clone repo 
-`git clone https://github.com/gregstarr/pychop3d.git`
+`> git clone https://github.com/gregstarr/pychop3d.git`
 ##### enter directory 
-`cd pychop3d`
-##### create virtual environment 
-`python -m venv venv`
-##### activate virtual environment 
-`venv/Scripts/activate`
+`> cd pychop3d`
+##### create and activate environment
+For venv:
+```
+> python -m venv venv
+> venv\Scripts\activate
+```
+For Anaconda:
+```
+> conda create -n pychop3d python=3.7
+> conda activate pychop3d
+```
 ##### update pip
-`python -m pip install --upgrade pip`
+`> python -m pip install --upgrade pip`
 ##### install packages 
-`pip install -r windows_requirements.txt`
+`> pip install -r windows_requirements.txt`
 
 ## Usage
 ##### Try the example (this uses bunny_config.yml) 
 `python main.py`
 ##### Try out your own STLs by creating a configuration YAML and passing it to main
-`python main.py -c my_config.yml`
+`> python main.py -c my_config.yml`
+
+*NOTE: you may have to add the pychop3d directory to your PYTHONPATH environment variable using:*
+```
+> set PYTHONPATH=C:\path\to\pychop3d
+```
 
 ### Main Configuration Options
 * beam_width: increasing this will cause the process to take longer but will (in theory) 
