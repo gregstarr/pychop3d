@@ -9,6 +9,7 @@ from pychop3d import utils
 from pychop3d.configuration import Configuration
 
 
+@pytest.mark.slow
 @pytest.mark.parametrize('file_number', range(1, 4))
 def test_regression(file_number):
     print()

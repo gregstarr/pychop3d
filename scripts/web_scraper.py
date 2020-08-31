@@ -69,11 +69,15 @@ def dump_error(timestamped_dir):
 
 
 if __name__ == "__main__":
+    webscraper_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'web_scraper'))
+    if not os.path.exists(webscraper_dir):
+        os.mkdir(webscraper_dir)
+    log_path = os.path.join(webscraper_dir, "log_output.log")
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s  %(name)s  [%(levelname)s]  %(message)s",
         handlers=[
-            logging.FileHandler("web_scraper.log", mode='w'),
+            logging.FileHandler(log_path, mode='w'),
             logging.StreamHandler()
         ]
     )
@@ -116,11 +120,11 @@ if __name__ == "__main__":
                 # split into separate components
                 if config.part_separation and starter.body_count > 1:
                     starter = utils.separate_starter(starter)
-                run.run(starter)
+                run(starter)
             # catch failure and move the timestamped directory to 'failed'
             except Exception as e:
                 dump_error(timestamped_dir)
                 n_failed += 1
-                failed_directory = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'failed', date_string))
-                shutil.move(timestamped_dir, failed_directory)
+                current_dir = os.path.join(webscraper_dir, date_string)
+                shutil.move(timestamped_dir, webscraper_dir)
     logging.info(f"{N_ITERATIONS} attempts: {(N_ITERATIONS - n_failed) / N_ITERATIONS} success rate")
