@@ -3,7 +3,8 @@
 # ============================================================
 # Bash script to install required packages for pychop3d
 # IMPORTANT:
-# Run this script by running 'source setup.sh' or '. setup.sh'
+# Run this script by running 'source <script name>' or '. <script name>'
+# This will properly activate the python virtual environment
 # ============================================================
 # This script worked for the following setup:
 # As of 2020-08-30
@@ -11,7 +12,8 @@
 # Python: 3.8.0 already installed 
 # Bash: GNU bash version 4.4.20(1)-release (x86_64-pc-linux-gnu)
 # Apt: 1.6.12ubuntu0.1 (amd64)
-#
+
+
 PY_VERSION=() # This variable will end up holding the version number of the newest python installation
 # PY_VERSION=$(python --version)    # Returns python version
 # PY_VERSION=${PY_VERSION##Python}  # Remove leading 'Python'
@@ -60,19 +62,23 @@ function find_python
 
 # Check if python version meets requirements, install necessary python-venv and python-pip 
 function py_version_check {
+    # If this script just installed python3.8, python3.8-venv, and python3-pip
     if $new_py_install
         then 
             echo $"Your python $PY_VERSION installation meets the requirements."
-            echo $"COntinuing setup..."
+            echo $"Continuing setup..."
+    # Else if the python version is 3.7 then use apt-get to install python3.7-venv and python3-pip
     elif [[ $PY_VERSION == $REQ_PY || $PY_VERSION > $REQ_PY && $PY_VERSION < 3.8.0 ]]
         then 
             echo $"Your python $PY_VERSION installation meets the requirements."
             echo $'\nContinuing setup...'
             sudo apt-get install python3.7-venv python3-pip
+    # Else if the python version is 3.8 then use apt-get to install python3.8-venv and python3-pip 
     elif [[ $PY_VERSION == 3.8.0 || $PY_VERSION > 3.8.0 ]]
         then
             echo $'You have Python 3.8, continuing setup'
             sudo apt-get install python3.8-venv python3-pip
+    # Else none of the python versions are new enough, install python 3.8
     else
         echo $'Your python installation does not meet the requirements.\nInstalling python3.8, python3.8-venv, and python3-pip'
         new_py_install=true
