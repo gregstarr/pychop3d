@@ -87,15 +87,24 @@ function py_version_check {
         PYTH=python3.8
         echo $'Continuing setup...'
     fi
+
+    sudo apt-get install blender # Blender (or openscad) needs to be installed so that trimesh can use it for boolean backend
 }
 
 # Function to install pychop dependencies with more useful output
 function confirm_installation {
     local num_err=0
     for p in ${DEPS[@]}; do
-        $PYTH -m pip install $p &> /dev/null     # Run pip by calling python -m pip, direct stdout and stderr to /dev/null
+        if [[ $p == Rtree ]]
+            then 
+                sudo apt-get -qq install python3-rtree # Rtree needs to be installed via 'apt' instead of pip
+            
+        else
+            $PYTH -m pip install $p &> /dev/null     # Run pip by calling python -m pip, direct stdout and stderr to /dev/null
+        fi
         if [ $? -eq 0 ]
-            then echo $"$p installed successfully."
+            then 
+                echo $"$p installed successfullyecho $"Installing rtree"."
         else
             echo $"ERROR: $p did not install correctly."; num_err=$((num_err + 1))
         fi
