@@ -101,18 +101,17 @@ function confirm_installation
         if [[ $p == Rtree ]]
             then 
                 sudo apt-get -qq install python3-rtree # Rtree needs to be installed via 'apt' instead of pip
-            
         else
             $PYTH -m pip install $p &> /dev/null     # Run pip by calling python -m pip, direct stdout and stderr to /dev/null
         fi
         if [ $? -eq 0 ]
             then 
-                echo $"$p installed successfullyecho $"Installing rtree"."
+                echo $"$p installed successfully."
         else
             echo $"ERROR: $p did not install correctly."; num_err=$((num_err + 1))
         fi
     done
-    echo $"Installation complete with $num_err errors"
+    echo $"Installation complete with $num_err errors."
 }
 
 # Function to create and activate virtual environment 
