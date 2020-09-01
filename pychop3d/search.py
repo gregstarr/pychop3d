@@ -1,6 +1,7 @@
 import numpy as np
 import trimesh
 import logging
+import multiprocessing
 
 from pychop3d import utils
 from pychop3d import bsp_tree
@@ -28,25 +29,14 @@ def evaluate_cuts(base_tree, node):
     N = np.append(N, node.auxiliary_normals, axis=0)  # Append partition's bounding-box-aligned vectors as normals
     N = np.unique(np.round(N, 3), axis=0)  # Return sorted unique elements of input array_like
 
+    with multiprocessing.Pool(4) as p:
+        pool_output = p.starmap(process_normal, [(n, node, base_tree, config) for n in N])
+    print()
     trees = []
-    for i in range(N.shape[0]):
-        trees_of_this_normal = []  # start a list of trees for splits along this normal
-        normal = N[i]  # current normal
-        for plane in bsp_tree.get_planes(node.part, normal):  # iterate over all valid cutting planes for the node
-            tree, result = bsp_tree.expand_node(base_tree, node.path, plane)  # split the node using the plane
-            if tree:  # only keep the tree if the split is successful
-                trees_of_this_normal.append(tree)
-            logger.debug(f"normal index: {i}, origin: {plane[0]}, normal: {plane[1]}, result: {result}")
-        if len(trees_of_this_normal) == 0:  # avoid empty list errors during objective function evaluation
-            logger.info(f"normal index: {i}, trees for normal: {len(trees_of_this_normal)}, total trees: {len(trees)}")
-            continue
-        # go through each objective function, evaluate the objective function for each tree in this normal's
-        # list, fill in the data in each tree object in the list
-        for evaluate_objective_func in objectives.values():
-            evaluate_objective_func(trees_of_this_normal, node.path)
-        trees += trees_of_this_normal
-        logger.info(f"normal index: {i}, trees for normal: {len(trees_of_this_normal)}, total trees: {len(trees)}")
-
+    for i in range(len(N)):
+        trees += pool_output[i]
+        logger.info(f"index {i}, normal {N[i]}, norm trees: {len(pool_output[i])}")
+    logger.info(f"total trees: {len(trees)}")
     # go through the list of trees, best ones first, and throw away any that are too similar to another tree already
     # in the result list
     result_set = []
@@ -79,6 +69,10 @@ def beam_search(starter):
     if isinstance(starter, trimesh.Trimesh):
         logger.info("Trimesh stats:")
         logger.info(f"verts: {starter.vertices.shape[0]} extents: {starter.extents}")
+    else:
+        logger.info(f"n_leaves: {len(starter.leaves)}")
+        logger.info(f"Largest part trimesh stats:")
+        logger.info(f"verts: {starter.largest_part.part.vertices.shape[0]}, extents: {starter.largest_part.part.extents}")
 
     if utils.all_at_goal(current_trees):
         raise Exception("Input mesh already small enough to fit in printer")
@@ -117,3 +111,20 @@ def beam_search(starter):
         utils.export_tree_stls(current_trees[0])
 
     return current_trees[0]
+
+
+def process_normal(normal, node, base_tree, config):
+    Configuration.config = config
+    trees_of_this_normal = []  # start a list of trees for splits along this normal
+    for plane in bsp_tree.get_planes(node.part, normal):  # iterate over all valid cutting planes for the node
+        tree, result = bsp_tree.expand_node(base_tree, node.path, plane)  # split the node using the plane
+        if tree:  # only keep the tree if the split is successful
+            trees_of_this_normal.append(tree)
+    if len(trees_of_this_normal) == 0:  # avoid empty list errors during objective function evaluation
+        return trees_of_this_normal
+    # go through each objective function, evaluate the objective function for each tree in this normal's
+    # list, fill in the data in each tree object in the list
+    for evaluate_objective_func in objectives.values():
+        evaluate_objective_func(trees_of_this_normal, node.path)
+    print('.', end='')
+    return trees_of_this_normal

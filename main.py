@@ -1,14 +1,5 @@
 """
 pychop3d - cli model chop utility
-
-# INSTRUCTIONS:
-
-1. Install dependencies from `requirements.txt`.
-2. Run this script from the root of the pychop3d repository in the form.
-```
-   $ python main.py -c config_file or -m mesh_file
-```
-3. Wait for chopping to finish. Chopped models will appear in the current working directory.
 """
 import time
 import datetime
@@ -16,6 +7,7 @@ import os
 import logging
 import sys
 import traceback
+import warnings
 
 from pychop3d.search import beam_search
 from pychop3d import connector
@@ -24,6 +16,7 @@ from pychop3d import utils
 
 
 logger = logging.getLogger(__name__)
+warnings.filterwarnings("ignore")
 
 
 def run(starter):

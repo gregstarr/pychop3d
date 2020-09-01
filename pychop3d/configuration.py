@@ -20,6 +20,7 @@ class Configuration:
             self.load(config_path)
 
     def load(self, path):
+        self.restore_defaults()
         self.directory = os.path.dirname(path)
         with open(path) as f:
             config_file = yaml.safe_load(f)
@@ -75,14 +76,15 @@ class Configuration:
         self.connector_collision_penalty = 10 ** 10
         self.empty_cc_penalty = 10**-5
         self.sa_initial_connector_ratio = .1
-        self.sa_initialization_iterations = 10_000
-        self.sa_iterations = 300_000
+        self.sa_initialization_iterations = 5_000
+        self.sa_iterations = 100_000
         # connector settings
         self.connector_diameter_min = 5
         self.connector_diameter_max = 30
         self.connector_diameter = 5
         self.connector_tolerance = 1
         self.connector_spacing = 10
+        self.connector_wall_distance = 4
         # run settings
         self.mesh = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'test', 'test_meshes', 'Bunny-LowPoly.stl'))
         self._directory = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'debug'))

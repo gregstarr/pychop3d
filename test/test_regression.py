@@ -11,17 +11,16 @@ from pychop3d.configuration import Configuration
 
 @pytest.mark.slow
 @pytest.mark.parametrize('file_number', range(1, 4))
-def test_regression(file_number):
+def test_regression(config, file_number):
     print()
     # files
     tree_file = f"regression_tree_{file_number}.json"
     config_file = f"regression_config_{file_number}.yml"
     tree_file = os.path.join(os.path.dirname(__file__), 'test_data', tree_file)
     config_file = os.path.join(os.path.dirname(__file__), 'test_data', config_file)
-    Configuration.config = Configuration(config_file)
+    config.load(config_file)
 
     with tempfile.TemporaryDirectory() as tmpdir:
-        config = Configuration.config
         config.directory = tmpdir
         # open and prepare mesh
         mesh = utils.open_mesh()
@@ -44,4 +43,3 @@ def test_regression(file_number):
                 print(f"baseline normal {baseline_node.plane[1]}, test normal {node.plane[1]}")
                 assert np.allclose(baseline_node.plane[0], node.plane[0])
                 assert np.allclose(baseline_node.plane[1], node.plane[1])
-    config.restore_defaults()

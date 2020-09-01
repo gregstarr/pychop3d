@@ -112,7 +112,7 @@ class ConnectorPlacer:
 
     def sa_iteration(self, state, objective, temp):
         new_state = state.copy()
-        if np.random.randint(0, 2) or not state.any():
+        if np.random.randint(0, 2) or not state.any() or state.all():
             e = np.random.randint(0, self.n_connectors)
             new_state[e] = 0 if state[e] else 1
         else:
@@ -132,7 +132,10 @@ class ConnectorPlacer:
     def insert_connectors(self, tree, state):
         logger.info(f"inserting {state.sum()} connectors")
         config = Configuration.config
-        new_tree = bsp_tree.BSPTree(tree.nodes[0].part)
+        if tree.nodes[0].plane is None:
+            new_tree = utils.separate_starter(tree.nodes[0].part)
+        else:
+            new_tree = bsp_tree.BSPTree(tree.nodes[0].part)
         for node in tree.nodes:
             if node.plane is None:
                 continue
