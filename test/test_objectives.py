@@ -92,6 +92,7 @@ def test_fragility_function_multiple_trees(config):
 
 def test_edge_fragility(config):
     config.connector_diameter = 3
+    config.connector_wall_distance = 1
     mesh_fn = os.path.join(os.path.dirname(__file__), 'test_meshes', 'fragility_test_2.stl')
     mesh = trimesh.load(mesh_fn)
     mesh = mesh.subdivide()

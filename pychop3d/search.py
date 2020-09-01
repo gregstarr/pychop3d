@@ -5,7 +5,7 @@ import multiprocessing
 
 from pychop3d import utils
 from pychop3d import bsp_tree
-from pychop3d.objective_functions import objectives
+from pychop3d.process_normal import process_normal
 from pychop3d.configuration import Configuration
 
 
@@ -29,8 +29,12 @@ def evaluate_cuts(base_tree, node):
     N = np.append(N, node.auxiliary_normals, axis=0)  # Append partition's bounding-box-aligned vectors as normals
     N = np.unique(np.round(N, 3), axis=0)  # Return sorted unique elements of input array_like
 
-    with multiprocessing.Pool(4) as p:
-        pool_output = p.starmap(process_normal, [(n, node, base_tree, config) for n in N])
+    args = [(n, node, base_tree, config) for n in N]
+    with multiprocessing.Pool(6) as p:
+        pool_output = p.starmap(process_normal, args)
+    # pool_output = []
+    # for arg in args:
+    #     pool_output.append(process_normal(*arg))
     print()
     trees = []
     for i in range(len(N)):
@@ -91,7 +95,7 @@ def beam_search(starter):
 
         n_leaves += 1  # on the next iteration, look at trees with more leaves
         current_trees += new_bsps
-        current_trees = sorted(current_trees, key=lambda x: x.objective) # sort all of the trees including the new ones
+        current_trees = sorted(current_trees, key=lambda x: x.objective)  # sort all of the trees including the new ones
         # if we are considering part separation, some of the trees may have more leaves, put those away for later
         if config.part_separation:
             extra_leaves_trees = [t for t in current_trees if len(t.leaves) > n_leaves]
@@ -111,20 +115,3 @@ def beam_search(starter):
         utils.export_tree_stls(current_trees[0])
 
     return current_trees[0]
-
-
-def process_normal(normal, node, base_tree, config):
-    Configuration.config = config
-    trees_of_this_normal = []  # start a list of trees for splits along this normal
-    for plane in bsp_tree.get_planes(node.part, normal):  # iterate over all valid cutting planes for the node
-        tree, result = bsp_tree.expand_node(base_tree, node.path, plane)  # split the node using the plane
-        if tree:  # only keep the tree if the split is successful
-            trees_of_this_normal.append(tree)
-    if len(trees_of_this_normal) == 0:  # avoid empty list errors during objective function evaluation
-        return trees_of_this_normal
-    # go through each objective function, evaluate the objective function for each tree in this normal's
-    # list, fill in the data in each tree object in the list
-    for evaluate_objective_func in objectives.values():
-        evaluate_objective_func(trees_of_this_normal, node.path)
-    print('.', end='')
-    return trees_of_this_normal

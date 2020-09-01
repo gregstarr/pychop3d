@@ -1,5 +1,5 @@
 beam_width: 3
-connector_diameter: 5
+connector_diameter: 2
 connector_spacing: 10
 connector_tolerance: 1
 mesh: "test/past_failures/maya_marker.stl"

@@ -117,7 +117,7 @@ def test_grid_sample(config):
 
     # test
     cd = config.connector_diameter
-    tol = config.connector_tolerance
+    tol = config.connector_wall_distance
     mesh = trimesh.primitives.Box(extents=[cd + tol + .1, cd + tol + .1, 40])
     cross_section = section.CrossSection(mesh, origin, normal)
     samples = cross_section.connected_components[0].grid_sample_polygon()
