@@ -19,7 +19,7 @@ PY_VERSION=() # This variable will end up holding the version number of the newe
 # PY_VERSION=${PY_VERSION##Python}  # Remove leading 'Python'
 # PY_VERSION=${PY_VERSION%%.*}      # Remove longest pattern matching regex .* from end of expansion
 PYTH=() # Use this to save what python version we are calling so we can say things like $PYTH -m venv venv
-DEPS=(matplotlib numpy scipy pytest networkx PyYAML requests trimesh triangle pyglet MeshPy Shapely Rtree) # List of pychop dependencies to install using pip
+DEPS=(matplotlib numpy scipy pytest networkx PyYAML requests trimesh triangle pyglet MeshPy Shapely Rtree) # List of pychop dependencies to install using pip, except rtree is installed with apt
 
 REQ_PY=3.7.0
 
@@ -61,7 +61,8 @@ function find_python
 }
 
 # Check if python version meets requirements, install necessary python-venv and python-pip 
-function py_version_check {
+function py_version_check 
+{
     # If this script just installed python3.8, python3.8-venv, and python3-pip
     if $new_py_install
         then 
@@ -92,7 +93,9 @@ function py_version_check {
 }
 
 # Function to install pychop dependencies with more useful output
-function confirm_installation {
+function confirm_installation 
+{
+    echo $"Installing Pychop3d dependencies."
     local num_err=0
     for p in ${DEPS[@]}; do
         if [[ $p == Rtree ]]
@@ -113,11 +116,11 @@ function confirm_installation {
 }
 
 # Function to create and activate virtual environment 
-function make_venv {
+function make_venv 
+{
     echo $"Setting up virtual environemnt."
     $PYTH -m venv venv          # Create virtual environment
     source ./venv/bin/activate  # Activate virtual environment
-    echo $"Installing Pychop3d dependencies."
 }
 
 
