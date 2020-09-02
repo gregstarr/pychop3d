@@ -10,5 +10,5 @@ printer_extents:
 - 200.0
 directory: "output"
 name: "electronics_housing"
-plane_spacing: 20
+plane_spacing: 25
 scale_factor: 2

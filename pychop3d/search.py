@@ -10,6 +10,7 @@ from pychop3d.configuration import Configuration
 
 
 logger = logging.getLogger(__name__)
+PARALLEL = False
 
 
 def evaluate_cuts(base_tree, node):
@@ -30,11 +31,13 @@ def evaluate_cuts(base_tree, node):
     N = np.unique(np.round(N, 3), axis=0)  # Return sorted unique elements of input array_like
 
     args = [(n, node, base_tree, config) for n in N]
-    with multiprocessing.Pool(6) as p:
-        pool_output = p.starmap(process_normal, args)
-    # pool_output = []
-    # for arg in args:
-    #     pool_output.append(process_normal(*arg))
+    if PARALLEL:
+        with multiprocessing.Pool(6) as p:
+            pool_output = p.starmap(process_normal, args)
+    else:
+        pool_output = []
+        for arg in args:
+            pool_output.append(process_normal(*arg))
     print()
     trees = []
     for i in range(len(N)):

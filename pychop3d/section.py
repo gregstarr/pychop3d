@@ -2,6 +2,7 @@ import trimesh
 import numpy as np
 import shapely.geometry as sg
 from shapely import affinity
+from trimesh import creation
 import matplotlib.pyplot as plt
 
 from pychop3d.configuration import Configuration
@@ -36,7 +37,7 @@ class ConnectedComponent:
         if self.area < (self.connector_diameter / 2) ** 2:
             return
 
-        verts, faces = trimesh.creation.triangulate_polygon(polygon, triangle_args='p', allow_boundary_steiner=False)
+        verts, faces = creation.triangulate_polygon(polygon, triangle_args='p')
         verts = np.column_stack((verts, np.zeros(len(verts))))
         verts = trimesh.transform_points(verts, xform)
         faces = np.fliplr(faces)
@@ -128,7 +129,6 @@ class CrossSection:
         self.origin = origin
         self.normal = normal
         self.connected_components = []
-
         path3d = mesh.section(plane_origin=origin, plane_normal=normal)
         if path3d is None:
             # 'Missed' the part basically
