@@ -7,11 +7,17 @@
 # This will properly activate the python virtual environment
 # ============================================================
 # This script worked for the following setup:
-# As of 2020-08-30
+# As of 2020-09-02
 # OS: Linux Ubunutu 18.04.5 LTS
 # Python: 3.8.0 already installed 
-# Bash: GNU bash version 4.4.20(1)-release (x86_64-pc-linux-gnu)
+# Bash: GNU bash, version 4.4.20(1)-release (x86_64-pc-linux-gnu)
 # Apt: 1.6.12ubuntu0.1 (amd64)
+#
+# OS: Microsoft Windows 10 Pro, 10.0.18363 Build 18363
+#     Windows Subsystem for Linux 4.4.0-18362-Microsoft, Ubuntu 20.04.1 LTS
+# Python: 3.8.2 already installed
+# Bash: GNU bash, version 5.0.17(1)-release (x86_64-pc-linux-gnu)
+# Apt: 2.0.2ubuntu0.1 (amd64)
 
 
 PY_VERSION=() # This variable will end up holding the version number of the newest python installation
