@@ -23,6 +23,22 @@ DEPS=(matplotlib numpy scipy pytest networkx PyYAML requests trimesh triangle py
 
 REQ_PY=3.7.0
 
+# Blender or OpenSCAD required for boolean backend
+# Check if they are installed using 'which'
+# If neither is installed, install Blender
+function check_blender 
+{
+    which blender &> /dev/null
+    local blend_inst=$?
+    which openscad &> /dev/null
+    local openscad_inst=$?
+    
+    if [[ $blend_inst -eq 1 && $openscad_inst -eq 1 ]]
+        then
+            sudo apt-get install blender
+    fi
+}
+
 # Determines whether python or python3 are installed and which one is newer
 function find_python 
 {
@@ -88,8 +104,6 @@ function py_version_check
         PYTH=python3.8
         echo $'Continuing setup...'
     fi
-
-    sudo apt-get install blender # Blender (or openscad) needs to be installed so that trimesh can use it for boolean backend
 }
 
 # Function to install pychop dependencies with more useful output
@@ -123,6 +137,7 @@ function make_venv
 }
 
 
+check_blender        # Check for Blender installation
 find_python          # Find python installation
 py_version_check     # Check if python version meets requirements
 make_venv            # Create python virtual environment
