@@ -35,8 +35,16 @@ function check_blender
     
     if [[ $blend_inst -eq 1 && $openscad_inst -eq 1 ]]
         then
+            echo $'No Blender or OpenSCAD detected.\nInstalling Blender now.'
             sudo apt-get install blender
+    elif [[ $blend_inst -eq 0 ]]
+        then 
+            echo $"Blender installation detected."
+    else
+        echo $"OpenSCAD installation detected."
     fi
+
+    echo $"Continuing pychop3d setup."
 }
 
 # Determines whether python or python3 are installed and which one is newer
@@ -114,11 +122,13 @@ function confirm_installation
     for p in ${DEPS[@]}; do
         if [[ $p == Rtree ]]
             then 
-                sudo apt-get -qq install python3-rtree # Rtree needs to be installed via 'apt' instead of pip
-        else
-            $PYTH -m pip install $p &> /dev/null     # Run pip by calling python -m pip, direct stdout and stderr to /dev/null
-        fi
-        if [ $? -eq 0 ]
+                sudo apt-get -qq install python3-rtree # Rtree needs to be installed via 'apt' first
+        fi  
+        
+        $PYTH -m pip install $p &> /dev/null     # Run pip by calling python -m pip, direct stdout and stderr to /dev/null
+        
+
+        if [[ $? -eq 0 ]]
             then 
                 echo $"$p installed successfully."
         else
