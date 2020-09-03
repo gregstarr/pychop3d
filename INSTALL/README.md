@@ -11,4 +11,5 @@ activate a python virtual environment.
 ##### or
 `. INSTALL/setup_linux`
 
-
+##### Note:
+As long as this script is used for Good and not for Evil, I authorize anyone to use/modify it as they see fit. 
