@@ -1,0 +1,165 @@
+#!/bin/bash
+
+# ============================================================
+# Bash script to install required packages for pychop3d
+# IMPORTANT:
+# Run this script by running 'source <script name>' or '. <script name>'
+# This will properly activate the python virtual environment
+# ============================================================
+# This script worked for the following setup:
+# As of 2020-09-03
+# OS: Linux Ubuntu 18.04.5 LTS
+# Python: 3.8.0 already installed 
+# Bash: GNU bash, version 4.4.20(1)-release (x86_64-pc-linux-gnu)
+# Apt: 1.6.12ubuntu0.1 (amd64)
+#
+# OS: Microsoft Windows 10 Pro, 10.0.18363 Build 18363
+#     Windows Subsystem for Linux 4.4.0-18362-Microsoft, Ubuntu 20.04.1 LTS
+# Python: 3.8.2 already installed
+# Bash: GNU bash, version 5.0.17(1)-release (x86_64-pc-linux-gnu)
+# Apt: 2.0.2ubuntu0.1 (amd64)
+#
+# OS: Linux Ubuntu 20.04.1 LTS
+# Python: 3.8.2
+# Bash: GNU bash, version 5.0.17(1)-release (x86_64-pc-linux-gnu)
+# Apt: 2.0.2ubuntu0.1 (amd64)
+
+PY_VERSION=() # This variable will end up holding the version number of the newest python installation
+# PY_VERSION=$(python --version)    # Returns python version
+# PY_VERSION=${PY_VERSION##Python}  # Remove leading 'Python'
+# PY_VERSION=${PY_VERSION%%.*}      # Remove longest pattern matching regex .* from end of expansion
+PYTH=() # Use this to save what python version we are calling so we can say things like $PYTH -m venv venv
+DEPS=(matplotlib numpy scipy pytest networkx PyYAML requests trimesh triangle pyglet MeshPy Shapely Rtree) # List of pychop dependencies to install using pip, except rtree is installed with apt
+
+REQ_PY=3.7.0
+
+# Blender or OpenSCAD required for boolean backend
+# Check if they are installed using 'which'
+# If neither is installed, install Blender
+function check_blender 
+{
+    which blender &> /dev/null
+    local blend_inst=$?
+    which openscad &> /dev/null
+    local openscad_inst=$?
+    
+    if [[ $blend_inst -eq 1 && $openscad_inst -eq 1 ]]
+        then
+            echo $'No Blender or OpenSCAD detected.\nInstalling Blender now.'
+            sudo apt-get install blender
+    elif [[ $blend_inst -eq 0 ]]
+        then 
+            echo $"Blender installation detected."
+    else
+        echo $"OpenSCAD installation detected."
+    fi
+
+    echo $"Continuing pychop3d setup."
+}
+
+# Determines whether python or python3 are installed and which one is newer
+function find_python 
+{
+    local py_version=$(python --version 2> /dev/null)
+    local py_flag=$? # 0 if 'python --version' command worked
+    local py3_version=$(python3 --version 2> /dev/null)
+    local py3_flag=$? # 0 if 'python3 --version' command worked
+    new_py_install=false
+
+    if [[ $py_flag -eq 0 && $py3_flag -eq 0 ]]
+        then
+            echo $"Python and Python3 detected. Determining which is newer." 
+            if [[ ${py_version##Python } > ${py3_version##Python } ]]
+                then PYTH=python
+                     PY_VERSION=${py_version##Python }
+            else
+                PYTH=python3
+                PY_VERSION=${py3_version##Python }
+            fi
+    elif [[ $py_flag -eq 0 ]]
+        then PYTH=python
+             PY_VERSION=${py_version##Python }
+    elif [[ $py3_flag -eq 0 ]]
+        then PYTH=python3
+             PY_VERSION=${py3_version##Python }
+    else
+        echo $"No Python3 installed. Installing python3.8, python3.8-venv, and python3-pip"
+        new_py_install=true
+        sudo apt-get update
+        sudo apt-get install python3.8 python3.8-venv python3-pip
+        PYTH=python3.8
+        PY_VERSION=3.8.0
+    fi
+
+    echo $"Python $PY_VERSION is your newest python installation."
+}
+
+# Check if python version meets requirements, install necessary python-venv and python-pip 
+function py_version_check 
+{
+    # If this script just installed python3.8, python3.8-venv, and python3-pip
+    if $new_py_install
+        then 
+            echo $"Your python $PY_VERSION installation meets the requirements."
+            echo $"Continuing setup..."
+    # Else if the python version is 3.7 then use apt-get to install python3.7-venv and python3-pip
+    elif [[ $PY_VERSION == $REQ_PY || $PY_VERSION > $REQ_PY && $PY_VERSION < 3.8.0 ]]
+        then 
+            echo $"Your python $PY_VERSION installation meets the requirements."
+            echo $'\nContinuing setup...'
+            sudo apt-get install python3.7-venv python3-pip
+    # Else if the python version is 3.8 then use apt-get to install python3.8-venv and python3-pip 
+    elif [[ $PY_VERSION == 3.8.0 || $PY_VERSION > 3.8.0 ]]
+        then
+            echo $'You have Python 3.8, continuing setup'
+            sudo apt-get install python3.8-venv python3-pip
+    # Else none of the python versions are new enough, install python 3.8
+    else
+        echo $'Your python installation does not meet the requirements.\nInstalling python3.8, python3.8-venv, and python3-pip'
+        new_py_install=true
+        sudo apt-get update
+        sudo apt-get install python3.8 python3.8-venv python3-pip
+        PYTH=python3.8
+        echo $'Continuing setup...'
+    fi
+}
+
+# Function to install pychop dependencies with more useful output
+function confirm_installation 
+{
+    echo $"Installing Pychop3d dependencies."
+    local num_err=0
+    for p in ${DEPS[@]}; do
+        if [[ $p == Rtree ]]
+            then 
+                sudo apt-get -qq install python3-rtree # Rtree needs to be installed via 'apt' first
+        fi  
+        
+        $PYTH -m pip install $p &> /dev/null     # Run pip by calling python -m pip, direct stdout and stderr to /dev/null
+        
+
+        if [[ $? -eq 0 ]]
+            then 
+                echo $"$p installed successfully."
+        else
+            echo $"ERROR: $p did not install correctly."; num_err=$((num_err + 1))
+        fi
+    done
+    echo $"Installation complete with $num_err errors."
+}
+
+# Function to create and activate virtual environment 
+function make_venv 
+{
+    echo $"Setting up virtual environemnt."
+    $PYTH -m venv venv          # Create virtual environment
+    source ./venv/bin/activate  # Activate virtual environment
+}
+
+
+check_blender        # Check for Blender installation
+find_python          # Find python installation
+py_version_check     # Check if python version meets requirements
+make_venv            # Create python virtual environment
+confirm_installation # Install pychop3d dependencies using pip
+
