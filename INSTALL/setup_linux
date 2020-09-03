@@ -106,12 +106,13 @@ function py_version_check
     elif [[ $PY_VERSION == $REQ_PY || $PY_VERSION > $REQ_PY && $PY_VERSION < 3.8.0 ]]
         then 
             echo $"Your python $PY_VERSION installation meets the requirements."
-            echo $'\nContinuing setup...'
+            echo $"Continuing setup..."
             sudo apt-get install python3.7-venv python3-pip
     # Else if the python version is 3.8 then use apt-get to install python3.8-venv and python3-pip 
     elif [[ $PY_VERSION == 3.8.0 || $PY_VERSION > 3.8.0 ]]
         then
-            echo $'You have Python 3.8, continuing setup'
+            echo $"Your python $PY_VERSION installation meets the requirements."
+            echo $"Continuing setup..."
             sudo apt-get install python3.8-venv python3-pip
     # Else none of the python versions are new enough, install python 3.8
     else
@@ -129,6 +130,7 @@ function confirm_installation
 {
     echo $"Installing Pychop3d dependencies."
     local num_err=0
+    local err_packages=()
     for p in ${DEPS[@]}; do
         if [[ $p == Rtree ]]
             then 
@@ -142,10 +144,14 @@ function confirm_installation
             then 
                 echo $"$p installed successfully."
         else
-            echo $"ERROR: $p did not install correctly."; num_err=$((num_err + 1))
+            echo $"ERROR: $p did not install successfully."; num_err=$((num_err + 1)); err_packages+=($p)
         fi
     done
     echo $"Installation complete with $num_err errors."
+
+    # if [[ $num_err -gt 0 ]]
+    #     then
+    #         echo
 }
 
 # Function to create and activate virtual environment 
