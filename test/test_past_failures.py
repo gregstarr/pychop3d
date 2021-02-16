@@ -9,7 +9,7 @@ from main import run
 
 
 config_files = glob.glob(os.path.abspath(os.path.join(os.path.dirname(__file__), 'past_failures', '*.yml')))
-xfails = ['bracket']
+xfails = ['bracket', 'electronics_housing']
 
 
 @pytest.mark.slow
