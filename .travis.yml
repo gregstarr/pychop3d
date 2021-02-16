@@ -1,8 +1,21 @@
 language: python
 
-services:
-  - docker
-
+addons:
+  apt:
+    update: true
+    packages:
+    - wget 
+    - libspatialindex-dev 
+    - libglu1
+    - libxrender1
+    - libxtst6
+    - libxi6
+    
 before_install:
-- docker build -t gregstarr/pychop3d .
-- docker run gregstarr/pychop3d /bin/bash -c "cd home; git clone https://github.com/gregstarr/pychop3d.git; cd pychop3d; export PYTHONPATH=/home/pychop3d; py.test"
+  - wget https://download.blender.org/release/Blender2.79/blender-2.79b-linux-glibc219-x86_64.tar.bz2
+  - tar xjf blender-2.79b-linux-glibc219-x86_64.tar.bz2
+  - mv blender-2.79b-linux-glibc219-x86_64 /usr/local
+  - export PATH=/usr/local/blender-2.79b-linux-glibc219-x86_64:$PATH
+  
+script:
+  - py.test
