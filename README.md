@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.com/gregstarr/pychop3d.svg?branch=master)](https://travis-ci.com/gregstarr/pychop3d)
+[![Coverage Status](https://coveralls.io/repos/github/gregstarr/pychop3d/badge.svg?branch=develop)](https://coveralls.io/github/gregstarr/pychop3d?branch=develop)
 # Chopper: Partitioning Models into 3D-Printable Parts
 (not my paper)
 
