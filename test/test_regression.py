@@ -9,6 +9,7 @@ from pychop3d import utils
 from pychop3d.configuration import Configuration
 
 
+@pytest.mark.skip("Not working in CI")
 @pytest.mark.slow
 @pytest.mark.parametrize('file_number', range(1, 4))
 def test_regression(config, file_number):
