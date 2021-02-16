@@ -30,7 +30,7 @@ install:
   - pip install coveralls
   
 script:
-  - travis_wait 60 coverage run --source=pychop3d -m pytest test/
+  - travis_wait 60 coverage run --source=pychop3d -m pytest -m "not slow" test/
   
 notifications:
   email:
