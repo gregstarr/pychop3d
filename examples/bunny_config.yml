@@ -1,0 +1,14 @@
+beam_width: 2  # increasing this will cause the process to take longer but will (in theory) make the output better
+connector_diameter: 10  # side length of the connector pegs (cubes)
+connector_spacing: 10  # minimum distance between adjacent connectors
+connector_tolerance: 1  # extra side length for the 'slots'
+mesh: "examples/Bunny-LowPoly.stl"  # file path to stl, can also override this on command line in main.py
+part_separation: true  # experimental feature, sometimes helps, sometimes hurts
+printer_extents:  # volume of your cartesian printer (currently do not support delta-style printers)
+- 200.0
+- 200.0
+- 200.0
+directory: "output"  # directory where the output stls, config file, and save progress will be stored
+                     # a new directory will be created within this directory with the 'name' and the datetime string
+name: "bunny"  # name of job, this will influence what the name of the output directory is
+scale_factor: 2  # scale the model up by this factor before chopping

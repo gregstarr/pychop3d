@@ -17,12 +17,15 @@ class Configuration:
 
         # open config YAML
         if config_path is not None:
-            with open(config_path) as f:
-                config_file = yaml.safe_load(f)
+            self.load(config_path)
 
-            for key, value in config_file.items():
-                setattr(self, key, value)
-
+    def load(self, path):
+        self.restore_defaults()
+        self.directory = os.path.dirname(path)
+        with open(path) as f:
+            config_file = yaml.safe_load(f)
+        for key, value in config_file.items():
+            setattr(self, key, value)
         self.printer_extents = np.array(self.printer_extents, dtype=float)
 
     @property
@@ -44,6 +47,7 @@ class Configuration:
         self.normals = self.uniform_normals()
 
     def restore_defaults(self):
+        self.name = "chopped"
         self.do_not_save = ['normals']
         # printer parameters
         self.printer_extents = np.array([200, 200, 200], dtype=float)
@@ -52,6 +56,7 @@ class Configuration:
         self._n_theta = 5
         self._n_phi = 5
         self.normals = self.uniform_normals()
+        self.add_middle_plane = True
         # plane uniqueness parameters
         self.different_origin_th = float(.1 * np.sqrt(np.sum(self.printer_extents ** 2)))
         self.different_angle_th = np.pi / 10
@@ -66,24 +71,35 @@ class Configuration:
         }
         self.fragility_objective_th = .95
         self.connector_objective_th = 10
+        self.obb_utilization = False
         # connector placement parameters
         self.connector_collision_penalty = 10 ** 10
         self.empty_cc_penalty = 10**-5
         self.sa_initial_connector_ratio = .1
-        self.sa_initialization_iterations = 15_000
-        self.sa_iterations = 300_000
+        self.sa_initialization_iterations = 5_000
+        self.sa_iterations = 100_000
         # connector settings
-        self.adaptive_connector_size = True
-        self.connector_diameter_min = 5
-        self.connector_diameter_max = 30
-        self.connector_diameter = 10
+        self.connector_diameter = 5
         self.connector_tolerance = 1
+        self.connector_spacing = 10
+        self._connector_wall_distance = None
         # run settings
-        self.mesh = "C:\\Users\\Greg\\Downloads\\Low_Poly_Stanford_Bunny\\files\\Bunny-LowPoly.stl"
-        self._directory = "C:\\Users\\Greg\\code\\pychop3d\\debug"
-        self.save_path = os.path.join(self.directory, 'config.yml')
-        self.scale = True
+        self.mesh = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'test', 'test_meshes', 'Bunny-LowPoly.stl'))
+        self._directory = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'debug'))
+        self.save_path = os.path.abspath(os.path.join(self.directory, 'config.yml'))
+        self.scale_factor = -1
         self.beam_width = 5
+        self.part_separation = False
+
+    @property
+    def connector_wall_distance(self):
+        if self._connector_wall_distance is not None:
+            return self._connector_wall_distance
+        return .5 * self.connector_diameter
+
+    @connector_wall_distance.setter
+    def connector_wall_distance(self, val):
+        self._connector_wall_distance = val
 
     @property
     def directory(self):
@@ -93,7 +109,7 @@ class Configuration:
     def directory(self, value):
         self._directory = value
         save_name = os.path.basename(self.save_path)
-        self.save_path = os.path.join(self.directory, save_name)
+        self.save_path = os.path.abspath(os.path.join(self.directory, save_name))
 
     def uniform_normals(self):
         """http://corysimon.github.io/articles/uniformdistn-on-sphere/
@@ -114,7 +130,7 @@ class Configuration:
         therefore the save data will convert any numpy array to list first
         """
         if filename is not None:
-            self.save_path = os.path.join(self.directory, filename)
+            self.save_path = os.path.abspath(os.path.join(self.directory, filename))
 
         save_data = {}
         for key, value in self.__dict__.items():

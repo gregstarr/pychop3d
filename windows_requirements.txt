@@ -1,0 +1,13 @@
+matplotlib==3.3.1
+numpy==1.19.1
+scipy==1.5.2
+pytest==6.0.1
+networkx==2.5
+pyyaml==5.3.1
+requests==2.24.0
+trimesh==3.8.3
+triangle==20200424
+pyglet==1.5.7
+https://github.com/gregstarr/pychop3d/raw/develop/whl/MeshPy-2018.2.1-cp37-cp37m-win_amd64.whl
+https://github.com/gregstarr/pychop3d/raw/develop/whl/Rtree-0.9.4-cp37-cp37m-win_amd64.whl
+https://github.com/gregstarr/pychop3d/raw/develop/whl/Shapely-1.7.1-cp37-cp37m-win_amd64.whl
