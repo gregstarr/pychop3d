@@ -3,4 +3,4 @@ services:
 
 script:
 - docker build -t gregstarr/pychop3d .
-- docker run gregstarr/pychop3d /bin/bash -c "git clone https://github.com/gregstarr/pychop3d.git; cd pychop3d; py.test"
+- docker run gregstarr/pychop3d /bin/bash -c "cd home; git clone https://github.com/gregstarr/pychop3d.git; cd pychop3d; export PYTHONPATH=/home/pychop3d; py.test"
