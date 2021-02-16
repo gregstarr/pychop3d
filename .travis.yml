@@ -30,11 +30,12 @@ install:
   - pip install coveralls
   
 script:
-  - coverage run --source=pychop3d -m pytest -m "not slow" test/
+  - coverage run --source=pychop3d -m pytest -v test/
   
 notifications:
   email:
     on_success: never
     on_failure: never
+
 after_success:
   - coveralls
