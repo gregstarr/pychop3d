@@ -1,5 +1,11 @@
 language: python
 
+python:
+  - "3.6"
+  - "3.7"
+  - "3.8"
+  - "3.9"
+
 addons:
   apt:
     update: true
@@ -14,8 +20,11 @@ addons:
 before_install:
   - wget https://download.blender.org/release/Blender2.79/blender-2.79b-linux-glibc219-x86_64.tar.bz2
   - tar xjf blender-2.79b-linux-glibc219-x86_64.tar.bz2
-  - mv blender-2.79b-linux-glibc219-x86_64 /usr/local
-  - export PATH=/usr/local/blender-2.79b-linux-glibc219-x86_64:$PATH
+  - export PATH=/home/blender-2.79b-linux-glibc219-x86_64:$PATH
+  
+install:
+  - python -m pip install --upgrade pip
+  - pip install -r requirements.txt
   
 script:
   - py.test
