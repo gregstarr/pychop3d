@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.com/gregstarr/pychop3d.svg?branch=master)](https://travis-ci.com/gregstarr/pychop3d)
 # Chopper: Partitioning Models into 3D-Printable Parts
 (not my paper)
 
