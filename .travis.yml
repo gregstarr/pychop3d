@@ -18,10 +18,12 @@ addons:
     - libxi6
     
 before_install:
-  - pwd
+  - cd ..
   - wget https://download.blender.org/release/Blender2.79/blender-2.79b-linux-glibc219-x86_64.tar.bz2
   - tar xjf blender-2.79b-linux-glibc219-x86_64.tar.bz2
-  - export PATH=/home/blender-2.79b-linux-glibc219-x86_64:$PATH
+  - export PATH=/home/travis/build/gregstarr/blender-2.79b-linux-glibc219-x86_64:$PATH
+  - export PYTHONPATH=/home/travis/build/gregstarr/pychop3d
+  - cd pychop3d
   
 install:
   - python -m pip install --upgrade pip
