@@ -1,21 +1,23 @@
-# See here for image contents: https://github.com/microsoft/vscode-dev-containers/tree/v0.134.1/containers/python-3/.devcontainer/base.Dockerfile
-ARG VARIANT="3.7"
-FROM mcr.microsoft.com/vscode/devcontainers/python:0-${VARIANT}
+FROM python:3.7
 
-# [Optional] If your pip requirements rarely change, uncomment this section to add them to the image.
+WORKDIR /usr/src/app
 
+RUN apt-get -y update
+RUN apt-get -y install wget 
+RUN apt-get -y install libspatialindex-dev 
+RUN apt-get -y install libglu1
+RUN apt-get -y install libxrender1
+RUN apt-get -y install libxtst6
+RUN apt-get -y install libxi6
 
-# [Optional] Uncomment this section to install additional OS packages.
-RUN apt-get update \
-    && export DEBIAN_FRONTEND=noninteractive \
-    && apt-get -y install --no-install-recommends wget libspatialindex-dev libglu1 libxrender1 libxtst6 libxi6 \
-    && wget https://download.blender.org/release/Blender2.79/blender-2.79b-linux-glibc219-x86_64.tar.bz2 \
-    && tar xjf blender-2.79b-linux-glibc219-x86_64.tar.bz2 \
-    && rm -rf blender-2.79b-linux-glibc219-x86_64.tar.bz2 \
-    && mv blender-2.79b-linux-glibc219-x86_64 /usr/local \
-    && echo export PATH=/usr/local/blender-2.79b-linux-glibc219-x86_64:$PATH >> ~/.bashrc \
-    && bash -c "source ~/.bashrc"
+COPY requirements.txt .
+COPY blender-2.79b-linux-glibc219-x86_64.tar.bz2 .
 
-COPY requirements.txt /tmp/pip-tmp/
-RUN pip3 --disable-pip-version-check --no-cache-dir install -r /tmp/pip-tmp/requirements.txt \
-   && rm -rf /tmp/pip-tmp
+RUN tar xjf blender-2.79b-linux-glibc219-x86_64.tar.bz2
+RUN export PATH=/usr/src/app/blender-2.79b-linux-glibc219-x86_64:$PATH
+RUN export PYTHONPATH=/usr/src/app/pychop3d
+
+RUN python -m pip install --upgrade --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org pip
+RUN pip install --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org --no-cache-dir pybind11
+RUN pip install --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org --no-cache-dir meshpy
+RUN pip install --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org --no-cache-dir -r requirements.txt
