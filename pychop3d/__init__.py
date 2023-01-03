@@ -16,7 +16,6 @@ from pychop3d import utils
 
 
 logger = logging.getLogger(__name__)
-warnings.filterwarnings("ignore")
 
 
 def run(starter):
@@ -67,7 +66,8 @@ def run(starter):
     logger.info("Finished")
 
 
-if __name__ == "__main__":
+def main():
+    warnings.filterwarnings("ignore")
     # Read mesh filepath from argument
     import argparse
     parser = argparse.ArgumentParser(description='Pychop3D command line runner')

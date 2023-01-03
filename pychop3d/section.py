@@ -3,7 +3,6 @@ import numpy as np
 import shapely.geometry as sg
 from shapely import affinity
 from trimesh import creation
-import matplotlib.pyplot as plt
 
 from pychop3d.configuration import Configuration
 from pychop3d import utils

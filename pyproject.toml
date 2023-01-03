@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+
+[project]
+name = "pychop3d"
+version = "0.0.0"
+dependencies = [
+    "trimesh[all] >= 3.17.1",
+    "pyyaml >= 6.0",
+]
+
+[project.scripts]
+pychop = "pychop3d:main"
+
+
+[tool.pytest.ini_options]
+addopts = "-v"
+testpaths = ["tests"]
+env = [
+    "PATH={HOME}/blender-3.4.1-linux-x64:{PATH}"
+]

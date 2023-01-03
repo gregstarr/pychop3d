@@ -1,0 +1,13 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Flask",
+            "type": "python",
+            "request": "launch",
+            "jinja": true,
+            "justMyCode": false,
+            "purpose": ["debug-test"]
+        }
+    ]
+}

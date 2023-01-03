@@ -1,4 +1,0 @@
-def PREPROCESSOR_FUNC(mesh):
-    modifier = mesh.modifiers.new('decimate', 'DECIMATE')
-    modifier.ratio=0.1
-    modifier.use_collapse_triangulate=True

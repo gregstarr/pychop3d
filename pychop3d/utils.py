@@ -1,46 +1,17 @@
+import json
+import logging
+import os
+
 import numpy as np
 import trimesh
-import json
-import os
-import logging
-
-from pychop3d import bsp_tree
-from pychop3d import bsp_node
-from pychop3d.objective_functions import evaluate_utilization_objective, evaluate_nparts_objective
-from pychop3d.configuration import Configuration
-from trimesh.interfaces.blender import _blender_executable, exists
-from trimesh.interfaces.generic import MeshScript
 from trimesh import repair
-from trimesh import util
 
+from pychop3d import bsp_node, bsp_tree
+from pychop3d.configuration import Configuration
+from pychop3d.objective_functions import (evaluate_nparts_objective,
+                                          evaluate_utilization_objective)
 
 logger = logging.getLogger(__name__)
-
-
-def preprocess(mesh, debug=True):
-    """
-    Run a preprocess operation with mesh using Blender.
-    """
-    config = Configuration.config
-
-    logger.info("starting preprocessing")
-    if not exists:
-        raise ValueError('No blender available!')
-    curr_dir = os.path.dirname(__file__)
-    preprocessor_func_fn = find_file(config.preprocessor)
-    with open(os.path.join(curr_dir + "/blender_script_templates/preprocessor.py.template"), 'rb') as preprocessor:
-        with open(preprocessor_func_fn, 'rb') as preprocessor_func_file:
-            preprocessor_func = preprocessor_func_file.read().decode('utf-8')
-            script = preprocessor.read().decode(
-                'utf-8').replace("$PREPROCESSOR_FUNC", preprocessor_func)
-
-            with MeshScript(meshes=[mesh], script=script, debug=debug) as blend:
-                result = blend.run(_blender_executable + ' --background --python $SCRIPT')
-                logger.info("finished preprocessing")
-
-            for m in util.make_sequence(result):
-                m.face_normals = None
-            return result
 
 
 def separate_starter(mesh):
