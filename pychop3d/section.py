@@ -6,6 +6,7 @@ from trimesh import creation
 
 from pychop3d.configuration import Configuration
 from pychop3d import utils
+from pychop3d.logger import logger
 
 
 class ConnectedComponent:
@@ -22,12 +23,8 @@ class ConnectedComponent:
         self.negative = None
         self.connector_diameter = None
         self.objective = None
-        self.positive_sites = None
-        self.pos_index = None
-        self.negative_sites = None
-        self.neg_index = None
-        self.all_sites = None
-        self.all_index = None
+        self.sites = None
+        self.index = None
 
         self.connector_diameter = config.connector_diameter
         self.connector_spacing = config.connector_spacing
@@ -43,7 +40,7 @@ class ConnectedComponent:
         self.mesh = trimesh.Trimesh(verts, faces)
         self.valid = True
 
-    def evaluate_interface(self, positive, negative):
+    def evaluate_interface(self, positive: trimesh.Trimesh, negative: trimesh.Trimesh):
         config = Configuration.config
 
         plane_samples = self.grid_sample_polygon()
@@ -51,23 +48,21 @@ class ConnectedComponent:
         if len(plane_samples) == 0:
             return False
 
+        # TODO: these checks should depend on the connector type
         mesh_samples = trimesh.transform_points(np.column_stack((plane_samples, np.zeros(plane_samples.shape[0]))),
                                                 self.xform)
-        pos_dists = positive.nearest.signed_distance(mesh_samples + (1 + self.connector_diameter) * self.normal)
-        neg_dists = negative.nearest.signed_distance(mesh_samples + (1 + self.connector_diameter) * -1 * self.normal)
-        # overestimate sqrt(2) to make the radius larger than half the diagonal of a square connector
-        pos_valid_mask = pos_dists > 1.5 * self.connector_diameter / 2
-        neg_valid_mask = neg_dists > 1.5 * self.connector_diameter / 2
-        ch_area_mask = np.logical_or(pos_valid_mask, neg_valid_mask)
+        pos_dists = positive.nearest.signed_distance(mesh_samples + (1 + self.connector_diameter / 2) * self.normal)
+        neg_dists = negative.nearest.signed_distance(mesh_samples + (1 + self.connector_diameter / 2) * -1 * self.normal)
+        pos_valid_mask = pos_dists > (self.connector_diameter / 2)
+        neg_valid_mask = neg_dists > (self.connector_diameter / 2)
+        valid_mask = np.logical_and(pos_valid_mask, neg_valid_mask)
 
-        if ch_area_mask.sum() == 0:
+        if valid_mask.sum() == 0:
             return False
 
-        convex_hull_area = sg.MultiPoint(plane_samples[ch_area_mask]).buffer(self.connector_diameter / 2).convex_hull.area
+        convex_hull_area = sg.MultiPoint(plane_samples[valid_mask]).buffer(self.connector_diameter / 2).convex_hull.area
         self.objective = max(self.area / convex_hull_area - config.connector_objective_th, 0)
-        self.positive_sites = mesh_samples[pos_valid_mask]
-        self.negative_sites = mesh_samples[neg_valid_mask]
-        self.all_sites = np.concatenate((self.positive_sites, self.negative_sites), axis=0)
+        self.sites = mesh_samples[valid_mask]
         return True
 
     def grid_sample_polygon(self):
@@ -83,15 +78,11 @@ class ConnectedComponent:
         angle = -1 * np.arctan2(mrr_edges[0, 1], mrr_edges[0, 0])
         rotated_polygon = affinity.rotate(self.polygon, angle, use_radians=True, origin=(0, 0))
         min_x, min_y, max_x, max_y = rotated_polygon.bounds
-        xp = np.arange(min_x + (self.connector_wall_distance + self.connector_diameter) / 2,
-                       max_x - (self.connector_wall_distance + self.connector_diameter) / 2,
-                       self.connector_spacing)
+        xp = np.arange(min_x, max_x, self.connector_spacing)
         if len(xp) == 0:
             return np.array([])
         xp += (min_x + max_x) / 2 - (xp.min() + xp.max()) / 2
-        yp = np.arange(min_y + (self.connector_wall_distance + self.connector_diameter) / 2,
-                       max_y - (self.connector_wall_distance + self.connector_diameter) / 2,
-                       self.connector_spacing)
+        yp = np.arange(min_y, max_y, self.connector_spacing)
         if len(yp) == 0:
             return np.array([])
         yp += (min_y + max_y) / 2 - (yp.min() + yp.max()) / 2
@@ -100,24 +91,22 @@ class ConnectedComponent:
         rotation = np.array([[np.cos(angle), -np.sin(angle)], [np.sin(angle), np.cos(angle)]])
         xy = xy @ rotation
         mask = np.zeros(xy.shape[0], dtype=bool)
+        eroded_polygon = self.polygon.buffer(self.connector_diameter / 2)
         for i in range(xy.shape[0]):
             point = sg.Point(xy[i])
-            if point.within(self.polygon):
+            if point.within(eroded_polygon):
                 mask[i] = True
         return xy[mask]
 
     def get_sites(self, state):
-        return self.all_sites[np.isin(self.all_index, np.arange(state.shape[0])[state])]
+        return self.sites[np.isin(self.index, np.arange(state.shape[0])[state])]
 
     def register_sites(self, n_connectors):
-        self.pos_index = np.arange(n_connectors, n_connectors + self.positive_sites.shape[0])
-        self.neg_index = np.arange(n_connectors + self.positive_sites.shape[0], n_connectors + self.all_sites.shape[0])
-        self.all_index = np.arange(n_connectors, n_connectors + self.all_sites.shape[0])
+        self.index = np.arange(n_connectors, n_connectors + self.sites.shape[0])
 
     def get_indices(self, state):
-        pos_ind = np.isin(np.arange(state.shape[0]), self.pos_index) * state
-        neg_ind = np.isin(np.arange(state.shape[0]), self.neg_index) * state
-        return np.argwhere(pos_ind)[:, 0], np.argwhere(neg_ind)[:, 0]
+        ind = np.isin(np.arange(state.shape[0]), self.index) * state
+        return np.argwhere(ind)[:, 0]
 
 
 class CrossSection:

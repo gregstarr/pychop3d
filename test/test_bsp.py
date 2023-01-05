@@ -31,7 +31,7 @@ def test_different_from(config):
     check if the plane is far enough away given the config, then assert that `BSPNode.different_from` returns the
     correct value. This skips any splits that fail.
     """
-    print()
+
     mesh = trimesh.primitives.Sphere(radius=50)
 
     tree = bsp_tree.BSPTree(mesh)

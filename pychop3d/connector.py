@@ -1,19 +1,25 @@
 import numpy as np
-import logging
 import trimesh
-import traceback
 
 from pychop3d.configuration import Configuration
 from pychop3d import bsp_tree
 from pychop3d import utils
+from pychop3d.logger import logger
 
 
-logger = logging.getLogger(__name__)
+def match_connectors(original_tree: bsp_tree.BSPTree, tree: bsp_tree.BSPTree):
+    for i, node in enumerate(tree.nodes):
+        if node.cross_section is None:
+            continue
+        # create global vector of connectors
+        for j, cc in enumerate(node.cross_section.connected_components):
+            original_tree.nodes[i].cross_section.connected_components[j].index = cc.index
+            original_tree.nodes[i].cross_section.connected_components[j].sites = cc.sites
 
 
 class ConnectorPlacer:
 
-    def __init__(self, tree):
+    def __init__(self, tree: bsp_tree.BSPTree):
         config = Configuration.config
 
         self.connected_components = []
@@ -27,23 +33,16 @@ class ConnectorPlacer:
         for n, node in enumerate(tree.nodes):
             if node.cross_section is None:
                 continue
-
             # create global vector of connectors
             for cc in node.cross_section.connected_components:
                 caps.append(cc.mesh)
                 # register the ConnectedComponent's sites with the global array of connectors
                 cc.register_sites(len(self.connectors))
                 self.connected_components.append(cc)
-                for site in cc.positive_sites:
-                    box = trimesh.primitives.Box(extents=np.ones(3) * cc.connector_diameter)
-                    box.apply_transform(np.linalg.inv(trimesh.points.plane_transform(site, cc.normal)))
-                    box.apply_transform(trimesh.transformations.translation_matrix(cc.normal * (cc.connector_diameter / 2 - .1)))
-                    self.connectors.append(box)
-                for site in cc.negative_sites:
-                    box = trimesh.primitives.Box(extents=np.ones(3) * cc.connector_diameter)
-                    box.apply_transform(np.linalg.inv(trimesh.points.plane_transform(site, -1 * cc.normal)))
-                    box.apply_transform(trimesh.transformations.translation_matrix(-1 * cc.normal * (cc.connector_diameter / 2 - .1)))
-                    self.connectors.append(box)
+                for site in cc.sites:
+                    conn_m = trimesh.primitives.Sphere(radius=cc.connector_diameter / 2)
+                    conn_m.apply_transform(np.linalg.inv(trimesh.points.plane_transform(site, cc.normal)))
+                    self.connectors.append(conn_m)
 
         self.connectors = np.array(self.connectors)
         self.n_connectors = self.connectors.shape[0]
@@ -60,9 +59,27 @@ class ConnectorPlacer:
         self.collisions[intersections > 1, :] = True
         self.collisions[:, intersections > 1] = True
 
+        logger.info("determining connector mesh protrusions")
+        for n, node in enumerate(tree.nodes):
+            if node.cross_section is None:
+                continue
+            origin, normal = node.plane
+            origin -= normal * .1
+            for cc in node.cross_section.connected_components:
+                for idx in cc.index:
+                    part = node.children[cc.negative].part
+                    xform = self.connectors[idx].primitive.transform
+                    conn_f = trimesh.primitives.Sphere(radius=(cc.connector_diameter + config.connector_tolerance + 1) / 2, transform=xform)
+                    sliced_conn_f = conn_f.slice_plane(origin, -1 * normal)
+                    v_check = part.contains(sliced_conn_f.vertices)
+                    protrude = not v_check.all()
+                    if protrude:
+                        self.collisions[idx, :] = True
+                        self.collisions[:, idx] = True
+
         logger.info("determining connector-connector intersections")
         distances = np.sqrt(np.sum((mass_centers[:, None, :] - mass_centers[None, :, :]) ** 2, axis=2))
-        mask = (distances > 0) * (distances < config.connector_diameter * 1.5)
+        mask = (distances > 0) & (distances < config.connector_diameter)
         self.collisions = np.logical_or(self.collisions, mask)
 
     def evaluate_connector_objective(self, state):
@@ -89,7 +106,7 @@ class ConnectorPlacer:
     def get_initial_state(self):
         state = np.zeros(self.n_connectors, dtype=bool)
         for cc in self.connected_components:
-            for i in np.random.choice(cc.all_index, 2, replace=False):
+            for i in np.random.choice(cc.index, 2, replace=False):
                 state[i] = True
         return state
 
@@ -148,35 +165,27 @@ class ConnectorPlacer:
             new_node = new_tree.get_node(node.path)
             if node.cross_section is None:
                 continue
+            origin, normal = node.plane
+            origin += normal * .1
             for cc in node.cross_section.connected_components:
-                pos_index, neg_index = cc.get_indices(state)
+                index = cc.get_indices(state)
                 pi = cc.positive
                 ni = cc.negative
-                for idx in pos_index:
+                for idx in index:
                     xform = self.connectors[idx].primitive.transform
-                    slot = trimesh.primitives.Box(
-                        extents=np.ones(3) * (cc.connector_diameter + config.connector_tolerance),
-                        transform=xform)
-                    new_node.children[pi].part = insert_slot(new_node.children[pi].part, slot)
-                    new_node.children[ni].part = insert_box(new_node.children[ni].part, self.connectors[idx])
-                for idx in neg_index:
-                    xform = self.connectors[idx].primitive.transform
-                    slot = trimesh.primitives.Box(
-                        extents=np.ones(3) * (cc.connector_diameter + config.connector_tolerance),
-                        transform=xform)
-                    new_node.children[ni].part = insert_slot(new_node.children[ni].part, slot)
-                    new_node.children[pi].part = insert_box(new_node.children[pi].part, self.connectors[idx])
+                    conn_m = self.connectors[idx].slice_plane(origin, -1 * normal)
+                    conn_f = trimesh.primitives.Sphere(radius=(cc.connector_diameter + config.connector_tolerance) / 2, transform=xform)
+                    new_node.children[ni].part = insert_connector_f(new_node.children[ni].part, conn_f)
+                    new_node.children[pi].part = insert_connector_m(new_node.children[pi].part, conn_m)
         return new_tree
 
 
-def insert_slot(part, slot, retries=10):
+def insert_connector_f(part: trimesh.Trimesh, conn_f: trimesh.Trimesh, retries=10):
     """Inserts a slot into a part using boolean difference. Operating under the assumption
     that inserting a slot MUST INCREASE the number of vertices of the resulting part.
 
     :param part: part to insert slot into
-    :type part: trimesh.Trimesh
     :param slot: slot (connector expanded with tolerance) to remove from part
-    :type slot: trimesh.Trimesh (usually a primitive like Box)
     :param retries: number of times to retry before raising an error, checking to see if number of
                     vertices increases. Default = 10
     :type retries: int
@@ -185,20 +194,18 @@ def insert_slot(part, slot, retries=10):
     """
     utils.trimesh_repair(part)
     for t in range(retries):
-        new_part_slot = part.difference(slot)
-        if len(new_part_slot.vertices) > len(part.vertices):
-            return new_part_slot
-    raise Exception("Couldn't insert slot")
+        new_part = part.difference(conn_f)
+        if len(new_part.vertices) > len(part.vertices):
+            return new_part
+    raise Exception("Couldn't insert connector")
 
 
-def insert_box(part, box, retries=10):
+def insert_connector_m(part: trimesh.Trimesh, conn_m: trimesh.Trimesh, retries=10):
     """Adds a box / connector to a part using boolean union. Operating under the assumption
     that adding a connector MUST INCREASE the number of vertices of the resulting part.
 
     :param part: part to add connector to
-    :type part: trimesh.Trimesh
     :param box: connector to add to part
-    :type box: trimesh.Trimesh (usually a primitive like Box)
     :param retries: number of times to retry before raising an error, checking to see if number of
                     vertices increases. Default = 10
     :type retries: int
@@ -207,7 +214,7 @@ def insert_box(part, box, retries=10):
     """
     utils.trimesh_repair(part)
     for t in range(retries):
-        new_part_slot = part.union(box)
-        if len(new_part_slot.vertices) > len(part.vertices):
-            return new_part_slot
-    raise Exception("Couldn't insert slot")
+        new_part = part.union(conn_m)
+        if len(new_part.vertices) > len(part.vertices):
+            return new_part
+    raise Exception("Couldn't insert connector")

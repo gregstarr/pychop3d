@@ -1,0 +1,11 @@
+beam_width: 2
+connector_diameter: 5
+connector_spacing: 10
+connector_tolerance: 1.0
+directory: output
+mesh: test/past_failures/gnome.stl
+name: gnome
+printer_extents:
+- 100.0
+- 100.0
+- 100.0

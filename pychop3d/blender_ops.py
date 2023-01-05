@@ -1,12 +1,9 @@
 import pathlib
-import logging
 
 from trimesh.interfaces.blender import _blender_executable, exists
 from trimesh.interfaces.generic import MeshScript
 from trimesh import util
-
-
-logger = logging.getLogger(__name__)
+from pychop3d.logger import logger
 
 
 def run_blender_op(mesh, func_str, debug=True):

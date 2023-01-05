@@ -1,15 +1,14 @@
 import numpy as np
 import trimesh
-import logging
 import multiprocessing
 
 from pychop3d import utils
 from pychop3d import bsp_tree
 from pychop3d.process_normal import process_normal
 from pychop3d.configuration import Configuration
+from pychop3d.logger import logger
 
 
-logger = logging.getLogger(__name__)
 PARALLEL = False
 
 
@@ -36,9 +35,10 @@ def evaluate_cuts(base_tree, node):
             pool_output = p.starmap(process_normal, args)
     else:
         pool_output = []
-        for arg in args:
+        for i, arg in enumerate(args):
+            logger.info(f"normal {i} of {len(args)}")
             pool_output.append(process_normal(*arg))
-    print()
+
     trees = []
     for i in range(len(N)):
         trees += pool_output[i]

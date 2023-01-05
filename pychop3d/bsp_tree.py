@@ -1,9 +1,9 @@
-import trimesh
 import numpy as np
 import copy
 
 from pychop3d.configuration import Configuration
 from pychop3d import bsp_node
+from pychop3d.logger import logger
 
 
 class BSPTree:

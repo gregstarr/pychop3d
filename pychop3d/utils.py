@@ -1,5 +1,4 @@
 import json
-import logging
 import os
 
 import numpy as np
@@ -10,8 +9,7 @@ from pychop3d import bsp_node, bsp_tree
 from pychop3d.configuration import Configuration
 from pychop3d.objective_functions import (evaluate_nparts_objective,
                                           evaluate_utilization_objective)
-
-logger = logging.getLogger(__name__)
+from pychop3d.logger import logger
 
 
 def separate_starter(mesh):
@@ -64,6 +62,8 @@ def open_mesh():
     # OPEN MESH
     mesh_fn = find_file(config.mesh)
     mesh = trimesh.load(mesh_fn)
+    if config.scale_factor > 0:
+        mesh.apply_scale(config.scale_factor)
     # REPAIR MESH
     trimesh_repair(mesh)
 

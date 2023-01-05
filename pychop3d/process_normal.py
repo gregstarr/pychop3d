@@ -1,6 +1,7 @@
 from pychop3d import bsp_tree
 from pychop3d.objective_functions import objectives
 from pychop3d.configuration import Configuration
+from pychop3d.logger import logger
 
 
 def process_normal(normal, node, base_tree, config):
@@ -16,5 +17,4 @@ def process_normal(normal, node, base_tree, config):
     # list, fill in the data in each tree object in the list
     for evaluate_objective_func in objectives.values():
         evaluate_objective_func(trees_of_this_normal, node.path)
-    print('.', end='')
     return trees_of_this_normal

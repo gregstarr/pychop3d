@@ -73,7 +73,7 @@ class Configuration:
         self.connector_objective_th = 10
         self.obb_utilization = False
         # connector placement parameters
-        self.connector_collision_penalty = 10 ** 10
+        self.connector_collision_penalty = 10 ** 6
         self.empty_cc_penalty = 10**-5
         self.sa_initial_connector_ratio = .1
         self.sa_initialization_iterations = 5_000
@@ -87,9 +87,10 @@ class Configuration:
         self.mesh = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'test', 'test_meshes', 'Bunny-LowPoly.stl'))
         self._directory = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'debug'))
         self.save_path = os.path.abspath(os.path.join(self.directory, 'config.yml'))
-        self.beam_width = 5
+        self.beam_width = 3
         self.part_separation = False
-        self.max_faces = 5000
+        self.max_faces = 3000
+        self.scale_factor = -1
 
     @property
     def connector_wall_distance(self):

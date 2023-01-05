@@ -1,9 +1,13 @@
-import trimesh
-import numpy as np
+from __future__ import annotations
+
 import traceback
+
+import numpy as np
+import trimesh
 
 from pychop3d import section
 from pychop3d.configuration import Configuration
+from pychop3d.logger import logger
 
 
 class ConvexHullError(Exception):
@@ -11,8 +15,7 @@ class ConvexHullError(Exception):
 
 
 class BSPNode:
-
-    def __init__(self, part, parent=None, num=None):
+    def __init__(self, part: trimesh.Trimesh, parent: BSPNode = None, num=None):
         """Initialize an instance of `BSPNode`, determine n_parts objective and termination status.
 
         :param part: mesh part associated with this node
@@ -27,7 +30,9 @@ class BSPNode:
         self.plane = None  # this node will get a plane and a cross_section if and when it is split
         self.cross_section = None
         # determine n_parts and termination status
-        self.n_parts = np.prod(np.ceil(self.obb.primitive.extents / config.printer_extents))
+        self.n_parts = np.prod(
+            np.ceil(self.obb.primitive.extents / config.printer_extents)
+        )
         self.terminated = np.all(self.obb.primitive.extents <= config.printer_extents)
         # if this isn't the root node
         if self.parent is not None:
@@ -77,9 +82,13 @@ class BSPNode:
         config = Configuration.config  # collect configuration
         o = other_node.plane[0]  # other plane origin
         delta = o - self.plane[0]  # vector from this plane's origin to the others'
-        dist = abs(self.plane[1] @ delta)  # distance along this plane's normal to other plane
+        dist = abs(
+            self.plane[1] @ delta
+        )  # distance along this plane's normal to other plane
         # angle between this plane's normal vector and the other plane's normal vector
-        angle = trimesh.transformations.angle_between_vectors(self.plane[1], other_node.plane[1])
+        angle = trimesh.transformations.angle_between_vectors(
+            self.plane[1], other_node.plane[1]
+        )
         # also consider angle between the vectors in the opposite direction
         angle = min(np.pi - angle, angle)
         # check if either the distance or the angle are above their respective thresholds
@@ -100,21 +109,23 @@ def split(node, plane):
     origin, normal = plane
 
     try:
-        parts, cross_section, result = section.bidirectional_split(node.part, origin, normal)  # split the part
+        parts, cross_section, result = section.bidirectional_split(
+            node.part, origin, normal
+        )  # split the part
     except:
         traceback.print_exc()
-        return None, 'unknown_mesh_split_error'
+        return None, "unknown_mesh_split_error"
     if None in [parts, cross_section]:  # check for splitting errors
         return None, result
     node.cross_section = cross_section
 
     for i, part in enumerate(parts):
-        if part.volume < .1:  # make sure each part has some volume
-            return None, 'low_volume_error'
+        if part.volume < 0.1:  # make sure each part has some volume
+            return None, "low_volume_error"
         try:
             child = BSPNode(part, parent=node, num=i)  # potential convex hull failure
         except ConvexHullError:
-            return None, 'convex_hull_error'
+            return None, "convex_hull_error"
 
         node.children.append(child)  # The parts become this node's children
-    return node, 'success'
+    return node, "success"

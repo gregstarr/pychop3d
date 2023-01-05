@@ -1,7 +1,7 @@
 import numpy as np
-import trimesh
 
 from pychop3d.configuration import Configuration
+from pychop3d.logger import logger
 
 
 def evaluate_nparts_objective(trees, path):
