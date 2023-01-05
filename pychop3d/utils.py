@@ -64,16 +64,8 @@ def open_mesh():
     # OPEN MESH
     mesh_fn = find_file(config.mesh)
     mesh = trimesh.load(mesh_fn)
-
-    if hasattr(config, 'preprocessor') and config.preprocessor:
-        mesh = preprocess(mesh)
-
     # REPAIR MESH
     trimesh_repair(mesh)
-    # SCALE MESH
-    if config.scale_factor > 0:
-        mesh.apply_scale(config.scale_factor)
-    # SUBDIVIDE MESH
 
     return mesh
 

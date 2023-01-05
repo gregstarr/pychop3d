@@ -87,9 +87,9 @@ class Configuration:
         self.mesh = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'test', 'test_meshes', 'Bunny-LowPoly.stl'))
         self._directory = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'debug'))
         self.save_path = os.path.abspath(os.path.join(self.directory, 'config.yml'))
-        self.scale_factor = -1
         self.beam_width = 5
         self.part_separation = False
+        self.max_faces = 5000
 
     @property
     def connector_wall_distance(self):

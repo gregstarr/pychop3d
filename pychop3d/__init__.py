@@ -8,11 +8,13 @@ import logging
 import sys
 import traceback
 import warnings
+import trimesh
 
 from pychop3d.search import beam_search
 from pychop3d import connector
 from pychop3d.configuration import Configuration
 from pychop3d import utils
+from pychop3d.blender_ops import decimate
 
 
 logger = logging.getLogger(__name__)
@@ -27,16 +29,6 @@ def run(starter):
     :type starter: `trimesh.Trimesh`
     :type starter: `bsp_tree.BSPTree`
     """
-    config = Configuration.config
-    # basic logging setup
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s  %(name)s  [%(levelname)s]  %(message)s",
-        handlers=[
-            logging.FileHandler(os.path.join(config.directory, "info.log")),
-            logging.StreamHandler()
-        ]
-    )
     # mark starting time
     t0 = time.time()
     # complete the beam search using the starter, no search will take place if the starter tree is already
@@ -66,6 +58,19 @@ def run(starter):
     logger.info("Finished")
 
 
+def prepare_starter():
+    config = Configuration.config
+    # open the input mesh as the starter
+    starter = utils.open_mesh()
+    # n_faces = len(starter.faces)
+    # ratio = config.max_faces / n_faces
+    # if ratio < 1:
+    #     starter = decimate(starter, ratio)
+    # separate pieces
+    if config.part_separation and starter.body_count > 1:
+        starter = utils.separate_starter(starter)
+
+
 def main():
     warnings.filterwarnings("ignore")
     # Read mesh filepath from argument
@@ -91,6 +96,17 @@ def main():
         config.mesh = args.mesh
         config.name = os.path.splitext(os.path.basename(args.mesh)[0])
 
+    # basic logging setup
+    trimesh.util.attach_to_log()
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s  %(name)s  [%(levelname)s]  %(message)s",
+        handlers=[
+            logging.FileHandler(os.path.join(config.directory, "info.log")),
+            logging.StreamHandler()
+        ]
+    )
+
     # name the folder based on the name of the object and the current date / time
     output_folder = f"{config.name}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}"
     # create the new directory in the 'output' subdirectory of pychop3d
@@ -101,11 +117,7 @@ def main():
     config.save()
     Configuration.config = config
 
-    # open the input mesh as the starter
-    starter = utils.open_mesh()
-    # separate pieces
-    if config.part_separation and starter.body_count > 1:
-        starter = utils.separate_starter(starter)
+    starter = prepare_starter()
     # run through the process
     print(f"Using config: {args.config}")
     print(f"Using mesh: {config.mesh}")
