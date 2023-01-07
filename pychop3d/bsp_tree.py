@@ -1,5 +1,7 @@
 import numpy as np
 import copy
+from trimesh import Trimesh
+import typing
 
 from pychop3d.configuration import Configuration
 from pychop3d import bsp_node
@@ -7,8 +9,10 @@ from pychop3d.logger import logger
 
 
 class BSPTree:
+    nodes: typing.List[bsp_node.BSPNode]
+    objectives: typing.Dict[str, float]
 
-    def __init__(self, part):
+    def __init__(self, part: Trimesh):
         """start a new BSPTree from a single part / object
 
         :param part: original part / object to split
@@ -64,7 +68,7 @@ class BSPTree:
         return node
 
     @property
-    def leaves(self):
+    def leaves(self) -> typing.List[bsp_node.BSPNode]:
         """property containing the leaves of the tree. The leaves of the final BSP tree correspond to parts
         small enough to fit in the printer
 

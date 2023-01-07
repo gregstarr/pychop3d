@@ -11,10 +11,11 @@ def match_connectors(original_tree: bsp_tree.BSPTree, tree: bsp_tree.BSPTree):
     for i, node in enumerate(tree.nodes):
         if node.cross_section is None:
             continue
+        original_node = original_tree.get_node(node.path)
         # create global vector of connectors
         for j, cc in enumerate(node.cross_section.connected_components):
-            original_tree.nodes[i].cross_section.connected_components[j].index = cc.index
-            original_tree.nodes[i].cross_section.connected_components[j].sites = cc.sites
+            original_node.cross_section.connected_components[j].index = cc.index
+            original_node.cross_section.connected_components[j].sites = cc.sites
 
 
 class ConnectorPlacer:
@@ -31,6 +32,7 @@ class ConnectorPlacer:
 
         logger.info("Creating connectors...")
         for n, node in enumerate(tree.nodes):
+            logger.info(f"$CONNECTOR_PROGRESS {.1 * n / len(tree.nodes)}")
             if node.cross_section is None:
                 continue
             # create global vector of connectors
@@ -48,7 +50,6 @@ class ConnectorPlacer:
         self.n_connectors = self.connectors.shape[0]
         if self.n_connectors == 0:
             return
-        logger.info(f"Number of connectors: {self.n_connectors}")
         self.collisions = np.zeros((self.n_connectors, self.n_connectors), dtype=bool)
 
         logger.info("determining connector-cut intersections")
@@ -61,6 +62,7 @@ class ConnectorPlacer:
 
         logger.info("determining connector mesh protrusions")
         for n, node in enumerate(tree.nodes):
+            logger.info(f"$CONNECTOR_PROGRESS {.1 + .1 * n / len(tree.nodes)}")
             if node.cross_section is None:
                 continue
             origin, normal = node.plane
@@ -106,8 +108,8 @@ class ConnectorPlacer:
     def get_initial_state(self):
         state = np.zeros(self.n_connectors, dtype=bool)
         for cc in self.connected_components:
-            for i in np.random.choice(cc.index, 2, replace=False):
-                state[i] = True
+            i = np.random.choice(cc.index)
+            state[i] = True
         return state
 
     def simulated_annealing_connector_placement(self):
@@ -118,12 +120,14 @@ class ConnectorPlacer:
         # initialization
         for i in range(config.sa_initialization_iterations):
             state, objective = self.sa_iteration(state, objective, 0)
-
+        logger.info("$CONNECTOR_PROGRESS .3")
         logger.info(f"post initialization objective: {objective}")
         initial_temp = objective / 2
         for i, temp in enumerate(np.linspace(initial_temp, 0, config.sa_iterations)):
+            if (i % (config.sa_iterations // 20)) == 0:
+                logger.info(f"$CONNECTOR_PROGRESS {.3 + .3 * i / config.sa_iterations}")
             state, objective = self.sa_iteration(state, objective, temp)
-
+        logger.info("$CONNECTOR_PROGRESS 1")
         logger.info(f"final objective: {objective}")
         return state
 
@@ -147,7 +151,10 @@ class ConnectorPlacer:
         return state, objective
 
     def insert_connectors(self, tree, state):
-        logger.info(f"inserting {state.sum()} connectors")
+        NI = state.sum()
+        nc = 0
+        logger.info(f"inserting {NI} connectors")
+        logger.info(f"$N_INSERT {NI}")
         config = Configuration.config
         if tree.nodes[0].plane is None:
             new_tree = utils.separate_starter(tree.nodes[0].part)
@@ -172,6 +179,8 @@ class ConnectorPlacer:
                 pi = cc.positive
                 ni = cc.negative
                 for idx in index:
+                    nc += 1
+                    logger.info(f"$CONNECTOR_PROGRESS {.6 + .4 * nc / NI}")
                     xform = self.connectors[idx].primitive.transform
                     conn_m = self.connectors[idx].slice_plane(origin, -1 * normal)
                     conn_f = trimesh.primitives.Sphere(radius=(cc.connector_diameter + config.connector_tolerance) / 2, transform=xform)

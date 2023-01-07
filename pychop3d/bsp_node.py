@@ -1,5 +1,5 @@
 from __future__ import annotations
-
+import typing
 import traceback
 
 import numpy as np
@@ -15,7 +15,14 @@ class ConvexHullError(Exception):
 
 
 class BSPNode:
-    def __init__(self, part: trimesh.Trimesh, parent: BSPNode = None, num=None):
+    part: trimesh.Trimesh
+    parent: BSPNode
+    children: typing.List[BSPNode]
+    path: typing.Tuple[int]
+    plane: typing.Tuple[np.ndarray]
+    cross_section: section.CrossSection
+
+    def __init__(self, part, parent=None, num=None):
         """Initialize an instance of `BSPNode`, determine n_parts objective and termination status.
 
         :param part: mesh part associated with this node
@@ -37,6 +44,9 @@ class BSPNode:
         # if this isn't the root node
         if self.parent is not None:
             self.path = (*self.parent.path, num)
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}({self.path=})"
 
     @property
     def obb(self):
@@ -95,13 +105,11 @@ class BSPNode:
         return dist > config.different_origin_th or angle > config.different_angle_th
 
 
-def split(node, plane):
+def split(node: BSPNode, plane: tuple):
     """Split a node along a plane
 
     :param node: BSPNode to split
-    :type node: BSPNode
     :param plane: (origin, normal) pair defining the cutting plane
-    :type plane: tuple
     :return: the input node split by the plane, will have at least 2 children
     :rtype: BSPNode
     """
