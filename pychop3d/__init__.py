@@ -87,33 +87,19 @@ def main():
 
     parser = argparse.ArgumentParser(description="Pychop3D command line runner")
     parser.add_argument(
-        "-c",
-        "--config",
+        "config",
         type=str,
-        help='path to a config yaml file, for an example, see "bunny_config.yml"',
-        default="examples/bunny_config.yml",
-    )
-    parser.add_argument(
-        "-m",
-        "--mesh",
-        type=str,
+        help="path to a config yaml file, for an example, see 'bunny_config.yml'",
         default=None,
-        help="Specify the mesh file path to chop. This will override the mesh file in the config yaml",
     )
     args = parser.parse_args()
 
     # load specified or default config file
-    try:
-        config = Configuration(args.config)
-    except:
+    if args.config is None:
         parser.print_help()
-        traceback.print_exc()
         sys.exit(0)
-
-    # override the mesh path in config if specified on command line
-    if args.mesh:
-        config.mesh = args.mesh
-        config.name = os.path.splitext(os.path.basename(args.mesh)[0])
+    
+    config = Configuration(args.config)    
 
     # name the folder based on the name of the object and the current date / time
     output_folder = f"{config.name}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}"

@@ -1,23 +1,23 @@
-[build-system]
-requires = ["setuptools"]
-build-backend = "setuptools.build_meta"
-
-
-[project]
+[tool.poetry]
 name = "pychop3d"
-version = "0.0.0"
-dependencies = [
-    "trimesh[all] >= 3.17.1",
-    "pyyaml >= 6.0",
-]
+version = "0.1.0"
+description = "Chop 3d models to fit your printer"
+authors = ["Greg Starr <gregstarr2@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+homepage = "https://pychop.xyz/"
+repository = "https://github.com/gregstarr/pychop3d"
 
-[project.scripts]
+[tool.poetry.dependencies]
+python = "^3.11"
+trimesh = {extras = ["all"], version = "^3.18.0"}
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.2.1"
+
+[tool.poetry.scripts]
 pychop = "pychop3d:main"
 
-
-[tool.pytest.ini_options]
-addopts = "-v"
-testpaths = ["tests"]
-env = [
-    "PATH={HOME}/blender-3.4.1-linux-x64:{PATH}"
-]
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
