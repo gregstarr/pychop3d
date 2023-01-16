@@ -12,7 +12,7 @@ import trimesh
 
 from pychop3d import connector, settings, utils
 from pychop3d.blender_ops import decimate
-from pychop3d.bsp_tree import BSPTree
+from pychop3d.bsp_tree import BSPTree, open_tree, separate_starter
 from pychop3d.logger import logger
 from pychop3d.search import beam_search
 
@@ -36,7 +36,7 @@ def run(meshpath: Path, printer_extents: np.ndarray, name: str, output_directory
     tree = beam_search(starter, name, output_directory)
     logger.info("Best BSP-tree found in %s seconds", time.time() - t0)
     # save the tree now in case the connector placement fails
-    utils.save_tree(tree, output_directory / "final_tree.json")
+    tree.save(output_directory / "final_tree.json")
 
     # mark starting time
     t0 = time.time()
@@ -48,23 +48,21 @@ def run(meshpath: Path, printer_extents: np.ndarray, name: str, output_directory
         # use simulated annealing to determine the best combination of connectors
         state = connector_placer.simulated_annealing_connector_placement()
         # save the final tree including the state
-        utils.save_tree(
-            tree, output_directory / "final_tree_with_connectors.json", state
-        )
+        tree.save(output_directory / "final_tree_with_connectors.json", state)
         # add the connectors / subtract the slots from the parts of the partitioned
         # input object
-        original_tree = utils.open_tree(
+        original_tree = open_tree(
             output_directory / "final_tree.json", meshpath, printer_extents
         )
         connector.match_connectors(original_tree, tree)
         tree = connector_placer.insert_connectors(original_tree, state, printer_extents)
     else:
-        tree = utils.open_tree(
+        tree = open_tree(
             output_directory / "final_tree.json", meshpath, printer_extents
         )
 
     # export the parts of the partitioned object
-    utils.export_tree_stls(tree, output_directory, name)
+    tree.export_stls(output_directory, name)
     logger.info("Finished")
 
 
@@ -92,7 +90,7 @@ def prepare_starter(mesh_fn: Path, printer_extents) -> BSPTree:
         logger.info("n faces %s n verts %s ratio %s", n_faces, n_verts, ratio)
     # separate pieces
     if settings.PART_SEPARATION and starter.body_count > 1:
-        starter = utils.separate_starter(starter, printer_extents)
+        starter = separate_starter(starter, printer_extents)
     else:
         starter = BSPTree(starter, printer_extents)
     return starter

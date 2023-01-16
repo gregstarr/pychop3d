@@ -1,9 +1,12 @@
+from __future__ import annotations
 import json
 from pathlib import Path
 
 import numpy as np
 import trimesh
 from trimesh import Trimesh
+
+from pychop3d import bsp_tree
 
 
 def load_connector_configuration(tree_file: Path) -> np.ndarray:
@@ -39,7 +42,7 @@ def trimesh_repair(mesh: Trimesh):
     mesh.process()
 
 
-def preview_tree(tree: "BSPTree", other_objects: Trimesh = None):
+def preview_tree(tree: bsp_tree.BSPTree, other_objects: Trimesh = None):
     """runs the trimesh pyglet utility, shows the mesh and other optional objects,
     e.g. make_plane
 
@@ -57,41 +60,3 @@ def preview_tree(tree: "BSPTree", other_objects: Trimesh = None):
         scene.add_geometry(ob)
     scene.camera.z_far = 10_000
     scene.show()
-
-
-def save_tree(tree: "BSPTree", save_path: Path, state: np.ndarray = None):
-    """saves tree file json
-
-    Args:
-        tree (BSPTree)
-        save_path (Path)
-        state (np.ndarray, optional): Defaults to None.
-    """
-    if state is None:
-        state = []
-
-    nodes = []
-    for node in tree.nodes:
-        if node.plane is None:
-            continue
-        this_node = {
-            "path": node.path,
-            "origin": list(node.plane[0]),
-            "normal": list(node.plane[1]),
-        }
-        nodes.append(this_node)
-
-    with open(save_path, "w", encoding="utf8") as f:
-        json.dump({"nodes": nodes, "state": [bool(s) for s in state]}, f)
-
-
-def export_tree_stls(tree: "BSPTree", output_dir: Path, name: str):
-    """Saves all of a tree's parts
-
-    Args:
-        tree (BSPTree)
-        output_dir (Path)
-        name (str)
-    """
-    for i, leaf in enumerate(tree.leaves):
-        leaf.part.export(output_dir / f"{name}_{i}.stl")

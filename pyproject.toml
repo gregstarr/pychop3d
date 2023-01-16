@@ -20,7 +20,7 @@ black = "^22.12.0"
 isort = "^5.11.4"
 
 [tool.poetry.scripts]
-pychop = "pychop3d:main"
+pychop = "pychop3d.main:main"
 
 [build-system]
 requires = ["poetry-core"]

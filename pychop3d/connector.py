@@ -1,10 +1,9 @@
 import numpy as np
 from trimesh import Trimesh
-from trimesh.points import plane_transform
 from trimesh.primitives import Sphere
 
 from pychop3d import settings, utils
-from pychop3d.bsp_tree import BSPTree, expand_node
+from pychop3d.bsp_tree import BSPTree, expand_node, separate_starter
 from pychop3d.logger import logger
 
 
@@ -51,10 +50,7 @@ class ConnectorPlacer:
                 cc.register_sites(len(self.connectors))
                 self.connected_components.append(cc)
                 for site in cc.sites:
-                    conn_m = Sphere(radius=CD / 2)
-                    conn_m.apply_transform(
-                        np.linalg.inv(plane_transform(site, cc.plane.normal))
-                    )
+                    conn_m = Sphere(radius=CD / 2, center=site)
                     self.connectors.append(conn_m)
 
         self.connectors = np.array(self.connectors)
@@ -82,8 +78,8 @@ class ConnectorPlacer:
             for cc in node.cross_section.connected_components:
                 for idx in cc.index:
                     part = node.children[cc.negative].part
-                    xform = self.connectors[idx].primitive.transform
-                    conn_f = Sphere(radius=(CD + CT + 1) / 2, transform=xform)
+                    site = self.connectors[idx].primitive.center
+                    conn_f = Sphere(radius=(CD + CT + 1) / 2, center=site)
                     sliced_conn_f = conn_f.slice_plane(origin, -1 * normal)
                     v_check = part.contains(sliced_conn_f.vertices)
                     protrude = not v_check.all()
@@ -190,7 +186,7 @@ class ConnectorPlacer:
         CT = settings.CONNECTOR_TOLERANCE
         nc = 0
         if tree.nodes[0].plane is None:
-            new_tree = utils.separate_starter(tree.nodes[0].part, printer_extents)
+            new_tree = separate_starter(tree.nodes[0].part, printer_extents)
         else:
             new_tree = BSPTree(tree.nodes[0].part, printer_extents)
         for node in tree.nodes:
@@ -214,9 +210,9 @@ class ConnectorPlacer:
                 for idx in index:
                     nc += 1
                     logger.info("$CONNECTOR_PROGRESS %s", 0.6 + 0.4 * nc / NI)
-                    xform = self.connectors[idx].primitive.transform
+                    site = self.connectors[idx].primitive.center
                     conn_m = self.connectors[idx].slice_plane(origin, -1 * normal)
-                    conn_f = Sphere(radius=(CD + CT) / 2, transform=xform)
+                    conn_f = Sphere(radius=(CD + CT) / 2, center=site)
                     new_node.children[ni].part = insert_connector(
                         new_node.children[ni].part, conn_f, "difference"
                     )

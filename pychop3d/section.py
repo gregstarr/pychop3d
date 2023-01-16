@@ -1,17 +1,18 @@
 """Cross section and connected component"""
+from __future__ import annotations
 import numpy as np
 from shapely.affinity import rotate
 from shapely.geometry import MultiPoint, Point, Polygon
 from trimesh import Trimesh, creation, transform_points
 
-from pychop3d import settings, utils
+from pychop3d import settings, utils, bsp_node
 from pychop3d.logger import logger
 
 
 class ConnectedComponent:
     """a connected component of a mesh-plane intersection"""
 
-    def __init__(self, polygon: Polygon, xform: np.ndarray, plane: "Plane"):
+    def __init__(self, polygon: Polygon, xform: np.ndarray, plane: bsp_node.Plane):
         self.valid = False
         self.polygon = polygon
         self.plane = plane
@@ -131,7 +132,7 @@ class CrossSection:
     """cross section created by plane intersection with mesh, should contain at least
     one connected component"""
 
-    def __init__(self, mesh: Trimesh, plane: "Plane"):
+    def __init__(self, mesh: Trimesh, plane: bsp_node.Plane):
         self.valid = False
         self.cc_valid = True
         self.plane = plane
@@ -187,14 +188,16 @@ class CrossSection:
         return positive, negative
 
 
-def bidirectional_split(mesh: Trimesh, plane: "Plane"):
+def bidirectional_split(mesh: Trimesh, plane: bsp_node.Plane):
     """https://github.com/mikedh/trimesh/issues/235"""
     positive_parts, negative_parts = [], []
 
     cross_section = CrossSection(mesh, plane)
     if not cross_section.valid:
+        logger.warning("invalid_cross_section_error")
         return None, None, "invalid_cross_section_error"
     if not cross_section.cc_valid:
+        logger.warning("invalid_connected_component_error")
         return None, None, "invalid_connected_component_error"
     positive, negative = cross_section.split(mesh)
     if settings.PART_SEPARATION:
@@ -207,6 +210,7 @@ def bidirectional_split(mesh: Trimesh, plane: "Plane"):
     parts_list = list(np.concatenate((positive_parts, negative_parts)))
 
     if len(positive_parts) == 0 or len(negative_parts) == 0:
+        logger.warning("bad_separation_error")
         return None, None, "bad_separation_error"
 
     for part in parts_list:
@@ -234,9 +238,11 @@ def bidirectional_split(mesh: Trimesh, plane: "Plane"):
                 break
 
         if None in [cc.positive, cc.negative]:
+            logger.warning("bad_separation_error")
             return None, None, "bad_separation_error"
 
         if not cc.evaluate_interface(parts_list[cc.positive], parts_list[cc.negative]):
+            logger.warning("connector_location_error")
             return None, None, "connector_location_error"
 
     return parts_list, cross_section, "success"

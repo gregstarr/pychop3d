@@ -193,6 +193,40 @@ class BSPTree:
         symmetry = weights["symmetry"] * self.objectives["symmetry"]
         return part + util + connector + fragility + seam + symmetry
 
+    def export_stls(self, output_dir: Path, name: str):
+        """Saves all of a tree's parts
+
+        Args:
+            output_dir (Path)
+            name (str)
+        """
+        for i, leaf in enumerate(self.leaves):
+            leaf.part.export(output_dir / f"{name}_{i}.stl")
+
+    def save(self, save_path: Path, state: np.ndarray = None):
+        """saves tree file json
+
+        Args:
+            save_path (Path)
+            state (np.ndarray, optional): Defaults to None.
+        """
+        if state is None:
+            state = []
+
+        nodes = []
+        for node in self.nodes:
+            if node.plane is None:
+                continue
+            this_node = {
+                "path": node.path,
+                "origin": list(node.plane.origin),
+                "normal": list(node.plane.normal),
+            }
+            nodes.append(this_node)
+
+        with open(save_path, "w", encoding="utf8") as f:
+            json.dump({"nodes": nodes, "state": [bool(s) for s in state]}, f)
+
 
 def expand_node(tree: BSPTree, path: tuple, plane: Plane) -> tuple[BSPTree, str]:
     """Splits a tree at the node given by `path` using `plane`. Returns a copy of the
@@ -280,8 +314,11 @@ def process_normal(
     # go through each objective function, evaluate the objective function for each tree
     # in this normal's list, fill in the data in each tree object in the list
     objectives = objective_functions.objectives
-    for evaluate_objective_func in objectives.values():
-        evaluate_objective_func(trees_of_this_normal, node.path)
+    for funcname, evaluate_objective_func in objectives.items():
+        if funcname == "utilization":
+            evaluate_objective_func(trees_of_this_normal, node.path, node.printer_extents)
+        else:
+            evaluate_objective_func(trees_of_this_normal, node.path)
     return trees_of_this_normal
 
 

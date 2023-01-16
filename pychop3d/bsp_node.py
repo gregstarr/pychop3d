@@ -15,6 +15,7 @@ class ConvexHullError(Exception):
 
 class Plane(NamedTuple):
     """tuple of (origin, normal), both 3D numpy vectors"""
+
     origin: np.ndarray
     normal: np.ndarray
 
@@ -104,7 +105,7 @@ class BSPNode:
         Returns:
             float
         """
-        return max([cc.objective for cc in self.cross_section.connected_components])
+        return max(cc.objective for cc in self.cross_section.connected_components)
 
     def different_from(self, other_node: "BSPNode") -> bool:
         """determine if this node is different plane-wise from the same node on another
@@ -118,15 +119,18 @@ class BSPNode:
         """
         other_o = other_node.plane.origin  # other plane origin
         # vector from this plane's origin to the others'
-        delta = (other_o - self.plane.origin)
+        delta = other_o - self.plane.origin
         # distance along this plane's normal to other plane
         dist = abs(self.plane.normal @ delta)
         # angle between this plane's normal vector and the other plane's normal vector
         angle = angle_between_vectors(self.plane.normal, other_node.plane.normal)
         # also consider angle between the vectors in the opposite direction
         angle = min(np.pi - angle, angle)
-        # check if either the distance or the angle are above their respective thresholds
-        return dist > settings.DIFFERENT_ORIGIN_TH or angle > settings.DIFFERENT_ANGLE_TH
+        # check if either the distance or the angle are above their respective
+        # thresholds
+        return (
+            dist > settings.DIFFERENT_ORIGIN_TH or angle > settings.DIFFERENT_ANGLE_TH
+        )
 
 
 def split(node: BSPNode, plane: Plane) -> BSPNode:
@@ -149,11 +153,13 @@ def split(node: BSPNode, plane: Plane) -> BSPNode:
         return None, "unknown_mesh_split_error"
 
     if None in [parts, cross_section]:  # check for splitting errors
+        logger.error("splitting error")
         return None, result
     node.cross_section = cross_section
 
     for i, part in enumerate(parts):
         if part.volume < 0.1:  # make sure each part has some volume
+            logger.error("low_volume_error")
             return None, "low_volume_error"
         try:
             child = BSPNode(part, parent=node, num=i)  # potential convex hull failure

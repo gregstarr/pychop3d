@@ -4,7 +4,7 @@ from pathlib import Path
 import numpy as np
 from trimesh import Trimesh
 
-from pychop3d import settings, utils
+from pychop3d import settings
 from pychop3d.bsp_node import BSPNode
 from pychop3d.bsp_tree import BSPTree, process_normal
 from pychop3d.logger import logger
@@ -144,7 +144,7 @@ def beam_search(starter: BSPTree, name: str, output_dir: Path) -> BSPTree:
         if len(current_trees) == 0:  # all of the trees failed
             raise Exception("No valid chops found")
 
-        total_parts = int(sum([p.n_parts for p in current_trees[0].leaves]))
+        total_parts = int(sum(p.n_parts for p in current_trees[0].leaves))
         progress = n_leaves / total_parts
         logger.info("Leaves: %d", n_leaves)
         logger.info("best objective: %s", current_trees[0].objective)
@@ -154,7 +154,7 @@ def beam_search(starter: BSPTree, name: str, output_dir: Path) -> BSPTree:
 
         # save progress
         for i, tree in enumerate(current_trees[: settings.BEAM_WIDTH]):
-            utils.save_tree(tree, output_dir / f"{name}_{i}.json")
-        utils.export_tree_stls(current_trees[0], output_dir, name)
+            tree.save(output_dir / f"{name}_beam{i}.json")
+        current_trees[0].export_stls(output_dir, name)
 
     return current_trees[0]
