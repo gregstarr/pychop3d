@@ -9,11 +9,15 @@ homepage = "https://pychop.xyz/"
 repository = "https://github.com/gregstarr/pychop3d"
 
 [tool.poetry.dependencies]
-python = "^3.11"
+python = "^3.10"
 trimesh = {extras = ["all"], version = "^3.18.0"}
 
-[tool.poetry.group.dev.dependencies]
+[tool.poetry.group.test.dependencies]
+matplotlib = "^3.6.3"
 pytest = "^7.2.1"
+pylint = "^2.15.10"
+black = "^22.12.0"
+isort = "^5.11.4"
 
 [tool.poetry.scripts]
 pychop = "pychop3d:main"
@@ -21,3 +25,6 @@ pychop = "pychop3d:main"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.pylint.format]
+max-line-length = 88

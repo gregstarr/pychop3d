@@ -3,7 +3,7 @@ import tempfile
 
 import pytest
 
-from pychop3d import run, prepare_starter
+from pychop3d.main import run, prepare_starter
 
 
 config_files = (pathlib.Path(__file__).parent / "past_failures").glob("*.yml")

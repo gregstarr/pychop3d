@@ -1,112 +1,144 @@
+"""main search functions"""
+from pathlib import Path
+
 import numpy as np
 from trimesh import Trimesh
-import multiprocessing
-import typing
 
-from pychop3d import utils
-from pychop3d.bsp_tree import BSPTree
+from pychop3d import settings, utils
 from pychop3d.bsp_node import BSPNode
-from pychop3d.process_normal import process_normal
-from pychop3d.configuration import Configuration
+from pychop3d.bsp_tree import BSPTree, process_normal
 from pychop3d.logger import logger
 
 
-PARALLEL = False
-
-
-def evaluate_cuts(base_tree: BSPTree, node: BSPNode):
-    """this function returns a list of unique trees by splitting a specified node of an input tree along all planes
-    as defined in the configuration
-
-    :param base_tree: tree to split at a particular node
-    :param node: node of the input tree to split
-    :return: list of 'unique' trees resulting from splitting the input tree at the specified node
-    :rtype: list of `BSPTree`
+def all_at_goal(trees: list[BSPTree]) -> bool:
+    """convenience / readability function which returns whether a list of trees are all
+    terminated
     """
-    config = Configuration.config  # Collect configuration
+    for tree in trees:
+        if not tree.terminated:
+            return False
+    return True
 
-    N = config.normals  # Collect predefined set of normal vectors
-    N = np.append(N, node.auxiliary_normals, axis=0)  # Append partition's bounding-box-aligned vectors as normals
-    N = np.unique(np.round(N, 3), axis=0)  # Return sorted unique elements of input array_like
 
-    args = [(n, node, base_tree, config) for n in N]
-    if PARALLEL:
-        with multiprocessing.Pool(6) as p:
-            pool_output = p.starmap(process_normal, args)
-    else:
-        pool_output = []
-        for i, arg in enumerate(args):
-            logger.info(f"$NORMAL {i} / {len(args)}")
-            pool_output.append(process_normal(*arg))
+def not_at_goal_set(trees: list[BSPTree]) -> list[BSPTree]:
+    """convenience / readability function which returns the non terminated trees from a
+    list
+    """
+    not_at_goal = []
+    for tree in trees:
+        if not tree.terminated:
+            not_at_goal.append(tree)
+    return not_at_goal
+
+
+def evaluate_cuts(
+    base_tree: BSPTree, node: BSPNode, normals: np.ndarray
+) -> list[BSPTree]:
+    """returns a list of unique trees by splitting a specified node of an input tree
+    along all planes as defined in the configuration
+
+    Args:
+        base_tree (BSPTree): tree to split at a particular node
+        node (BSPNode): node of the input tree to split
+        normals (np.ndarray): ): list of normal vectors to evaluate
+
+    Returns:
+        list[BSPTree]: _description_
+    """
+
+    test_normals = normals.copy()  # Collect predefined set of normal vectors
+    # Append partition's bounding-box-aligned vectors as normals
+    test_normals = np.append(test_normals, node.auxiliary_normals, axis=0)
+    # Return sorted unique elements of input array_like
+    test_normals = np.unique(np.round(test_normals, 3), axis=0)
 
     trees = []
-    for i in range(len(N)):
-        trees += pool_output[i]
-        logger.info(f"index {i}, normal {N[i]}, norm trees: {len(pool_output[i])}")
-    logger.info(f"total trees: {len(trees)}")
-    # go through the list of trees, best ones first, and throw away any that are too similar to another tree already
-    # in the result list
+    for i, normal in enumerate(test_normals):
+        logger.info("$NORMAL %d / %d", i, len(test_normals))
+        trees += process_normal(normal, node, base_tree)
+
+    logger.info("total trees: %d", len(trees))
+    # go through the list of trees, best ones first, and throw away any that are too
+    # similar to another tree already in the result list
     result_set = []
     for tree in sorted(trees, key=lambda x: x.objective):
         if tree.sufficiently_different(node, result_set):
             result_set.append(tree)
-    logger.info(f"{len(result_set)} valid trees")
+    logger.info("%d valid trees", len(result_set))
     return result_set
 
 
-def beam_search(starter: typing.Union[Trimesh, BSPTree]):
-    """This function executes the beam search to find a good BSPTree partitioning of the input object
+def beam_search(starter: BSPTree, name: str, output_dir: Path) -> BSPTree:
+    """executes the beam search to find a good BSPTree partitioning of the input object
 
-    :param starter: Either an unpartitioned mesh or an already partitioned tree to begin the process using
-    :return: a BSPTree which adequately partitions the input object
-    :rtype: `BSPTree`
+    Args:
+        starter (Union[Trimesh, BSPTree]): Either an unpartitioned mesh or an already
+            partitioned tree to begin the process using
+        name (str): name for saving
+        otuput_dir (Path): directory
+
+    Raises:
+        ValueError: Incorrect input
+        ValueError: Mesh already fits within printer
+        Exception: No valid chops found
+
+    Returns:
+        BSPTree: BSPTree which adequately partitions the input object
     """
-    config = Configuration.config  # collect configuration
-    # open up starter, this can either be a trimesh or an already partitioned object as a tree
-    if isinstance(starter, Trimesh):
-        current_trees = [BSPTree(starter)]
-    elif isinstance(starter, BSPTree):
-        current_trees = [starter]
-    else:
-        raise NotImplementedError
+    current_trees = [starter]
 
-    logger.info(f"Starting beam search with an instance of {type(starter)}")
+    logger.info("Starting beam search with an instance of %s", type(starter))
     if isinstance(starter, Trimesh):
         logger.info("Trimesh stats:")
-        logger.info(f"verts: {starter.vertices.shape[0]} extents: {starter.extents}")
+        logger.info("verts: %d extents: %s", starter.vertices.shape[0], starter.extents)
     else:
-        logger.info(f"n_leaves: {len(starter.leaves)}")
-        logger.info(f"Largest part trimesh stats:")
-        logger.info(f"verts: {starter.largest_part.part.vertices.shape[0]}, extents: {starter.largest_part.part.extents}")
+        logger.info("n_leaves: %s", len(starter.leaves))
+        logger.info("Largest part trimesh stats:")
+        logger.info(
+            "verts: %d extents: %s",
+            starter.largest_part.part.vertices.shape[0],
+            starter.largest_part.part.extents,
+        )
 
-    if utils.all_at_goal(current_trees):
-        raise Exception("Input mesh already small enough to fit in printer")
+    if all_at_goal(current_trees):
+        raise ValueError("Input mesh already small enough to fit in printer")
 
     total_parts = int(sum([p.n_parts for p in current_trees[0].leaves]))
-    logger.info(f"$EST_N_PARTS {total_parts}")
-    # keep track of n_leaves, in each iteration we will only consider trees with the same number of leaves
-    # I think the trees become less comparable when they don't have the same number of leaves
+    logger.info("$EST_N_PARTS %d", total_parts)
+    # keep track of n_leaves, in each iteration we will only consider trees with the
+    # same number of leaves
+    # I think the trees become less comparable when they don't have the same number of
+    # leaves
     n_leaves = 1
-    while not utils.all_at_goal(current_trees):  # continue until we have at least {beam_width} trees
+    # continue until we have at least {beam_width} trees
+    while not all_at_goal(current_trees):
         new_bsps = []  # list of new bsps
-        active_trees = utils.not_at_goal_set(current_trees)  # look at all trees that haven't terminated
+        # look at all trees that haven't terminated
+        active_trees = not_at_goal_set(current_trees)
         for i, tree in enumerate(active_trees):
-            logger.info(f"$TREE {i} / {len(active_trees)}")
-            if len(tree.leaves) != n_leaves:  # only consider trees with a certain number of leaves
+            logger.info("$TREE %d / %d", i, len(active_trees))
+            # only consider trees with a certain number of leaves
+            if len(tree.leaves) != n_leaves:
                 continue
-            current_trees.remove(tree)  # remove the current tree (we will replace it with its best partition)
+            # remove the current tree (we will replace it with its best partition)
+            current_trees.remove(tree)
             largest_node = tree.largest_part  # split the largest node
-            new_bsps += evaluate_cuts(tree, largest_node)  # consider many different cutting planes for the node
+            # consider many different cutting planes for the node
+            new_bsps += evaluate_cuts(tree, largest_node, settings.NORMALS)
 
         n_leaves += 1  # on the next iteration, look at trees with more leaves
-        logger.info(f"$N_LEAVES {n_leaves}")
+        logger.info("$N_LEAVES %d", n_leaves)
         current_trees += new_bsps
-        current_trees = sorted(current_trees, key=lambda x: x.objective)  # sort all of the trees including the new ones
-        # if we are considering part separation, some of the trees may have more leaves, put those away for later
-        if config.part_separation:
+        # sort all of the trees including the new ones
+        current_trees = sorted(current_trees, key=lambda x: x.objective)
+        # if we are considering part separation, some of the trees may have more leaves
+        # put those away for later
+        if settings.PART_SEPARATION:
             extra_leaves_trees = [t for t in current_trees if len(t.leaves) > n_leaves]
-        current_trees = current_trees[:config.beam_width]  # only keep the best {beam_width} trees
-        if config.part_separation:  # add back in the trees with extra leaves
+        # only keep the best {beam_width} trees
+        current_trees = current_trees[: settings.BEAM_WIDTH]
+        # add back in the trees with extra leaves
+        if settings.PART_SEPARATION:
             current_trees += [t for t in extra_leaves_trees if t not in current_trees]
 
         if len(current_trees) == 0:  # all of the trees failed
@@ -114,15 +146,15 @@ def beam_search(starter: typing.Union[Trimesh, BSPTree]):
 
         total_parts = int(sum([p.n_parts for p in current_trees[0].leaves]))
         progress = n_leaves / total_parts
-        logger.info(f"Leaves: {n_leaves}")
-        logger.info(f"best objective: {current_trees[0].objective}")
-        logger.info(f"estimated number of parts: {total_parts}")
-        logger.info(f"estimated beam_search progress: {progress}")
-        logger.info(f"$EST_N_PARTS {total_parts}")
+        logger.info("Leaves: %d", n_leaves)
+        logger.info("best objective: %s", current_trees[0].objective)
+        logger.info("estimated number of parts: %s", total_parts)
+        logger.info("estimated beam_search progress: %s", progress)
+        logger.info("$EST_N_PARTS %d", total_parts)
 
         # save progress
-        for i, tree in enumerate(current_trees[:config.beam_width]):
-            utils.save_tree(tree, f"{config.name}_{i}.json")
-        utils.export_tree_stls(current_trees[0])
+        for i, tree in enumerate(current_trees[: settings.BEAM_WIDTH]):
+            utils.save_tree(tree, output_dir / f"{name}_{i}.json")
+        utils.export_tree_stls(current_trees[0], output_dir, name)
 
     return current_trees[0]

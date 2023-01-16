@@ -1,16 +1,15 @@
+"""Create logger"""
 import logging
-import colorlog
 import sys
 
-from pychop3d.configuration import Configuration
+import colorlog
 
-
-config = Configuration.config
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 # basic logging setup
 stream_formatter = colorlog.ColoredFormatter(
-    "[%(asctime)s] %(log_color)s%(levelname)-8s%(reset)s (%(filename)17s:%(lineno)-4s) %(blue)4s%(message)s",
+    "[%(asctime)s] %(log_color)s%(levelname)-8s%(reset)s (%(filename)17s:%(lineno)-4s)"
+    " %(blue)4s%(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
     reset=True,
     log_colors={

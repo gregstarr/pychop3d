@@ -1,4 +1,4 @@
-# flake8: noqa
+# pylint: noqa
 
 import bpy
 import os

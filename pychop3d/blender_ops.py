@@ -1,20 +1,20 @@
-import pathlib
+"""operations on meshes using blender"""
+from pathlib import Path
 
+from trimesh import Trimesh, util
 from trimesh.interfaces.blender import _blender_executable, exists
 from trimesh.interfaces.generic import MeshScript
-from trimesh import util
+
 from pychop3d.logger import logger
 
 
-def run_blender_op(mesh, func_str, debug=True):
-    """
-    Run a preprocess operation with mesh using Blender.
-    """
+def run_blender_op(mesh: Trimesh, func_str: str, debug: bool = True):
+    """Run a preprocess operation with mesh using Blender."""
     logger.info("starting preprocessing")
     if not exists:
         raise ValueError('No blender available!')
 
-    curr_dir = pathlib.Path(__file__).parent
+    curr_dir = Path(__file__).parent
     script_fn = curr_dir / "blender_template.py.template"
     script = script_fn.read_text().replace("$FUNC", func_str)
 
@@ -27,12 +27,13 @@ def run_blender_op(mesh, func_str, debug=True):
     return result
 
 
-_decimate_str = """
+_DECIMATE_STR = """
 def FUNC(mesh):
     modifier = mesh.modifiers.new('decimate', 'DECIMATE')
     modifier.ratio={ratio}
     modifier.use_collapse_triangulate=True
 """
-def decimate(mesh, ratio, debug=True):
-    result = run_blender_op(mesh, _decimate_str.format(ratio=ratio), debug)
+def decimate(mesh: Trimesh, ratio: float, debug: bool = True):
+    """Decimate a trimesh by a ratio"""
+    result = run_blender_op(mesh, _DECIMATE_STR.format(ratio=ratio), debug)
     return result

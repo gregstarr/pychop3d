@@ -1,46 +1,69 @@
-from __future__ import annotations
-import typing
-import traceback
+from typing import NamedTuple
 
 import numpy as np
-import trimesh
+from trimesh import Trimesh
+from trimesh.transformations import angle_between_vectors
 
-from pychop3d import section
-from pychop3d.configuration import Configuration
 from pychop3d.logger import logger
+from pychop3d import settings
+from pychop3d.section import CrossSection, bidirectional_split
 
 
 class ConvexHullError(Exception):
-    pass
+    """Convex hull error"""
+
+
+class Plane(NamedTuple):
+    """tuple of (origin, normal), both 3D numpy vectors"""
+    origin: np.ndarray
+    normal: np.ndarray
 
 
 class BSPNode:
-    part: trimesh.Trimesh
-    parent: BSPNode
-    children: typing.List[BSPNode]
-    path: typing.Tuple[int]
-    plane: typing.Tuple[np.ndarray]
-    cross_section: section.CrossSection
+    """Binary Space Partition Node"""
 
-    def __init__(self, part, parent=None, num=None):
-        """Initialize an instance of `BSPNode`, determine n_parts objective and termination status.
+    part: Trimesh
+    parent: "BSPNode"
+    children: list["BSPNode"]
+    path: tuple[int]
+    plane: Plane
+    cross_section: CrossSection
+    printer_extents: np.ndarray
 
-        :param part: mesh part associated with this node
-        :param parent: BSPNode which was split to produce this node and this node's sibling nodes
-        :param num: index of this node, e.g. 0 -> 0th child of this node's parent
+    def __init__(
+        self,
+        part: Trimesh,
+        parent: "BSPNode",
+        printer_extents: np.ndarray = None,
+        num: int = None,
+    ):
+        """Initialize a bspnode, determine n_parts objective and termination status.
+
+        Args:
+            part (Trimesh): mesh part associated with this node
+            parent (BSPNode): BSPNode which was split to produce this node and
+                this node's sibling nodes. Use `None` for root node.
+            printer_extents (np.ndarray, optional): printer dimensions (mm), inherit
+                from parent if None.
+            num (int, optional): index of this node, e.g. 0 -> 0th child of this node's
+                parent. Defaults to None.
         """
-        config = Configuration.config  # collect configuration
         self.part = part
         self.parent = parent
         self.children = []
         self.path = tuple()
-        self.plane = None  # this node will get a plane and a cross_section if and when it is split
+        # this node will get a plane and a cross_section if and when it is split
+        self.plane = None
         self.cross_section = None
+        if printer_extents is None:
+            self.printer_extents = parent.printer_extents
+        else:
+            self.printer_extents = printer_extents
         # determine n_parts and termination status
         self.n_parts = np.prod(
-            np.ceil(self.obb.primitive.extents / config.printer_extents)
+            np.ceil(self.obb.primitive.extents / self.printer_extents)
         )
-        self.terminated = np.all(self.obb.primitive.extents <= config.printer_extents)
+        self.terminated = np.all(self.obb.primitive.extents <= self.printer_extents)
         # if this isn't the root node
         if self.parent is not None:
             self.path = (*self.parent.path, num)
@@ -49,80 +72,82 @@ class BSPNode:
         return f"{self.__class__.__name__}({self.path=})"
 
     @property
-    def obb(self):
+    def obb(self) -> Trimesh:
         """oriented bounding box
 
-        :return: oriented bounding box
-        :rtype: `trimesh.Trimesh`
+        Raises:
+            ConvexHullError
+
+        Returns:
+            Trimesh
         """
         try:
             return self.part.bounding_box_oriented
-        except Exception:
-            raise ConvexHullError("OBB failed")
+        except Exception as exc:
+            raise ConvexHullError("OBB failed") from exc
 
     @property
-    def auxiliary_normals(self):
-        """(3 x 3) numpy array who's rows are the three unit vectors aligned with this node's part's oriented
-        bounding box
+    def auxiliary_normals(self) -> np.ndarray:
+        """(3 x 3) numpy array who's rows are the three unit vectors aligned with this
+        node's part's oriented bounding box
 
-        :return: oriented bounding box unit vectors
-        :rtype: `numpy.ndarray`
+        Returns:
+            np.ndarray
         """
         obb_xform = np.array(self.obb.primitive.transform)
         return obb_xform[:3, :3]
 
     @property
-    def connection_objective(self):
-        """property containing the connection objective for this node
+    def connection_objective(self) -> float:
+        """connection objective for this node
 
-        :return: connection objective value for this node
-        :rtype: float
+        Returns:
+            float
         """
         return max([cc.objective for cc in self.cross_section.connected_components])
 
-    def different_from(self, other_node):
-        """determine if this node is different plane-wise from the same node on another tree (check if this node's
-        plane is different from another node's plane)
+    def different_from(self, other_node: "BSPNode") -> bool:
+        """determine if this node is different plane-wise from the same node on another
+        tree (check if this node's plane is different from another node's plane)
 
-        :param other_node: corresponding node on another tree
-        :type other_node: `bsp_node.BSPNode`
-        :return: boolean indicating if this node is different from another
-        :rtype: bool
+        Args:
+            other_node (BSPNode): corresponding node on another tree
+
+        Returns:
+            bool
         """
-        config = Configuration.config  # collect configuration
-        o = other_node.plane[0]  # other plane origin
-        delta = o - self.plane[0]  # vector from this plane's origin to the others'
-        dist = abs(
-            self.plane[1] @ delta
-        )  # distance along this plane's normal to other plane
+        other_o = other_node.plane.origin  # other plane origin
+        # vector from this plane's origin to the others'
+        delta = (other_o - self.plane.origin)
+        # distance along this plane's normal to other plane
+        dist = abs(self.plane.normal @ delta)
         # angle between this plane's normal vector and the other plane's normal vector
-        angle = trimesh.transformations.angle_between_vectors(
-            self.plane[1], other_node.plane[1]
-        )
+        angle = angle_between_vectors(self.plane.normal, other_node.plane.normal)
         # also consider angle between the vectors in the opposite direction
         angle = min(np.pi - angle, angle)
         # check if either the distance or the angle are above their respective thresholds
-        return dist > config.different_origin_th or angle > config.different_angle_th
+        return dist > settings.DIFFERENT_ORIGIN_TH or angle > settings.DIFFERENT_ANGLE_TH
 
 
-def split(node: BSPNode, plane: tuple):
-    """Split a node along a plane
+def split(node: BSPNode, plane: Plane) -> BSPNode:
+    """Split a node with a plane
 
-    :param node: BSPNode to split
-    :param plane: (origin, normal) pair defining the cutting plane
-    :return: the input node split by the plane, will have at least 2 children
-    :rtype: BSPNode
+    Args:
+        node (BSPNode): BSPNode to split
+        plane (Plane): the cutting plane
+
+    Returns:
+        BSPNode
     """
     node.plane = plane
-    origin, normal = plane
 
     try:
-        parts, cross_section, result = section.bidirectional_split(
-            node.part, origin, normal
-        )  # split the part
-    except:
-        traceback.print_exc()
+        # split the part
+        parts, cross_section, result = bidirectional_split(node.part, plane)
+    except Exception:
+        logger.exception("bidirectional_split failed")
         return None, "unknown_mesh_split_error"
+
     if None in [parts, cross_section]:  # check for splitting errors
         return None, result
     node.cross_section = cross_section
@@ -133,6 +158,7 @@ def split(node: BSPNode, plane: tuple):
         try:
             child = BSPNode(part, parent=node, num=i)  # potential convex hull failure
         except ConvexHullError:
+            logger.exception("convex hull")
             return None, "convex_hull_error"
 
         node.children.append(child)  # The parts become this node's children
