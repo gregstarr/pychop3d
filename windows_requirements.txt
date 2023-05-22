@@ -4,7 +4,7 @@ scipy==1.5.2
 pytest==6.0.1
 networkx==2.5
 pyyaml==5.4
-requests==2.24.0
+requests==2.31.0
 trimesh==3.8.3
 triangle==20200424
 pyglet==1.5.7
